@@ -32,9 +32,9 @@
     "@emnapi/runtime": "^1.11.2",
     "@mnci/eslint-config": ">=0.1.0 <1.0.0",
     "@nx-go/nx-go": "^4.1.1",
-    "@nx/eslint": "23.2.0",
-    "@nx/eslint-plugin": "23.2.0",
-    "@nx/js": "23.2.0",
+    "@nx/eslint": "23.3.0",
+    "@nx/eslint-plugin": "23.3.0",
+    "@nx/js": "23.3.0",
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
@@ -43,7 +43,7 @@
     "adm-zip": "^0.6.1",
     "eslint": "^10.8.0",
     "husky": "^9.1.7",
-    "nx": "23.2.0",
+    "nx": "23.3.0",
     "tslib": "^2.3.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
@@ -79,7 +79,8 @@
       "express": ">=4.0.0 <6.0.0"
     },
     "@emnapi/core": "$@emnapi/core",
-    "@emnapi/runtime": "$@emnapi/runtime"
+    "@emnapi/runtime": "$@emnapi/runtime",
+    "undici": "^7.30.0"
   },
   "nx": {
     "includedScripts": [],
