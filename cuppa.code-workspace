@@ -67,7 +67,78 @@
   },
   "tasks": {
     "version": "2.0.0",
-    "tasks": []
+    "tasks": [
+      {
+        "label": "document: qa",
+        "type": "npm",
+        "script": "document:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "catalog: qa",
+        "type": "npm",
+        "script": "catalog:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "canvas: qa",
+        "type": "npm",
+        "script": "canvas:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "render: qa",
+        "type": "npm",
+        "script": "render:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "cuppafile: qa",
+        "type": "npm",
+        "script": "cuppafile:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "export: qa",
+        "type": "npm",
+        "script": "export:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "cuppa-tui: qa",
+        "type": "npm",
+        "script": "cuppa-tui:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "cuppa-tui: build",
+        "type": "npm",
+        "script": "cuppa-tui:build",
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "cuppa-tui: start",
+        "type": "npm",
+        "script": "cuppa-tui:start",
+        "problemMatcher": [],
+        "isBackground": true
+      },
+      {
+        "label": "archcheck: qa",
+        "type": "npm",
+        "script": "archcheck:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      }
+    ]
   },
   "launch": {
     "version": "0.2.0",

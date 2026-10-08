@@ -35,6 +35,12 @@
       "options": {
         "targetName": "lint"
       }
+    },
+    {
+      "plugin": "@nx-go/nx-go",
+      "options": {
+        "modulePrefix": "github.com/fancy-cuppa/cuppa"
+      }
     }
   ],
   "analytics": false,
