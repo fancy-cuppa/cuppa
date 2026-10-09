@@ -25,11 +25,12 @@ the stable line.
 (`apps/cuppa-tui/shell`), served in-process through `tty-go`.
 
 - One program, one UI. Nothing in the designer is duplicated for the desktop.
-- `terminal.Start` listens on `127.0.0.1` on a free port, serves one *shared*
-  program (a reload of the window finds the design as it was), and puts a random
-  secret in the WebSocket path. The page reads the address from a bound Go
-  method, `App.TerminalURL()`. Only the Wails page origins (`wails.localhost`,
-  `wails`, and `localhost` for `wails dev`) are accepted.
+- The program is one *shared* `ttygo.SharedProgram` (a reload of the window
+  finds the design as it was), bound to the window with `ttygo.BindShared` over
+  Wails events; the page uses `createWailsSocket()`. There is no server, port,
+  secret or origin check. (The first version ran a loopback WebSocket with a
+  random secret in its path; tty-go v0.1.3 made that unnecessary and it was
+  removed.)
 - Closing the window sends Ctrl+Q into the program, so the app's own
   unsaved-changes prompt runs. When the user quits from inside the app the
   window closes (`OnBeforeClose`, `OnQuit`).

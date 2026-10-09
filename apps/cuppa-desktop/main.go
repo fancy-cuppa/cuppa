@@ -46,7 +46,6 @@ func main() {
 		OnStartup:        app.startup,
 		OnBeforeClose:    app.beforeClose,
 		OnShutdown:       app.shutdown,
-		Bind:             []any{app},
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cuppa-desktop:", err)

@@ -76,8 +76,8 @@ pointer leaves it.
 ## The desktop app
 
 `apps/cuppa-desktop` is not a second UI. It is a Wails window whose one
-component, TReactUI's `<TTY>`, shows this same terminal app through a loopback
-WebSocket served from the same process ([ADR 0004](adr/0004-desktop-app-wails-and-treactui.md)).
+component, TReactUI's `<TTY>`, shows this same terminal app over Wails events
+from the same process ([ADR 0004](adr/0004-desktop-app-wails-and-treactui.md)).
 Anything added to the catalog or the shell appears in both front ends.
 
 ## Code layout rules
