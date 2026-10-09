@@ -25,7 +25,6 @@ func place(t *testing.T, m *Model, x int) design.Node {
 	return n
 }
 
-func ctrlKey(r rune) tea.Msg      { return tea.KeyPressMsg{Code: r, Mod: tea.ModCtrl} }
 func ctrlShift(r rune) tea.Msg { return tea.KeyPressMsg{Code: r, Mod: tea.ModCtrl | tea.ModShift} }
 
 func TestCtrlDDuplicatesTheSelection(t *testing.T) {
