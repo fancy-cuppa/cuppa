@@ -16,7 +16,7 @@ Think Lucidchart or Figma, but for [Bubble Tea](https://github.com/charmbracelet
 - **Export** to PNG, SVG or WebP through [Freeze](https://github.com/charmbracelet/freeze), or to colour or plain text.
 
 **Desktop window.** `apps/cuppa-desktop` runs the same app in a [Wails](https://wails.io) window, through
-[TReactUI](https://github.com/meta-tui/treactui). It is not in the releases yet; build it with
+[TReactUI](https://github.com/meta-tui/treactui). Release zips for Windows, macOS and Linux are attached to each release; or build it with
 `npx nx run cuppa-desktop:bundle` (see [its README](apps/cuppa-desktop/README.md)).
 
 Cuppa is early: the previews are faithful sketches of each component, not live widgets, and keyboard navigation is still to come (see the [roadmap](#roadmap)).
