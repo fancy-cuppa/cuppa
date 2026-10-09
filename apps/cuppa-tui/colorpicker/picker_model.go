@@ -23,9 +23,10 @@ const (
 	tab256
 	tabRGB
 	tabHSL
+	tabThemes
 )
 
-var tabNames = []string{"16", "256", "RGB", "HSL"}
+var tabNames = []string{"16", "256", "RGB", "HSL", "Themes"}
 
 const (
 	innerW = 46
@@ -47,6 +48,8 @@ type Model struct {
 	title string
 
 	tab   tab
+	// scheme is the colour scheme the Themes tab shows (an index into scheme.All).
+	scheme int
 	empty bool // no colour
 	index int  // palette index, or -1 for a colour made with the sliders
 	rgb   space.RGB
@@ -71,6 +74,7 @@ type Model struct {
 // or "" for none).
 func New(title, current string) *Model {
 	m := &Model{title: title, index: -1}
+	m.scheme = startScheme()
 	if c, idx, isIndex, ok := space.Parse(current); ok && strings.TrimSpace(current) != "" {
 		if isIndex {
 			m.setIndex(idx)
@@ -192,7 +196,7 @@ func (r *row) span(s string, down, drag func(x int)) *row {
 
 func (r *row) String() string { return r.b.String() }
 
-// tabBar draws the four tabs.
+// tabBar draws the tabs.
 func (m *Model) tabBar() string {
 	r := m.newRow(1)
 	r.text(" ")
@@ -229,6 +233,8 @@ func (m *Model) body() []string {
 		lines = m.palette256Lines(bodyTop)
 	case tabRGB:
 		lines = m.rgbLines(bodyTop)
+	case tabThemes:
+		lines = m.themesLines(bodyTop)
 	default:
 		lines = m.hslLines(bodyTop)
 	}
@@ -267,6 +273,10 @@ func (m *Model) Handle(e pointer.Event) {
 		}
 	case pointer.Up:
 		m.grab = nil
+	case pointer.Wheel:
+		if m.tab == tabThemes && e.WheelY != 0 {
+			m.stepScheme(e.WheelY)
+		}
 	}
 }
 

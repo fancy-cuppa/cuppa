@@ -61,7 +61,7 @@ columns, and Cuppa remembers the widths for next time.
 - **Duplicate** and **Delete**.
 - **Properties**: what you can change depends on the component. Text fields are click-then-type (Enter to accept, Esc to cancel). Numbers have `[-]`/`[+]`. Choices (border style, alignment…) are arrows. Yes/no options are checkboxes. Click a colour to open the colour dialog: the **16** and **256** tabs are swatches of the terminal palettes
 (a click picks one), **RGB** and **HSL** have sliders for any colour (click or drag the bar, `[-]`/`[+]` for single
-steps, true colour on terminals that support it). Type a palette number (`0` to `255`) or hex (`#ff5fd7`) in the
+steps, true colour on terminals that support it). The **Themes** tab lists 342 terminal colour schemes (Dracula, Nord, Solarized and more, from [bubbletint](https://github.com/lrstanley/bubbletint)): step with `«` `◂` `▸` `»` or the wheel, jump by letter, and click one of its 16 colours, or its text, page, cursor or selection colour; the design stores that colour as plain hex. Type a palette number (`0` to `255`) or hex (`#ff5fd7`) in the
 value field and press Enter, or choose **None** for no colour. Long text values wrap inside the bar.
 
 **Undo and redo.** `[Undo]` and `[Redo]` at the top of the details bar, the Edit menu, or Ctrl+Z / Ctrl+Y. A drag or a typed edit is one step.

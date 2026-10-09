@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/libs/color/scheme"
 	"github.com/meta-tui/cuppa/libs/color/space"
 )
 
@@ -55,7 +56,7 @@ func TestEverySwatchOfTheSixteenIsReachable(t *testing.T) {
 	m := open("")
 	clickTab(t, m, "16")
 	seen := map[string]bool{}
-	for _, g := range append([]region(nil), m.regions[4:]...) {
+	for _, g := range append([]region(nil), m.regions[len(tabNames):]...) {
 		if g.down == nil {
 			continue
 		}
@@ -75,7 +76,7 @@ func TestEveryColourOfThe256IsReachable(t *testing.T) {
 	m := open("")
 	clickTab(t, m, "256")
 	seen := map[string]bool{}
-	for _, g := range append([]region(nil), m.regions[4:]...) {
+	for _, g := range append([]region(nil), m.regions[len(tabNames):]...) {
 		if g.down == nil || g.y >= bodyTop+m.bodyHeight() {
 			continue
 		}
@@ -264,5 +265,83 @@ func TestFirstKeystrokeReplacesTheShownValueAndBackspaceThenEditsNormally(t *tes
 	m.Key("", true, false, false)
 	if len(m.text) != 0 {
 		t.Fatalf("backspace on an untouched value clears it, got %q", string(m.text))
+	}
+}
+
+func TestThemesTabPicksAnyColourOfAScheme(t *testing.T) {
+	m := open("")
+	clickTab(t, m, "Themes")
+	s := scheme.All()[m.scheme]
+	seen := map[string]bool{}
+	for _, g := range append([]region(nil), m.regions[len(tabNames):]...) {
+		if g.down == nil || g.y < bodyTop+4 {
+			continue // the step buttons and the letter row
+		}
+		press(m, g.x0, g.y)
+		seen[m.Value()] = true
+	}
+	for i, c := range s.ANSI {
+		if !seen[c.Hex()] && !hasDuplicate(s, i) {
+			t.Errorf("%s: colour %d (%s) cannot be picked", s.Name, i, c.Hex())
+		}
+	}
+	if !seen[s.Foreground.Hex()] || !seen[s.Background.Hex()] {
+		t.Errorf("%s: text and page colours should be pickable", s.Name)
+	}
+}
+
+// hasDuplicate reports whether an earlier ANSI colour of the scheme has the same value.
+func hasDuplicate(s scheme.Scheme, i int) bool {
+	for j := 0; j < i; j++ {
+		if s.ANSI[j] == s.ANSI[i] {
+			return true
+		}
+	}
+	return false
+}
+
+func TestThemesTabStepsAndJumpsBetweenSchemes(t *testing.T) {
+	m := open("")
+	clickTab(t, m, "Themes")
+	start := m.scheme
+	m.stepScheme(1)
+	if m.scheme != start+1 {
+		t.Fatalf("step: %d, want %d", m.scheme, start+1)
+	}
+	m.stepScheme(-len(scheme.All()))
+	if m.scheme != start+1 {
+		t.Fatal("stepping a full lap should land on the same scheme")
+	}
+	m.jumpScheme('N')
+	if name := scheme.All()[m.scheme].Name; !strings.HasPrefix(strings.ToUpper(name), "N") {
+		t.Fatalf("jump to N landed on %q", name)
+	}
+	m.jumpScheme('#')
+	if name := scheme.All()[m.scheme].Name; name[0] < '0' || name[0] > '9' {
+		t.Fatalf("jump to # landed on %q", name)
+	}
+	before := m.scheme
+	m.Handle(pointer.Event{Phase: pointer.Wheel, WheelY: 1, X: m.rect.X + 5, Y: m.rect.Y + 5})
+	if m.scheme != before+1 {
+		t.Errorf("wheel: %d, want %d", m.scheme, before+1)
+	}
+}
+
+func TestPickingASchemeColourStoresAPlainHexColour(t *testing.T) {
+	m := open("")
+	clickTab(t, m, "Themes")
+	m.stepScheme(0)
+	s := scheme.All()[m.scheme]
+	for _, g := range m.regions[len(tabNames):] {
+		if g.down != nil && g.y >= bodyTop+4 {
+			press(m, g.x0, g.y)
+			break
+		}
+	}
+	if m.Value() != s.ANSI[0].Hex() {
+		t.Fatalf("value = %q, want %q", m.Value(), s.ANSI[0].Hex())
+	}
+	if _, err := space.Normalise(m.Value()); err != nil {
+		t.Fatal(err)
 	}
 }

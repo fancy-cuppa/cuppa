@@ -55,7 +55,7 @@ Bubble Tea column: the major version in the module's `go.mod`.
 | 76creates/stickers | FlexBox, responsive table | v1.5.0 (2025-09) | 402 | MIT | v1 | Keep `community.flexbox` as placeholder |
 | treilik/bubbleboxer | Layout tree | v0.2.0 (2023) | 87 | MIT | v1 (old) | Keep as placeholder; stale |
 | mistakenelf/teacup (statusbar, filetree) | Status bar, file tree | v0.4.1 (2023) | 272 | MIT | v1 (old) | Filetree is superseded by `bubbles.tree`; statusbar stays (different shape from clambin's) |
-| lrstanley/bubbletint/v2 | 340+ colour schemes, `color.Color` based | v2.0.2 (2026-05) | 150 | MIT | none | Not a component. Strong fit for the theme work: offer these palettes in the colour picker |
+| lrstanley/bubbletint/v2 | 340+ colour schemes, `color.Color` based | v2.0.2 (2026-05) | 150 | MIT | none | **Done** (#111): the Themes tab of the colour dialog, through `libs/color/scheme` |
 | Digital-Shane/treeview/v2 | Tree with search and icon providers | v2.0.1 (2026-05) | 86 | **GPL-3.0** | v2 | **Skip**: a generated program that imports it would have to be GPL |
 | pgavlin/tea-grid | Data grid with sorting, filters, pinning | pre (2026-06) | 3 | **none** | v2 | **Skip**: no licence means no right to use it |
 | madicen/bubble-color-picker | Colour picker | v0.1.1 (2026-05) | 0 | MIT | v1 | Backlog: v1, 0 stars |
