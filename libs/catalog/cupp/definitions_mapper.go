@@ -12,7 +12,7 @@ func ComponentID(pack, component string) string { return pack + "." + component 
 // per component.
 func Definitions(p Pack) (definition.Pack, []definition.Definition) {
 	pack := definition.Pack{
-		ID: definition.Family(p.ID), Name: p.Name, Version: p.Version, Description: p.Description, Source: p.Path,
+		ID: definition.Family(p.ID), Name: p.Name, Version: p.Version, Description: p.Description, Source: p.Path, Builtin: p.Path == "",
 	}
 	defs := make([]definition.Definition, 0, len(p.Components))
 	for _, c := range p.Components {

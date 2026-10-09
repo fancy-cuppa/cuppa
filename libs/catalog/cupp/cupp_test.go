@@ -195,3 +195,23 @@ func TestLoadedPacksRememberTheirFile(t *testing.T) {
 		}
 	}
 }
+
+func TestJSONFormRoundTripsAndNamesTheFirstProblem(t *testing.T) {
+	data, err := ToJSON(samplePack())
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := FromJSON(data)
+	if err != nil || !reflect.DeepEqual(got, samplePack()) {
+		t.Fatalf("round trip: %v\n%+v", err, got)
+	}
+	if _, err := FromJSON([]byte("{")); err == nil {
+		t.Fatal("broken JSON")
+	}
+	bad := samplePack()
+	bad.Components[0].Props[0].Target = "nowhere"
+	data, _ = ToJSON(bad)
+	if _, err := FromJSON(data); err == nil {
+		t.Fatal("a pack with a bad component is refused, not trimmed")
+	}
+}
