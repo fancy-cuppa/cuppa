@@ -15,6 +15,10 @@ Think Lucidchart or Figma, but for [Bubble Tea](https://github.com/charmbracelet
 - **Save and open** `.cuppa` files ([format](docs/spec/cuppa-format.md)).
 - **Export** to PNG, SVG or WebP through [Freeze](https://github.com/charmbracelet/freeze), or to colour or plain text.
 
+**Desktop window.** `apps/cuppa-desktop` runs the same app in a [Wails](https://wails.io) window, through
+[TReactUI](https://github.com/meta-tui/treactui). It is not in the releases yet; build it with
+`npx nx run cuppa-desktop:bundle` (see [its README](apps/cuppa-desktop/README.md)).
+
 Cuppa is early: the previews are faithful sketches of each component, not live widgets, and keyboard navigation is still to come (see the [roadmap](#roadmap)).
 
 ## Install
@@ -49,12 +53,12 @@ Colour and plain-text export work without it.
 | [Concept and architecture](docs/architecture.md) | Why it is built as a headless engine with thin front ends |
 | [Contributing](docs/contributing.md) | Setup, conventions, adding a component to the catalog |
 | [`.cuppa` format](docs/spec/cuppa-format.md) | The file format |
-| [Decisions](docs/adr) | Architecture decision records |
+| [Decisions](docs/adr) | Architecture decision records (including the [desktop app](docs/adr/0004-desktop-app-wails-and-treactui.md)) |
 | [Community components](docs/catalog/community-components.md) | Research behind the unofficial components |
 
 ## Roadmap
 
-Tracked in [GitHub issues](https://github.com/meta-tui/cuppa/issues): keyboard-first editing, exporting a design as Go source, live component previews, light/dark themes, and more front ends (desktop with Wails, a web app, an npm package) on the same engine.
+Tracked in [GitHub issues](https://github.com/meta-tui/cuppa/issues): keyboard-first editing, exporting a design as Go source, live component previews, light/dark themes, and more front ends (a web app, an npm package) on the same engine.
 
 ## License
 
