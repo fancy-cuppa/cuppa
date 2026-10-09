@@ -34,6 +34,9 @@ func richDesign() (design.Document, Catalog) {
 		"lipgloss.list", "bubbles.tree", "huh.spinner",
 		"community.frame", "community.dialog", "community.statusmessage", "community.toast",
 		"community.bigtext", "community.qrcode", "community.image",
+		"lipgloss.table", "lipgloss.tree", "lipgloss.tabs", "lipgloss.joinh", "lipgloss.joinv", "lipgloss.place",
+		"bubbles.help", "bubbles.filepicker",
+		"community.flexbox", "community.boxer", "community.datepicker", "community.overlay", "community.statusbar", "community.filetree",
 		"huh.input",
 	} {
 		def, _ := cat.Get(id)
