@@ -372,6 +372,10 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		if esc {
 			m.bar.Close()
 		}
+	case m.ins.Dragging():
+		if esc {
+			m.ins.CancelDrag()
+		}
 	case m.ins.Editing():
 		m.ins.Key(k.Text, back, enter, esc)
 	case m.pal.Searching():

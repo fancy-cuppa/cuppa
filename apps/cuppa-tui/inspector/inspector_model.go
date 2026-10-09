@@ -21,6 +21,8 @@ type Catalog interface {
 type region struct {
 	y, x0, x1 int
 	act       func()
+	// layer is set on a layer name: pressing it can start a drag of that layer.
+	layer design.NodeID
 }
 
 // Model is the inspector pane.
@@ -42,6 +44,12 @@ type Model struct {
 
 	// pickColor opens the colour dialog; nil means colours are edited as text.
 	pickColor ColorPicker
+
+	// The layer list: a drag in progress, where the list starts and how long it
+	// is (content rows, set at render), and where the trash button is.
+	drag                     *layerDrag
+	layerTop, layerCount     int
+	trashY, trashX0, trashX1 int
 }
 
 // New returns an inspector editing through ed.
@@ -78,11 +86,26 @@ func (m *Model) Handle(e pointer.Event) {
 		for _, r := range m.regions {
 			if r.y == y && e.X >= r.x0 && e.X < r.x1 {
 				m.cancelEdit()
+				if r.layer != "" {
+					// Selecting changes what the bar shows above the list, which
+					// would slide the list out from under a drag; so a layer is
+					// selected on release, when it was not dragged.
+					m.pressLayer(r.layer, y, r.act)
+					return
+				}
 				r.act()
 				return
 			}
 		}
 		m.cancelEdit()
+	case pointer.Move:
+		if m.drag != nil && e.Held {
+			m.dragTo(e)
+		}
+	case pointer.Up:
+		if m.drag != nil {
+			m.drop(e)
+		}
 	}
 }
 

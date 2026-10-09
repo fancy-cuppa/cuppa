@@ -36,7 +36,7 @@ func (m *Model) render() *grid.Grid {
 	var group design.Rect
 	for i, id := range selected {
 		if n, ok := doc.Get(id); ok {
-			m.drawSelection(view, n.Rect, len(selected) == 1)
+			m.drawSelection(view, n.Rect, len(selected) == 1 && !n.Locked)
 			if i == 0 {
 				group = n.Rect
 			} else {
