@@ -194,31 +194,78 @@ func paintFilePicker(g *grid.Grid, p Props) {
 	}
 }
 
-// paintBubbleTree draws the Bubbles tree: branches (names ending in "/") show
-// whether they are open, children are indented two spaces per level, and the
-// selected row is highlighted.
+// paintBubbleTree draws the Bubbles tree as the component does: a root with
+// Lip Gloss connectors, an open marker before every branch, the cursor arrow on
+// the selected row, and the key help under the tree.
 func paintBubbleTree(g *grid.Grid, p Props) {
+	type item struct {
+		name   string
+		depth  int
+		branch bool
+		last   bool
+	}
 	lines := pipeLines(p.Str("items"))
-	sel := pick(p, "selected", len(lines))
-	for i, line := range lines {
-		if i >= g.H {
-			break
-		}
+	var items []item
+	for _, line := range lines {
 		name := strings.TrimLeft(line, " ")
-		indent := len(line) - len(name)
-		branch := strings.HasSuffix(name, "/")
-		open := branch && i+1 < len(lines) && len(lines[i+1])-len(strings.TrimLeft(lines[i+1], " ")) > indent
-		marker, style := "  ", grid.Style{}
-		switch {
-		case open:
-			marker, style = "▾ ", grid.Style{Fg: "39"}
-		case branch:
-			marker, style = "▸ ", grid.Style{Fg: "39"}
+		if name == "" {
+			continue
 		}
-		if i == sel {
-			style = selected(p.Str("color"))
-			g.Fill(designRow(g, i), ' ', style)
+		items = append(items, item{name: name, depth: (len(line) - len(name)) / 2})
+	}
+	for i := range items {
+		items[i].last = true
+		for j := i + 1; j < len(items); j++ {
+			if items[j].depth < items[i].depth {
+				break
+			}
+			if items[j].depth == items[i].depth {
+				items[i].last = false
+				break
+			}
 		}
-		g.Text(indent, i, marker+name, style, g.W-indent)
+		items[i].branch = i+1 < len(items) && items[i+1].depth > items[i].depth
+	}
+	rowsShown := len(items) + 1
+	sel := pick(p, "selected", rowsShown)
+	accent := p.Str("color")
+	cursor := grid.Style{Fg: accent, Bold: true}
+	row := func(y int, selectedRow bool, text string, style grid.Style) {
+		if y >= g.H {
+			return
+		}
+		if selectedRow {
+			g.Text(0, y, "→ ", cursor, g.W)
+			style = grid.Style{Fg: accent, Bold: true}
+		}
+		g.Text(2, y, text, style, g.W-2)
+	}
+	row(0, sel == 0, "▼ "+p.Str("root"), grid.Style{Fg: "#ee6ff8"})
+	var ancestors []bool // whether each ancestor level was the last child
+	for i, it := range items {
+		ancestors = ancestors[:min(it.depth, len(ancestors))]
+		prefix := ""
+		for _, last := range ancestors {
+			if last {
+				prefix += "   "
+			} else {
+				prefix += "│  "
+			}
+		}
+		connector := "├──"
+		if it.last {
+			connector = "└──"
+		}
+		text := prefix + connector
+		style := grid.Style{Fg: "#b0b0b0"}
+		if it.branch {
+			text += "▼ "
+			style = grid.Style{Fg: "99"}
+		}
+		row(i+1, sel == i+1, text+it.name, style)
+		ancestors = append(ancestors, it.last)
+	}
+	if p.Bool("show_help") && g.H >= rowsShown+2 {
+		g.Text(2, g.H-1, "↓/j down • ↑/k up • ⏎ toggle • ? more", dim, g.W-2)
 	}
 }

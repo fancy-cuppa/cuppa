@@ -28,7 +28,7 @@ and cannot mix v1 and v2, so v1-only components stay placeholders there.
 | **Tree** | `charm.land/bubbles/v2/tree` (new in Bubbles v2.2.0, by dlvhdr) | A navigable tree with expand and collapse; the catalog only has the static Lip Gloss tree | **Added** (#105): `bubbles.tree` |
 | **Spinner (Huh)** | `charm.land/huh/v2/spinner` | A spinner with a title, shown while something runs | **Added** (#105): `huh.spinner` |
 | **Layers and canvas** | Lip Gloss v2 (`Layer`, `Canvas`, compositing with x, y, z) | How modals, toasts and popups are drawn in v2 | Not a component; it is how `overlay`, `modal` and `toast` should be generated |
-| **Gradients and blending** | Lip Gloss v2 (`Blend1D`, `Blend2D`) | Gradient fills and borders | **Added** (#105): the `gradient` property of `lipgloss.box` blends the border; the generated program does not draw it yet |
+| **Gradients and blending** | Lip Gloss v2 (`Blend1D`, `Blend2D`) | Gradient fills and borders | **Added** (#105): the `gradient` property of `lipgloss.box` blends the border, in the designer and in the generated program |
 | Cursor | `bubbles/v2/cursor` | The blinking cursor inside text inputs | Skip: part of textinput and textarea |
 | Key | `bubbles/v2/key` | Key bindings, no visual | Skip: non-visual |
 | Textarea options | Bubbles v2.1 and v2.2 | Dynamic height, selection | Properties of `bubbles.textarea` |

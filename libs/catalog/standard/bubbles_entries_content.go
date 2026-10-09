@@ -57,8 +57,10 @@ func bubblesEntries() []definition.Definition {
 			Description: "A navigable tree with expandable branches (new in Bubbles v2.2).",
 			DefaultSize: size(30, 10), MinSize: size(8, 2), Import: bubblesImport + "/tree", Status: definition.StatusPlaceholder,
 			Props: []definition.PropSpec{
-				textProp("items", "Items (| separated; two spaces indent; / = branch)", "apps/|  cuppa-tui/|  cuppa-web/|libs/|  render/|go.work|README.md"),
-				intProp("selected", "Selected", 1, 0, 99),
+				textProp("root", "Root", "cuppa"),
+				textProp("items", "Items (| separated; two spaces indent)", "apps/|  cuppa-tui/|  cuppa-web/|libs/|  render/|go.work|README.md"),
+				intProp("selected", "Selected row (0 = root)", 0, 0, 99),
+				boolProp("show_help", "Show key help", true),
 				colorProp("color", "Accent", "212"),
 			},
 		},
