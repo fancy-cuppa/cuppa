@@ -10,6 +10,10 @@ func All() []definition.Definition {
 	var defs []definition.Definition
 	defs = append(defs, lipglossEntries()...)
 	defs = append(defs, bubblesEntries()...)
+	defs = append(defs, huhEntries()...)
+	defs = append(defs, glamourEntries()...)
+	defs = append(defs, ntchartsEntries()...)
+	defs = append(defs, communityEntries()...)
 	return defs
 }
 
