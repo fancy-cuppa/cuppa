@@ -19,7 +19,7 @@ Cuppa is early: the previews are faithful sketches of each component, not live w
 
 ## Install
 
-Download the zip for your system from the [latest release](https://github.com/fancy-cuppa/cuppa/releases/latest) (Windows, macOS and Linux, Intel/AMD and ARM), unzip it and run `cuppa-tui`:
+Download the zip for your system from the [latest release](https://github.com/meta-tui/cuppa/releases/latest) (Windows, macOS and Linux, Intel/AMD and ARM), unzip it and run `cuppa-tui`:
 
 ```sh
 cuppa-tui                # start with an empty design
@@ -54,7 +54,7 @@ Colour and plain-text export work without it.
 
 ## Roadmap
 
-Tracked in [GitHub issues](https://github.com/fancy-cuppa/cuppa/issues): keyboard-first editing, exporting a design as Go source, live component previews, light/dark themes, and more front ends (desktop with Wails, a web app, an npm package) on the same engine.
+Tracked in [GitHub issues](https://github.com/meta-tui/cuppa/issues): keyboard-first editing, exporting a design as Go source, live component previews, light/dark themes, and more front ends (desktop with Wails, a web app, an npm package) on the same engine.
 
 ## License
 

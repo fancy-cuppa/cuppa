@@ -3,8 +3,8 @@ package palette
 import (
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/standard"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/libs/catalog/standard"
 )
 
 func newPalette() *Model {

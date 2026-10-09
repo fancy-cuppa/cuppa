@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/standard"
-	"github.com/fancy-cuppa/cuppa/libs/cuppafile/disk"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/export/image"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/catalog/standard"
+	"github.com/meta-tui/cuppa/libs/cuppafile/disk"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/export/image"
 )
 
 func setup(t *testing.T) (*Flow, *editor.Editor, string) {

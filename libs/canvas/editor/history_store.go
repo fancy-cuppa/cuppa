@@ -3,7 +3,7 @@ package editor
 import (
 	"reflect"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 const maxHistory = 200

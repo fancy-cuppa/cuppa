@@ -3,8 +3,8 @@ package scene
 import (
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/render/grid"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 // designRow is the full-width one-row rectangle at y.

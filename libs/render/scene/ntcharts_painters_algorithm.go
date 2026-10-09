@@ -3,7 +3,7 @@ package scene
 import (
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/render/grid"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 func paintBarChart(g *grid.Grid, p Props) {

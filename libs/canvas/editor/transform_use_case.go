@@ -1,6 +1,6 @@
 package editor
 
-import "github.com/fancy-cuppa/cuppa/libs/document/design"
+import "github.com/meta-tui/cuppa/libs/document/design"
 
 // MoveSelectionBy shifts every selected node by (dx, dy), as a group, stopping
 // at the canvas edge. It does not checkpoint: drags call Checkpoint once first.

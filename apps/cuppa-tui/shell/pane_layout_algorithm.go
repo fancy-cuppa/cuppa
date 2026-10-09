@@ -1,6 +1,6 @@
 package shell
 
-import "github.com/fancy-cuppa/cuppa/libs/document/design"
+import "github.com/meta-tui/cuppa/libs/document/design"
 
 // layout places the three panes below the title bar and above the status bar.
 // A one-cell separator column sits between neighbouring panes.

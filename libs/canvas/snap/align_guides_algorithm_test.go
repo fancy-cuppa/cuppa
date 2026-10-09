@@ -3,7 +3,7 @@ package snap
 import (
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 var canvas = design.Rect{W: 100, H: 40}

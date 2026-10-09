@@ -1,6 +1,6 @@
 package grid
 
-import "github.com/fancy-cuppa/cuppa/libs/document/design"
+import "github.com/meta-tui/cuppa/libs/document/design"
 
 // Border is the set of characters a box is drawn with.
 type Border struct {

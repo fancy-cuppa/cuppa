@@ -10,17 +10,17 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/fileflow"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/inspector"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/menubar"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/palette"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/stage"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/registry"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/export/image"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/fileflow"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/inspector"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/menubar"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/palette"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/catalog/registry"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/export/image"
 )
 
 // pane identifies which pane owns a pointer gesture.

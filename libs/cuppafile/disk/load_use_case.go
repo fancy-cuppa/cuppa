@@ -3,8 +3,8 @@ package disk
 import (
 	"os"
 
-	"github.com/fancy-cuppa/cuppa/libs/cuppafile/format"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/cuppafile/format"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // Load reads the design stored at path.

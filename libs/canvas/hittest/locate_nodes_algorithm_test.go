@@ -3,7 +3,7 @@ package hittest
 import (
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 func TestNodePicksTopmost(t *testing.T) {

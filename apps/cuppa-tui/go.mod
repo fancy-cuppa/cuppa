@@ -1,4 +1,4 @@
-module github.com/fancy-cuppa/cuppa/apps/cuppa-tui
+module github.com/meta-tui/cuppa/apps/cuppa-tui
 
 go 1.27
 

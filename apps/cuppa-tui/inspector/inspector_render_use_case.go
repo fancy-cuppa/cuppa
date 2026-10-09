@@ -6,10 +6,10 @@ import (
 	"strconv"
 
 	"charm.land/lipgloss/v2"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // builder assembles content lines and records which spans are clickable.

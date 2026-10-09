@@ -5,9 +5,9 @@ package palette
 import (
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
 )
 
 // Catalog is the part of the component registry the palette lists.
