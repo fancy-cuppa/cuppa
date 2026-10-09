@@ -68,7 +68,8 @@
       "preVersionCommand": "npx nx run-many -t build --projects=packages/*,python-packages/*,tag:type:vscode-extension",
       "versionActionsOptions": {
         "skipLockFileUpdate": true
-      }
+      },
+      "preserveMatchingDependencyRanges": false
     },
     "changelog": {
       "workspaceChangelog": false,
