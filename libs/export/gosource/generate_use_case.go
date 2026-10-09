@@ -28,6 +28,18 @@ var qrCodeSource string
 //go:embed image_go.txt
 var imageSource string
 
+//go:embed huh_go.txt
+var huhSource string
+
+//go:embed glamour_go.txt
+var glamourSource string
+
+//go:embed charts_go.txt
+var chartsSource string
+
+//go:embed bubbletable_go.txt
+var bubbleTableSource string
+
 // generated lists the components that have real code behind them. The
 // community widgets are drawn with Lip Gloss to look like the library they
 // stand for, so the generated project needs no extra module for them.
@@ -44,30 +56,56 @@ var generated = map[string]bool{
 	"bubbles.help": true, "bubbles.filepicker": true,
 	"community.flexbox": true, "community.boxer": true, "community.datepicker": true,
 	"community.overlay": true, "community.statusbar": true, "community.filetree": true,
+	"huh.input": true, "huh.text": true, "huh.select": true, "huh.multiselect": true,
+	"huh.confirm": true, "huh.note": true, "huh.filepicker": true, "huh.form": true,
+	"glamour.markdown":   true,
+	"ntcharts.sparkline": true, "ntcharts.barchart": true, "ntcharts.linechart": true,
+	"ntcharts.streamline": true, "ntcharts.timeseries": true, "ntcharts.heatmap": true, "ntcharts.canvas": true,
+	"community.bubbletable": true,
 }
 
 // extension is a component that needs a file of its own and, for some, a
-// module the rest of the project does not use.
+// module the rest of the project does not use. Several components can share a
+// file; the file and its module are added once.
 type extension struct {
-	file, source string
+	file, text string
 	// require is a go.mod requirement line, or empty for the standard library.
 	require string
 }
 
-var extensions = map[string]extension{
-	"community.bigtext": {"bigtext.go", "bigTextSource", "github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be"},
-	"community.qrcode":  {"qrcode.go", "qrCodeSource", "github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e"},
-	"community.image":   {"image.go", "imageSource", ""},
-}
+const (
+	figletRequire  = "github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be"
+	qrRequire      = "github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e"
+	huhRequire     = "charm.land/huh/v2 v2.0.3"
+	glamourRequire = "charm.land/glamour/v2 v2.0.1"
+	chartsRequire  = "github.com/NimbleMarkets/ntcharts/v2 v2.7.2"
+	tableRequire   = "github.com/evertras/bubble-table v0.23.0"
+)
 
-func (e extension) text() string {
-	switch e.source {
-	case "bigTextSource":
-		return bigTextSource
-	case "qrCodeSource":
-		return qrCodeSource
-	}
-	return imageSource
+var extensions = map[string]extension{
+	"community.bigtext": {"bigtext.go", bigTextSource, figletRequire},
+	"community.qrcode":  {"qrcode.go", qrCodeSource, qrRequire},
+	"community.image":   {"image.go", imageSource, ""},
+
+	"huh.input":       {"huh.go", huhSource, huhRequire},
+	"huh.text":        {"huh.go", huhSource, huhRequire},
+	"huh.select":      {"huh.go", huhSource, huhRequire},
+	"huh.multiselect": {"huh.go", huhSource, huhRequire},
+	"huh.confirm":     {"huh.go", huhSource, huhRequire},
+	"huh.note":        {"huh.go", huhSource, huhRequire},
+	"huh.filepicker":  {"huh.go", huhSource, huhRequire},
+
+	"glamour.markdown": {"glamour.go", glamourSource, glamourRequire},
+
+	"ntcharts.sparkline":  {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.barchart":   {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.linechart":  {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.streamline": {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.timeseries": {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.heatmap":    {"charts.go", chartsSource, chartsRequire},
+	"ntcharts.canvas":     {"charts.go", chartsSource, chartsRequire},
+
+	"community.bubbletable": {"bubbletable.go", bubbleTableSource, tableRequire},
 }
 
 // Generate turns doc into a Go project. The same document always gives the
@@ -77,15 +115,17 @@ func Generate(doc design.Document, cat Catalog) Project {
 	p := Project{Module: module, Files: map[string]string{}}
 	placed := leaves(doc, cat)
 	var requires []string
-	seen := map[string]bool{}
+	files := map[string]bool{}
+	needs := map[string]bool{}
 	for _, l := range placed {
 		e, ok := extensions[l.Kind]
-		if !ok || seen[l.Kind] {
+		if !ok || files[e.file] {
 			continue
 		}
-		seen[l.Kind] = true
-		p.Files[e.file] = e.text()
-		if e.require != "" {
+		files[e.file] = true
+		p.Files[e.file] = e.text
+		if e.require != "" && !needs[e.require] {
+			needs[e.require] = true
 			requires = append(requires, e.require)
 		}
 	}
@@ -171,7 +211,7 @@ func readme(doc design.Document, notes []string) string {
 	b.WriteString("- `layout.go` is the design: where each component sits and its properties.\n")
 	b.WriteString("- `runtime.go` wraps the real Bubbles models and draws boxes, labels, lists and the look of the community widgets with Lip Gloss. Change it freely.\n")
 	b.WriteString("- `widgets.go` draws the Lip Gloss tables, trees and tabs, the help and file picker, and the look of the community widgets.\n")
-	b.WriteString("- `bigtext.go`, `qrcode.go` and `image.go`, when present, hold the components that need a library of their own.\n")
+	b.WriteString("- `huh.go`, `glamour.go`, `charts.go`, `bubbletable.go`, `bigtext.go`, `qrcode.go` and `image.go`, when present, hold the components that need a library of their own.\n")
 	b.WriteString("- `main.go` is the Bubble Tea model that runs them.\n")
 	if len(notes) > 0 {
 		b.WriteString("\n## Not generated yet\n\n")

@@ -348,9 +348,10 @@ func TestExportGoSourceWritesAProjectAndSaysWhatIsMissing(t *testing.T) {
 	if _, err := ed.Add("bubbles.textinput", 2, 2); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ed.Add("huh.input", 2, 6); err != nil {
-		t.Fatal(err)
-	}
+	// A component the generator does not know (every catalog component has code).
+	doc := ed.Document()
+	doc.Add(design.Node{Component: "mystery.widget", Name: "Mystery", Rect: design.Rect{X: 2, Y: 6, W: 10, H: 3}})
+	ed.Load(doc)
 	f.ExportGoSource()
 	if f.Modal() == nil {
 		t.Fatal("a folder prompt should open")
@@ -365,7 +366,7 @@ func TestExportGoSourceWritesAProjectAndSaysWhatIsMissing(t *testing.T) {
 			t.Fatalf("%s not written: %v", name, err)
 		}
 	}
-	if f.Modal() == nil || !strings.Contains(stripped(strings.Join(f.Modal().Lines(), "\n")), "huh.input") {
+	if f.Modal() == nil || !strings.Contains(stripped(strings.Join(f.Modal().Lines(), "\n")), "mystery.widget") {
 		t.Fatal("the notice lists what was not generated")
 	}
 	press(f, true, false)
