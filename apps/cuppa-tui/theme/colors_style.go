@@ -1,7 +1,12 @@
 // Package theme holds the colours and text styles every pane shares.
 package theme
 
-import "charm.land/lipgloss/v2"
+import (
+	"strings"
+
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+)
 
 // Colours as Lip Gloss color specs (ANSI 256).
 const (
@@ -47,12 +52,21 @@ func Hovered(s string) string {
 	return lipgloss.NewStyle().Background(lipgloss.Color(Highlight)).Render(s)
 }
 
-// Fit pads or truncates a single line to exactly w cells.
+// Fit pads or truncates a single line to exactly w cells. It never wraps: a
+// line that is too long is cut, so one long value cannot add rows to a pane and
+// push the other panes out of line.
 func Fit(s string, w int) string {
 	if w <= 0 {
 		return ""
 	}
-	return lipgloss.NewStyle().Width(w).MaxWidth(w).Render(s)
+	cut := ansi.Truncate(s, w, "")
+	if cut != s {
+		cut += "\x1b[m" // do not let a style that was cut short run on into the padding
+	}
+	if pad := w - ansi.StringWidth(cut); pad > 0 {
+		cut += strings.Repeat(" ", pad)
+	}
+	return cut
 }
 
 // Block returns exactly h lines of exactly w cells, padding with blank lines.

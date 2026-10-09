@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
@@ -38,6 +40,24 @@ func (b *builder) end() {
 }
 
 func (b *builder) blank() { b.end() }
+
+// wrap splits text into lines of at most width cells, breaking at spaces,
+// commas and slashes, so a long list or path stays inside the pane.
+func wrap(text string, width int) []string {
+	return strings.Split(ansi.Wrap(text, max(width, 4), ",/"), "\n")
+}
+
+// block writes text wrapped to the pane, each line indented. When act is set,
+// every wrapped line is clickable.
+func (m *Model) block(b *builder, text string, indent int, style func(string) string, act func()) {
+	for _, line := range wrap(text, m.w-indent-1) {
+		b.text(strings.Repeat(" ", indent))
+		b.add(style(line), act)
+		b.end()
+	}
+}
+
+func plain(s string) string { return s }
 
 // Lines renders the pane as exactly h lines of w cells.
 func (m *Model) Lines() []string {
@@ -175,11 +195,29 @@ func (m *Model) properties(b *builder, n design.Node) {
 		if !set {
 			value = p.Default
 		}
-		b.text(" " + theme.Dim(p.Label)).end()
+		m.block(b, p.Label, 1, theme.Dim, nil)
+		if p.Kind == definition.PropText {
+			m.textProp(b, "prop:"+p.Key, value)
+			continue
+		}
 		b.text("  ")
 		m.propValue(b, n.ID, p, value)
 		b.end()
 	}
+}
+
+// textProp shows a text property wrapped to the pane; clicking any line edits it.
+func (m *Model) textProp(b *builder, field, value string) {
+	if m.editing == field {
+		m.block(b, m.buf+"█", 2, plain, nil)
+		return
+	}
+	edit := func() { m.startEdit(field, value) }
+	if value == "" {
+		m.block(b, "(empty)", 2, theme.Faded, edit)
+		return
+	}
+	m.block(b, value, 2, plain, edit)
 }
 
 func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, value string) {

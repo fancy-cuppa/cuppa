@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"strings"
 	"testing"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 	"github.com/meta-tui/cuppa/libs/document/design"
 )
+
+func stripANSI(s string) string { return ansi.Strip(s) }
 
 func setup(t *testing.T) (*Model, *editor.Editor, design.NodeID) {
 	t.Helper()
@@ -174,5 +177,38 @@ func TestSnapCanBeSwitchedOff(t *testing.T) {
 	up(m, 15+49, 8)
 	if got := rect(ed, id); got.X != 59 {
 		t.Fatalf("X = %d, want the unsnapped 59", got.X)
+	}
+}
+
+func TestMultipleSelectionIsMarkedEvenWithoutBorders(t *testing.T) {
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 100, 40))
+	a, _ := ed.Add("lipgloss.list", 5, 3)
+	b, _ := ed.Add("lipgloss.list", 30, 12)
+	ed.Select(a, b)
+	m := New(ed, cat)
+	m.SetSize(60, 25)
+	screen := stripANSI(strings.Join(m.Lines(), "\n"))
+	if got := strings.Count(screen, "□"); got != 8 {
+		t.Fatalf("expected 4 hollow corner marks per selected component, got %d:\n%s", got, screen)
+	}
+	if strings.Contains(screen, "■") {
+		t.Fatal("solid squares are resize handles and belong to a single selection only")
+	}
+	if !strings.Contains(screen, "╌") || !strings.Contains(screen, "╎") {
+		t.Fatalf("the group needs a frame:\n%s", screen)
+	}
+}
+
+func TestSingleSelectionKeepsItsResizeHandles(t *testing.T) {
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 100, 40))
+	a, _ := ed.Add("lipgloss.list", 5, 3)
+	ed.Select(a)
+	m := New(ed, cat)
+	m.SetSize(60, 25)
+	screen := stripANSI(strings.Join(m.Lines(), "\n"))
+	if strings.Count(screen, "■") != 4 || strings.Contains(screen, "□") || strings.Contains(screen, "╌") {
+		t.Fatalf("single selection should show four solid handles only:\n%s", screen)
 	}
 }

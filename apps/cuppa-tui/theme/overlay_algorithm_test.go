@@ -33,3 +33,19 @@ func TestPanelIsExactlyWide(t *testing.T) {
 		t.Error("title missing")
 	}
 }
+
+func TestFitNeverWrapsAndAlwaysFillsTheWidth(t *testing.T) {
+	long := Dim("docs/,libs/,apps/,README.md,go.work and a lot more text than fits")
+	for _, w := range []int{1, 10, 24, 200} {
+		got := Fit(long, w)
+		if strings.Contains(got, "\n") {
+			t.Fatalf("width %d: Fit wrapped the line: %q", w, got)
+		}
+		if ansi.StringWidth(got) != w {
+			t.Fatalf("width %d: got %d cells", w, ansi.StringWidth(got))
+		}
+	}
+	if Fit("x", 0) != "" {
+		t.Fatal("zero width gives nothing")
+	}
+}

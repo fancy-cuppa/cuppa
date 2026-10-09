@@ -1,4 +1,6 @@
-# ☕ Cuppa
+<p align="center">
+  <img src="assets/cuppa-full.svg" alt="Cuppa" width="480">
+</p>
 
 **A visual designer for terminal UIs, made with Bubble Tea.**
 Drag components onto a canvas, tune them, save the design, export a picture.
