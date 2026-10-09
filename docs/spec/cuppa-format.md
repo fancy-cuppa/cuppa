@@ -45,6 +45,8 @@ offset  size  field
 | `node.component` | Catalog id (`bubbles.list`, `huh.select`, `community.flexbox`…). Unknown ids load and render as a labelled placeholder, so a file from a newer catalog still opens. |
 | `node.rect` | Position and size in cells. `w` and `h` are at least 1. |
 | `node.props` | String values the designer changed. Anything not listed uses the component's default. |
+| `node.hidden` | Optional, `true` for a hidden layer: not drawn, exported or hit by the pointer. Absent means visible. |
+| `node.locked` | Optional, `true` for a locked layer: drawn, but it cannot be moved, resized, deleted or edited. Absent means unlocked. |
 
 ## Reading rules
 
@@ -67,7 +69,7 @@ leaves half a file where the old one was.
 
 ## Changing the format
 
-Adding an optional field needs no version bump. Anything that changes meaning
+Adding an optional field needs no version bump (`hidden` and `locked` were added this way: files without them load as visible and unlocked). Anything that changes meaning
 or removes a field:
 
 1. raise `CurrentVersion` in `file_contract.go`;

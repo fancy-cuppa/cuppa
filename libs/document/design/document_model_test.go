@@ -85,3 +85,16 @@ func TestRectGeometry(t *testing.T) {
 		t.Fatalf("Union = %+v", u)
 	}
 }
+
+func TestMoveToIndexPlacesANodeExactly(t *testing.T) {
+	d := NewDocument("t", 10, 10)
+	a := d.Add(Node{Name: "a", Rect: Rect{W: 1, H: 1}})
+	b := d.Add(Node{Name: "b", Rect: Rect{W: 1, H: 1}})
+	c := d.Add(Node{Name: "c", Rect: Rect{W: 1, H: 1}})
+	if !d.MoveToIndex(a.ID, 2) || d.Nodes[0].ID != b.ID || d.Nodes[1].ID != c.ID || d.Nodes[2].ID != a.ID {
+		t.Fatalf("order %v", d.Nodes)
+	}
+	if d.MoveToIndex(a.ID, 2) || d.MoveToIndex(a.ID, 9) || d.MoveToIndex("zz", 0) {
+		t.Fatal("no-ops must report false")
+	}
+}

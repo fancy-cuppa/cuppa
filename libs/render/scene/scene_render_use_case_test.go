@@ -129,3 +129,18 @@ func TestTabsThatDoNotFitAreCutAndTooSmallFallsBack(t *testing.T) {
 		t.Fatalf("grid %dx%d", g.W, g.H)
 	}
 }
+
+func TestHiddenNodesAreNotPaintedAndLockedOnesAre(t *testing.T) {
+	cat := standard.Default()
+	doc := design.NewDocument("t", 20, 5)
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Box", Rect: design.Rect{X: 0, Y: 0, W: 6, H: 3}, Hidden: true})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Box", Rect: design.Rect{X: 10, Y: 0, W: 6, H: 3}, Locked: true})
+	out := text(Render(doc, cat).Lines())
+	lines := strings.Split(out, "\n")
+	if strings.TrimSpace(lines[0][:8]) != "" {
+		t.Fatalf("the hidden box was painted: %q", lines[0])
+	}
+	if !strings.ContainsAny(lines[0][10:], "╭┌") {
+		t.Fatalf("the locked box must still be painted: %q", lines[0])
+	}
+}

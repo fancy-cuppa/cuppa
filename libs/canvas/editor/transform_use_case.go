@@ -5,7 +5,7 @@ import "github.com/meta-tui/cuppa/libs/document/design"
 // MoveSelectionBy shifts every selected node by (dx, dy), as a group, stopping
 // at the canvas edge. It does not checkpoint: drags call Checkpoint once first.
 func (e *Editor) MoveSelectionBy(dx, dy int) bool {
-	ids := e.selectedInOrder()
+	ids := e.unlockedSelection()
 	if len(ids) == 0 {
 		return false
 	}
@@ -43,7 +43,7 @@ func (e *Editor) MoveTo(id design.NodeID, x, y int) bool {
 // already in progress.
 func (e *Editor) SetRect(id design.NodeID, r design.Rect, checkpoint bool) bool {
 	n, ok := e.doc.Get(id)
-	if !ok {
+	if !ok || n.Locked {
 		return false
 	}
 	minW, minH := e.minSize(n)

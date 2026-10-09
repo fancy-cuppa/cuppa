@@ -67,11 +67,15 @@ var painters = map[string]painter{
 	"community.filetree":    paintFileTree,
 }
 
-// Render paints every node of doc, back to front, onto a new grid the size of
-// the canvas. Cells no node covers stay unpainted.
+// Render paints every visible node of doc, back to front, onto a new grid the
+// size of the canvas. Hidden nodes are skipped, so they are missing from every
+// export too. Cells no node covers stay unpainted.
 func Render(doc design.Document, cat Catalog) *grid.Grid {
 	out := grid.New(doc.Width, doc.Height)
 	for _, n := range doc.Nodes {
+		if n.Hidden {
+			continue
+		}
 		out.Blit(RenderNode(n, cat), n.Rect.X, n.Rect.Y)
 	}
 	return out

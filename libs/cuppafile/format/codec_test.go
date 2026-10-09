@@ -117,3 +117,20 @@ func FuzzDecode(f *testing.F) {
 		}
 	})
 }
+
+func TestLayerFlagsSurviveSaveAndLoad(t *testing.T) {
+	d := sample()
+	d.Nodes[0].Hidden = true
+	d.Nodes[1].Locked = true
+	data, err := Encode(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Nodes[0].Hidden || got.Nodes[0].Locked || got.Nodes[1].Hidden || !got.Nodes[1].Locked {
+		t.Fatalf("flags lost: %+v %+v", got.Nodes[0], got.Nodes[1])
+	}
+}

@@ -33,16 +33,16 @@ func (e *Editor) Add(componentID string, x, y int) (design.NodeID, error) {
 	return added.ID, nil
 }
 
-// Delete removes the selected nodes.
+// Delete removes the selected nodes, except locked ones.
 func (e *Editor) Delete() bool {
-	ids := e.selectedInOrder()
+	ids := e.unlockedSelection()
 	changed := e.apply(func() bool {
 		for _, id := range ids {
 			e.doc.Remove(id)
 		}
 		return len(ids) > 0
 	})
-	e.sel = nil
+	e.sel = e.keepSelected(func(id design.NodeID) bool { return e.doc.Index(id) >= 0 })
 	return changed
 }
 
@@ -55,6 +55,7 @@ func (e *Editor) Duplicate() bool {
 			n, _ := e.doc.Get(id)
 			c := n.Clone()
 			c.ID = ""
+			c.Locked, c.Hidden = false, false
 			c.Rect = n.Rect.Translate(duplicateDX, duplicateDY).MoveInto(e.doc.Bounds())
 			c.Name = e.uniqueName(baseName(n.Name))
 			copies = append(copies, e.doc.Add(c).ID)

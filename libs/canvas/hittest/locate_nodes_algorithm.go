@@ -3,21 +3,22 @@ package hittest
 
 import "github.com/meta-tui/cuppa/libs/document/design"
 
-// Node returns the topmost node covering the cell (x, y).
+// Node returns the topmost visible node covering the cell (x, y). Hidden
+// nodes cannot be hit.
 func Node(doc design.Document, x, y int) (design.NodeID, bool) {
 	for i := len(doc.Nodes) - 1; i >= 0; i-- {
-		if doc.Nodes[i].Rect.Contains(x, y) {
+		if !doc.Nodes[i].Hidden && doc.Nodes[i].Rect.Contains(x, y) {
 			return doc.Nodes[i].ID, true
 		}
 	}
 	return "", false
 }
 
-// NodesIn returns the nodes whose rectangle touches r, back to front.
+// NodesIn returns the visible nodes whose rectangle touches r, back to front.
 func NodesIn(doc design.Document, r design.Rect) []design.NodeID {
 	var out []design.NodeID
 	for _, n := range doc.Nodes {
-		if n.Rect.Intersects(r) {
+		if !n.Hidden && n.Rect.Intersects(r) {
 			out = append(out, n.ID)
 		}
 	}

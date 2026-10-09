@@ -60,3 +60,17 @@ func TestResizeKeepsOppositeEdgeAndMinimum(t *testing.T) {
 		t.Fatalf("bottom min: %+v", got)
 	}
 }
+
+func TestHiddenNodesCannotBeHit(t *testing.T) {
+	doc := design.NewDocument("t", 50, 20)
+	under := doc.Add(design.Node{Name: "under", Rect: design.Rect{X: 0, Y: 0, W: 10, H: 5}})
+	over := doc.Add(design.Node{Name: "over", Rect: design.Rect{X: 0, Y: 0, W: 10, H: 5}, Hidden: true})
+	if id, ok := Node(doc, 3, 3); !ok || id != under.ID {
+		t.Fatalf("the hidden node on top must be skipped, got %v %v", id, ok)
+	}
+	for _, id := range NodesIn(doc, design.Rect{W: 20, H: 20}) {
+		if id == over.ID {
+			t.Fatal("a marquee must not select a hidden node")
+		}
+	}
+}

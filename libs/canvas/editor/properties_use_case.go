@@ -30,6 +30,9 @@ func (e *Editor) SetProp(id design.NodeID, key, value string) error {
 	if !ok {
 		return fmt.Errorf("editor: no node %q", id)
 	}
+	if n.Locked {
+		return fmt.Errorf("editor: %s is locked", n.Name)
+	}
 	def, ok := e.cat.Get(n.Component)
 	if !ok {
 		return fmt.Errorf("editor: unknown component %q", n.Component)
