@@ -98,6 +98,10 @@ func TestNewComponentsDrawRecognisableContent(t *testing.T) {
 		{"community.statusmessage", 30, 1, map[string]string{"text": "Steeping", "spinner": "true"}, "Steeping ⣾"},
 		{"community.toast", 24, 3, map[string]string{"kind": "error", "message": "Spilled", "symbols": "ascii"}, "[!!] Spilled"},
 		{"community.toast", 24, 3, map[string]string{"kind": "info", "message": "Ready"}, "ⓘ Ready"},
+		{"community.bigtext", 40, 6, map[string]string{"text": "Hi", "font": "standard"}, "_   _"},
+		{"community.bigtext", 40, 6, map[string]string{"text": "Hi", "font": "no-such-font"}, "_   _"},
+		{"community.qrcode", 29, 15, map[string]string{"content": "cuppa"}, "█"},
+		{"community.image", 20, 5, map[string]string{"path": "tea.png", "fit": "fill"}, "tea.png · fill"},
 	}
 	for _, c := range cases {
 		n := design.Node{Component: c.id, Rect: design.Rect{W: c.w, H: c.h}, Props: c.props}
@@ -176,5 +180,26 @@ func TestRenderWithDrawsAnOverrideInPlaceOfThePainter(t *testing.T) {
 	}
 	if Render(doc, standard.Default()).At(1, 1).Ch == 'Z' {
 		t.Fatal("Render itself is unchanged")
+	}
+}
+
+func TestMediaComponentsSurviveHostileInput(t *testing.T) {
+	cat := standard.Default()
+	cases := []struct {
+		id    string
+		props map[string]string
+	}{
+		{"community.bigtext", map[string]string{"text": "tea ☕ ünïcode\nline", "font": "doom"}},
+		{"community.bigtext", map[string]string{"text": "", "font": "big"}},
+		{"community.qrcode", map[string]string{"content": strings.Repeat("x", 9000)}},
+		{"community.qrcode", map[string]string{"content": ""}},
+		{"community.qrcode", map[string]string{"content": "cuppa", "level": "nonsense"}},
+		{"community.image", map[string]string{"color": "not-a-colour"}},
+	}
+	for _, c := range cases {
+		for _, size := range []design.Rect{{W: 1, H: 1}, {W: 12, H: 4}, {W: 80, H: 30}} {
+			n := design.Node{Component: c.id, Rect: size, Props: c.props}
+			_ = RenderNode(n, cat) // must not panic or exit
+		}
 	}
 }

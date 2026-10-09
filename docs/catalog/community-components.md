@@ -9,7 +9,7 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (60)
+## What the catalog has today (63)
 
 | Family | Components |
 |---|---|
@@ -18,7 +18,7 @@ and cannot mix v1 and v2, so v1-only components stay placeholders there.
 | Lip Gloss (9) | box, label, list, tabs, table, tree, joinh, joinv, place |
 | Glamour (1) | markdown |
 | ntcharts (7) | bar, line, sparkline, streamline, time series, heatmap, canvas |
-| Community (11) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast |
+| Community (14) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast, bigtext, qrcode, image |
 | Bundled pack (2) | Card, Alert |
 
 ## 1. Official libraries: what is missing
@@ -92,9 +92,9 @@ need no extra dependency, and the generator already expands packs into their par
 | Diff view | Viewport with coloured lines | pack |
 | Gauge / meter | `bubbles.progress` or ntcharts | existing |
 | Slider | Progress with a handle glyph | pack |
-| Big text / banner | Needs a font library (go-figure, or Lip Gloss blocks) | backlog |
-| Image | go-termimg or half blocks | backlog |
-| QR code | Half-block grid (e.g. mdp/qrterminal) | backlog; unchecked |
+| Big text / banner | go-figure FIGlet fonts | `community.bigtext` (done, #113) |
+| Image | go-termimg (preview is a placeholder wash) | `community.image` (done, #113) |
+| QR code | skip2/go-qrcode, half blocks | `community.qrcode` (done, #113) |
 
 ## 4. Proposed order
 

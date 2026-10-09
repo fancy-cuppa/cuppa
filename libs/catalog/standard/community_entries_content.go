@@ -103,5 +103,34 @@ func communityEntries() []definition.Definition {
 				choiceProp("symbols", "Symbols", "unicode", "unicode", "ascii"),
 			},
 		},
+		{
+			ID: "community.bigtext", Name: "Big text", Family: definition.FamilyCommunity,
+			Description: "common-nighthawk/go-figure: banner text in a FIGlet font.",
+			DefaultSize: size(40, 6), MinSize: size(8, 3), Import: "github.com/common-nighthawk/go-figure", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("text", "Text", "Cuppa"),
+				choiceProp("font", "Font", "standard", "standard", "big", "small", "mini", "slant", "shadow", "doom", "banner", "block", "lean"),
+				accent,
+			},
+		},
+		{
+			ID: "community.qrcode", Name: "QR code", Family: definition.FamilyCommunity,
+			Description: "skip2/go-qrcode: a QR code drawn with half blocks.",
+			DefaultSize: size(29, 15), MinSize: size(10, 5), Import: "github.com/skip2/go-qrcode", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("content", "Content", "cuppa"),
+				choiceProp("level", "Error correction", "medium", "low", "medium", "high", "highest"),
+			},
+		},
+		{
+			ID: "community.image", Name: "Image", Family: definition.FamilyCommunity,
+			Description: "blacktop/go-termimg: an image shown with Kitty, Sixel, iTerm2 or half blocks.",
+			DefaultSize: size(32, 10), MinSize: size(6, 3), Import: "github.com/blacktop/go-termimg", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("path", "File", "photo.png"),
+				choiceProp("fit", "Fit", "fit", "fit", "fill", "stretch"),
+				accent,
+			},
+		},
 	}
 }
