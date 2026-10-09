@@ -1,0 +1,169 @@
+package inspector
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
+	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
+	"github.com/fancy-cuppa/cuppa/libs/catalog/standard"
+	"github.com/fancy-cuppa/cuppa/libs/document/design"
+)
+
+func setup(t *testing.T, comp string) (*Model, *editor.Editor, design.NodeID) {
+	t.Helper()
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 100, 40))
+	id, err := ed.Add(comp, 10, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := New(ed, cat)
+	m.SetSize(32, 40)
+	m.Lines() // renders once so clickable regions exist
+	return m, ed, id
+}
+
+// clickText clicks the first clickable span whose rendered line contains text.
+func clickText(t *testing.T, m *Model, line, text string) {
+	t.Helper()
+	lines := m.Lines()
+	for y, l := range lines {
+		plain := stripANSI(l)
+		if !strings.Contains(plain, line) {
+			continue
+		}
+		x := strings.Index(plain, text)
+		if x < 0 {
+			continue
+		}
+		col := len([]rune(plain[:x]))
+		m.Handle(pointer.Event{X: col, Y: y, Phase: pointer.Down, Left: true})
+		m.Lines()
+		return
+	}
+	t.Fatalf("no line %q containing %q in:\n%s", line, text, strings.Join(lines, "\n"))
+}
+
+func stripANSI(s string) string {
+	var b strings.Builder
+	esc := false
+	for _, r := range s {
+		switch {
+		case r == 0x1b:
+			esc = true
+		case esc && r == 'm':
+			esc = false
+		case !esc:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func rect(ed *editor.Editor, id design.NodeID) design.Rect {
+	n, _ := ed.Document().Get(id)
+	return n.Rect
+}
+
+func TestPlusMinusNudgeGeometry(t *testing.T) {
+	m, ed, id := setup(t, "lipgloss.box")
+	clickText(t, m, " X ", "[+]")
+	clickText(t, m, " Y ", "[-]")
+	if got := rect(ed, id); got.X != 11 || got.Y != 4 {
+		t.Fatalf("rect = %+v", got)
+	}
+}
+
+func TestTypedValueCommitsOnEnter(t *testing.T) {
+	m, ed, id := setup(t, "lipgloss.box")
+	clickText(t, m, " W ", "  24") // the value
+	if !m.Editing() {
+		t.Fatal("clicking the value should start editing")
+	}
+	for range "24" {
+		m.Key("", true, false, false)
+	}
+	m.Key("3", false, false, false)
+	m.Key("0", false, false, false)
+	m.Key("", false, true, false)
+	if got := rect(ed, id); got.W != 30 {
+		t.Fatalf("W = %d", got.W)
+	}
+	if m.Editing() {
+		t.Fatal("still editing after enter")
+	}
+}
+
+func TestEscapeCancelsAndBadInputReports(t *testing.T) {
+	m, ed, id := setup(t, "lipgloss.box")
+	clickText(t, m, " H ", "   6")
+	m.Key("9", false, false, false)
+	m.Key("", false, false, true)
+	if rect(ed, id).H != 6 || m.Editing() {
+		t.Fatal("escape should discard the edit")
+	}
+	clickText(t, m, " H ", "   6")
+	m.Key("", true, false, false)
+	m.Key("x", false, false, false)
+	m.Key("", false, true, false)
+	if m.message == "" {
+		t.Fatal("non-numeric input should produce a message")
+	}
+}
+
+func TestLayerButtonsAndList(t *testing.T) {
+	m, ed, a := setup(t, "lipgloss.box")
+	b, _ := ed.Add("lipgloss.label", 0, 0)
+	ed.Select(a)
+	m.Lines()
+	clickText(t, m, "[Front]", "[Front]")
+	doc := ed.Document()
+	if doc.Nodes[len(doc.Nodes)-1].ID != a {
+		t.Fatal("Front did not raise the node")
+	}
+	clickText(t, m, "Label 1", "Label 1") // layer list selects
+	if sel := ed.Selected(); len(sel) != 1 || sel[0] != b {
+		t.Fatalf("selection = %v", sel)
+	}
+}
+
+func TestPropertiesEditThroughTheSchema(t *testing.T) {
+	m, ed, id := setup(t, "lipgloss.box")
+	clickText(t, m, "rounded", "▸") // choice: next border
+	n, _ := ed.Document().Get(id)
+	if n.Props["border"] != "normal" {
+		t.Fatalf("border = %q", n.Props["border"])
+	}
+	clickText(t, m, "(empty)", "(empty)") // text prop (title)
+	for _, r := range "Tea" {
+		m.Key(string(r), false, false, false)
+	}
+	m.Key("", false, true, false)
+	if n, _ = ed.Document().Get(id); n.Props["title"] != "Tea" {
+		t.Fatalf("title = %q", n.Props["title"])
+	}
+}
+
+func TestUndoRedoButtons(t *testing.T) {
+	m, ed, _ := setup(t, "lipgloss.box")
+	clickText(t, m, "[Undo]", "[Undo]")
+	if len(ed.Document().Nodes) != 0 {
+		t.Fatal("undo button did not undo the add")
+	}
+	clickText(t, m, "[Redo]", "[Redo]")
+	if len(ed.Document().Nodes) != 1 {
+		t.Fatal("redo button did not redo")
+	}
+}
+
+func TestEmptyStateAndSizing(t *testing.T) {
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 100, 40))
+	m := New(ed, cat)
+	m.SetSize(30, 12)
+	lines := m.Lines()
+	if len(lines) != 12 || !strings.Contains(stripANSI(strings.Join(lines, "\n")), "Nothing selected") {
+		t.Fatalf("empty state wrong:\n%s", strings.Join(lines, "\n"))
+	}
+}
