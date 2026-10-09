@@ -6,6 +6,7 @@ import (
 
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 func text(lines []string) string {
@@ -142,5 +143,28 @@ func TestHiddenNodesAreNotPaintedAndLockedOnesAre(t *testing.T) {
 	}
 	if !strings.ContainsAny(lines[0][10:], "╭┌") {
 		t.Fatalf("the locked box must still be painted: %q", lines[0])
+	}
+}
+
+func TestRenderWithDrawsAnOverrideInPlaceOfThePainter(t *testing.T) {
+	doc := design.NewDocument("t", 20, 6)
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Box", Rect: design.Rect{X: 1, Y: 1, W: 5, H: 3}})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Other", Rect: design.Rect{X: 10, Y: 1, W: 5, H: 3}})
+	custom := grid.New(5, 3)
+	custom.Fill(design.Rect{W: 5, H: 3}, 'Z', grid.Style{})
+	out := RenderWith(doc, standard.Default(), func(n design.Node) *grid.Grid {
+		if n.Name == "Box" {
+			return custom
+		}
+		return nil
+	})
+	if out.At(1, 1).Ch != 'Z' || out.At(5, 3).Ch != 'Z' {
+		t.Fatal("the overridden node is drawn from the override")
+	}
+	if out.At(10, 1).Ch == 'Z' || out.At(10, 1).Ch == 0 {
+		t.Fatal("other nodes still use their painters")
+	}
+	if Render(doc, standard.Default()).At(1, 1).Ch == 'Z' {
+		t.Fatal("Render itself is unchanged")
 	}
 }

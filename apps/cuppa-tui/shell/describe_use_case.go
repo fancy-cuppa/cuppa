@@ -23,6 +23,9 @@ func (m *Model) Describe() a11y.Snapshot {
 		return snap
 	}
 	doc := m.ed.Document()
+	if m.run != nil {
+		snap.Nodes = append(snap.Nodes, a11y.Text("Preview running. Escape goes back to editing."))
+	}
 	snap.Nodes = append(snap.Nodes, m.bar.Describe()...)
 	snap.Nodes = append(snap.Nodes, m.pal.Describe()...)
 	snap.Nodes = append(snap.Nodes,

@@ -10,6 +10,7 @@ import (
 	"github.com/meta-tui/cuppa/libs/canvas/snap"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 // Catalog is what the stage needs to know about components.
@@ -31,6 +32,8 @@ type Model struct {
 	ed   *editor.Editor
 	cat  Catalog
 	w, h int
+	// renderer, when set, draws the canvas instead of the designer (the preview).
+	renderer func() *grid.Grid
 	// offX, offY is the canvas cell shown at the pane's top-left corner.
 	offX, offY int
 
@@ -56,6 +59,11 @@ type Model struct {
 func New(ed *editor.Editor, cat Catalog) *Model {
 	return &Model{ed: ed, cat: cat, snapOn: true}
 }
+
+// SetRenderer replaces how the canvas is drawn (nil for the designer's own
+// drawing). The preview uses it to show running components; while it is set
+// the selection and drag feedback are not drawn.
+func (m *Model) SetRenderer(draw func() *grid.Grid) { m.renderer = draw }
 
 // SetSize sets the pane size in cells.
 func (m *Model) SetSize(w, h int) {

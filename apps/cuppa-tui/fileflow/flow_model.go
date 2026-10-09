@@ -82,6 +82,9 @@ func (f *Flow) Title() string {
 // Status is the last result worth telling the user ("Saved demo.cuppa").
 func (f *Flow) Status() string { return f.status }
 
+// SetStatus replaces the feedback line, for modes that explain themselves.
+func (f *Flow) SetStatus(s string) { f.status = s }
+
 // Quitting is true once the user confirmed leaving.
 func (f *Flow) Quitting() bool { return f.quit }
 

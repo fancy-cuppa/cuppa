@@ -18,6 +18,7 @@ const (
 	EditUngroup    Action = "edit.ungroup"
 	EditComponent  Action = "edit.component"
 	EditPacks      Action = "edit.packs"
+	ViewPreview    Action = "view.preview"
 	ExportPNG      Action = "export.png"
 	ExportSVG      Action = "export.svg"
 	ExportWebP     Action = "export.webp"
@@ -63,6 +64,9 @@ var menus = []menu{
 		{"Save as component…", "", EditComponent},
 		{separatorLabel, "", nothing},
 		{"Component packs…", "", EditPacks},
+	}},
+	{"View", []item{
+		{"Preview design", "Ctrl+P", ViewPreview},
 	}},
 	{"Export", []item{
 		{"Image (PNG)…", "", ExportPNG},

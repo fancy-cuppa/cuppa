@@ -12,6 +12,9 @@ import (
 func (m *Model) render() *grid.Grid {
 	doc := m.ed.Document()
 	rendered := scene.Render(doc, m.cat)
+	if m.renderer != nil {
+		rendered = m.renderer()
+	}
 	view := grid.New(m.w, m.h)
 	canvasBg := doc.Background
 	if canvasBg == "" {
@@ -33,6 +36,9 @@ func (m *Model) render() *grid.Grid {
 				view.Set(vx, vy, grid.Cell{Ch: ' ', Style: grid.Style{Bg: canvasBg, Dim: c.Dim}})
 			}
 		}
+	}
+	if m.renderer != nil {
+		return view
 	}
 	selected := m.ed.Selected()
 	var group design.Rect
