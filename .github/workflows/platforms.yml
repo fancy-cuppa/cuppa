@@ -1,0 +1,95 @@
+name: Platforms
+
+# Hand-kept, separate from ci.yml (which mnci owns and rewrites on upgrade).
+# ci.yml verifies and releases on Linux only. This workflow proves that Cuppa
+# also builds, tests and starts on macOS and Windows, and that the zips attached
+# to the latest GitHub Release run on each OS and CPU we publish for.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Mondays 06:00 UTC: re-check the latest release still runs everywhere.
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # The libraries and the terminal app, on every OS. cuppa-desktop is left out:
+  # it needs GTK/WebKit on Linux and is built by desktop-release.yml.
+  test:
+    if: ${{ github.event_name != 'schedule' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.work
+          cache: false
+      - name: Test the libraries and cuppa-tui
+        shell: bash
+        run: |
+          set -e
+          for dir in apps/cuppa-tui libs/*/; do
+            [ -f "$dir/go.mod" ] || continue
+            echo "== $dir"
+            (cd "$dir" && go test -short ./...)
+          done
+      - name: Build cuppa-tui and run it
+        shell: bash
+        run: |
+          set -e
+          cd apps/cuppa-tui
+          go build -trimpath -ldflags "-s -w -X main.version=ci" -o "$RUNNER_TEMP/cuppa" .
+          "$RUNNER_TEMP/cuppa" --version
+          "$RUNNER_TEMP/cuppa" pack catalog > "$RUNNER_TEMP/catalog.txt"
+          head -5 "$RUNNER_TEMP/catalog.txt"
+
+  # The zips from the latest release, run as a user would run them.
+  release-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: linux-amd64 }
+          - { os: ubuntu-24.04-arm, target: linux-arm64 }
+          - { os: macos-latest, target: darwin-arm64 }
+          - { os: windows-latest, target: windows-amd64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Download the latest cuppa-tui release for ${{ matrix.target }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          tag=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 20 --json tagName -q '[.[] | select(.tagName | startswith("cuppa-tui@"))][0].tagName')
+          echo "release: $tag"
+          gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern "go-app-cuppa-tui-${{ matrix.target }}.zip" --dir "$RUNNER_TEMP/dl"
+          cd "$RUNNER_TEMP/dl"
+          unzip -q "go-app-cuppa-tui-${{ matrix.target }}.zip" -d app
+          ls -la app
+      - name: Run it
+        shell: bash
+        run: |
+          set -e
+          cd "$RUNNER_TEMP/dl/app"
+          bin=./cuppa-tui
+          [ -f cuppa-tui.exe ] && bin=./cuppa-tui.exe
+          chmod +x "$bin" 2>/dev/null || true
+          "$bin" --version
+          "$bin" pack catalog > catalog.txt
+          head -5 catalog.txt
