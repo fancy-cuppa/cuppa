@@ -2,6 +2,7 @@ package shell
 
 import (
 	"os"
+	"strings"
 	"path/filepath"
 
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
@@ -25,6 +26,19 @@ func (m *Model) restorePacks() {
 // stays behind the editor, so a design that uses a disabled pack still renders.
 func (m *Model) refreshPalette() {
 	m.pal.SetCatalog(m.cat.Only(m.packs.Enabled))
+}
+
+// ReportPackProblems tells the user which installed packs could not be used.
+// Front ends call it once at start, after loading them.
+func (m *Model) ReportPackProblems(problems []error) {
+	if len(problems) == 0 {
+		return
+	}
+	var lines []string
+	for _, p := range problems {
+		lines = append(lines, "• "+p.Error())
+	}
+	m.flow.Notice("Some packs could not be loaded", strings.Join(lines, "\n"))
 }
 
 // openPacks shows the Packs dialog; each click applies at once.

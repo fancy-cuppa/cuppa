@@ -1,6 +1,8 @@
 // Package definition holds the contracts that describe a designable component.
 package definition
 
+import "github.com/meta-tui/cuppa/libs/document/design"
+
 // Family groups components by where they come from.
 type Family string
 
@@ -92,6 +94,9 @@ type Definition struct {
 	// Import is the Go import path the real component lives at.
 	Import string
 	Status Status
+	// Inner is set on a component made of other components (from a .cupp
+	// pack): it is drawn by painting these parts, not by a dedicated painter.
+	Inner *design.Composite
 }
 
 // Defaults returns the default value of every property.

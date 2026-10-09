@@ -95,7 +95,9 @@ func Render(doc design.Document, cat Catalog) *grid.Grid {
 }
 
 // RenderNode paints one node onto its own grid, sized like the node.
-func RenderNode(n design.Node, cat Catalog) *grid.Grid {
+func RenderNode(n design.Node, cat Catalog) *grid.Grid { return renderNode(n, cat, 0) }
+
+func renderNode(n design.Node, cat Catalog, depth int) *grid.Grid {
 	g := grid.New(n.Rect.W, n.Rect.H)
 	def, known := cat.Get(n.Component)
 	props := Props{}
@@ -106,6 +108,11 @@ func RenderNode(n design.Node, cat Catalog) *grid.Grid {
 	}
 	for k, v := range n.Props {
 		props[k] = v
+	}
+	if known && def.Inner != nil {
+		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
+		paintComposite(g, *def.Inner, props, cat, depth)
+		return g
 	}
 	if p, ok := painters[n.Component]; ok {
 		// Every painter owns the whole node rectangle: clear it first so

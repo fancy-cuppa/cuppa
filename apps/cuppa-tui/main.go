@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/shell"
+	"github.com/meta-tui/cuppa/libs/catalog/cupp"
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 )
 
@@ -17,7 +18,8 @@ func main() {
 		fmt.Println("cuppa", version)
 		return
 	}
-	app := shell.New(standard.Default())
+	cat, packProblems := cupp.LoadUser(standard.Default())
+	app := shell.New(cat)
 	app.RestoreLayout()
 	if len(os.Args) > 1 {
 		if err := app.OpenFile(os.Args[1]); err != nil {
@@ -26,6 +28,7 @@ func main() {
 		}
 	}
 	app.Welcome()
+	app.ReportPackProblems(packProblems)
 	if _, err := tea.NewProgram(app).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "cuppa:", err)
 		os.Exit(1)

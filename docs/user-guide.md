@@ -32,6 +32,8 @@ The dot after the name means there are unsaved changes.
 
 **Component packs.** The palette is made of packs: Lip Gloss, Bubbles, Huh forms, Glamour, ntcharts and Community. *Edit → Component packs…* lists them with a checkbox each; click one to switch it off or on, and the palette follows at once. Switching a pack off only hides it from the palette: designs that already use its components keep drawing them. Your choice is remembered in `packs.json` in the Cuppa folder of your user config directory.
 
+**Your own packs.** Cuppa also loads components from `.cupp` files in the `packs` folder of its config directory (see the [format](spec/cupp-format.md)). Each file is a pack: it shows in the palette and in *Component packs…* under its own name, and its components behave like any other: drag them out, resize them (their parts scale), and edit the properties the pack author exposed. A pack that cannot be read is skipped, and a notice at start says why.
+
 **Document options.** With nothing selected the details bar shows the canvas: its width and height (click a number to type one; up to 400 × 200), the background colour (click it to open the colour picker; *None* keeps the terminal's own) and effects applied over the whole design, in the editor and in every export: *Shadows* (a drop shadow under each component), *Scanlines* (every other row dimmed) and *Vignette* (dimmed edges). *Grid dots* only hides the editor's dotted grid; it is never exported. Each change is one undo step and is saved in the `.cuppa` file. Image exports use the background colour as the picture's backdrop.
 
 **Resize the side bars.** Drag the thin line between the left bar and the canvas, or between the canvas and the
