@@ -57,6 +57,24 @@ jobs:
           "$RUNNER_TEMP/cuppa" pack catalog > "$RUNNER_TEMP/catalog.txt"
           head -5 "$RUNNER_TEMP/catalog.txt"
 
+  # cuppa-web: the terminal app as WebAssembly, run in Node over the page's bridge.
+  wasm:
+    if: ${{ github.event_name != 'schedule' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.work
+          cache: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Build cuppa.wasm and check it starts
+        run: |
+          node apps/cuppa-web/build-wasm.cjs
+          node apps/cuppa-web/smoke-wasm.cjs
+
   # The zips from the latest release, run as a user would run them.
   release-smoke:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}

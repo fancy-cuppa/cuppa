@@ -1,0 +1,12 @@
+//go:build js
+
+package clipboard
+
+import "errors"
+
+// Added to atotto/clipboard at build time (see build-wasm.cjs). The browser's
+// clipboard is asynchronous and needs a user gesture, so it is not wired yet.
+
+func readAll() (string, error) { return "", errors.New("clipboard is not available in the browser yet") }
+
+func writeAll(string) error { return errors.New("clipboard is not available in the browser yet") }
