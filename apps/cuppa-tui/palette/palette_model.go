@@ -1,0 +1,195 @@
+// Package palette is the left bar: the catalog of components, grouped by
+// family, from which the designer drags components onto the canvas.
+package palette
+
+import (
+	"strings"
+
+	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
+	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
+	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
+)
+
+// Catalog is the part of the component registry the palette lists.
+type Catalog interface {
+	Families() []definition.Family
+	ByFamily(definition.Family) []definition.Definition
+	Search(query string) []definition.Definition
+}
+
+// headerRows is the number of fixed lines above the scrolling list.
+const headerRows = 2
+
+type row struct {
+	family definition.Family // set on header rows
+	def    definition.Definition
+	header bool
+}
+
+// Model is the palette pane.
+type Model struct {
+	cat       Catalog
+	collapsed map[definition.Family]bool
+	rows      []row
+	scroll    int
+	hover     int // list index under the pointer, -1 if none
+	w, h      int
+	query     string
+	searching bool
+}
+
+// New returns a palette listing every component of cat.
+func New(cat Catalog) *Model {
+	m := &Model{cat: cat, collapsed: map[definition.Family]bool{}, hover: -1}
+	m.rebuild()
+	return m
+}
+
+// SetSize sets the pane size in cells.
+func (m *Model) SetSize(w, h int) {
+	m.w, m.h = w, h
+	m.clampScroll()
+}
+
+// Searching reports whether the search box is taking keyboard input.
+func (m *Model) Searching() bool { return m.searching }
+
+func (m *Model) rebuild() {
+	m.rows = m.rows[:0]
+	if m.query != "" {
+		for _, d := range m.cat.Search(m.query) {
+			m.rows = append(m.rows, row{def: d})
+		}
+		return
+	}
+	for _, f := range m.cat.Families() {
+		m.rows = append(m.rows, row{family: f, header: true})
+		if m.collapsed[f] {
+			continue
+		}
+		for _, d := range m.cat.ByFamily(f) {
+			m.rows = append(m.rows, row{def: d})
+		}
+	}
+}
+
+func (m *Model) listHeight() int { return max(m.h-headerRows, 0) }
+
+func (m *Model) clampScroll() {
+	m.scroll = min(max(m.scroll, 0), max(len(m.rows)-m.listHeight(), 0))
+}
+
+// listIndex maps a pane line to an index into rows, or -1.
+func (m *Model) listIndex(y int) int {
+	i := y - headerRows + m.scroll
+	if y < headerRows || i < 0 || i >= len(m.rows) {
+		return -1
+	}
+	return i
+}
+
+// Handle processes a pointer event in pane coordinates. It returns the
+// component id when the event starts dragging a component, otherwise "".
+func (m *Model) Handle(e pointer.Event) string {
+	switch e.Phase {
+	case pointer.Wheel:
+		m.scroll += e.WheelY * 3
+		m.clampScroll()
+	case pointer.Move:
+		m.hover = m.listIndex(e.Y)
+	case pointer.Down:
+		if !e.Left {
+			return ""
+		}
+		if e.Y == 1 {
+			m.searching = true
+			return ""
+		}
+		i := m.listIndex(e.Y)
+		if i < 0 {
+			return ""
+		}
+		r := m.rows[i]
+		if r.header {
+			m.collapsed[r.family] = !m.collapsed[r.family]
+			m.rebuild()
+			m.clampScroll()
+			return ""
+		}
+		return r.def.ID
+	}
+	return ""
+}
+
+// Key handles typing into the search box while it has focus.
+func (m *Model) Key(text string, backspace, enter, escape bool) {
+	switch {
+	case escape:
+		m.searching = false
+		m.query = ""
+	case enter:
+		m.searching = false
+	case backspace:
+		if r := []rune(m.query); len(r) > 0 {
+			m.query = string(r[:len(r)-1])
+		}
+	default:
+		m.query += text
+	}
+	m.rebuild()
+	m.scroll = 0
+}
+
+// Leave clears the hover highlight when the pointer leaves the pane.
+func (m *Model) Leave() { m.hover = -1 }
+
+// Lines renders the pane as exactly h lines of w cells.
+func (m *Model) Lines() []string {
+	lines := []string{theme.Title(" COMPONENTS")}
+	search := " ⌕ search components"
+	switch {
+	case m.searching:
+		search = " ⌕ " + m.query + "█"
+	case m.query != "":
+		search = " ⌕ " + m.query
+	}
+	lines = append(lines, theme.Faded(search))
+	end := min(m.scroll+m.listHeight(), len(m.rows))
+	for i := m.scroll; i < end; i++ {
+		lines = append(lines, m.renderRow(i))
+	}
+	if len(m.rows) == 0 {
+		lines = append(lines, theme.Faded(" no matches"))
+	}
+	return theme.Block(lines, m.w, m.h)
+}
+
+func (m *Model) renderRow(i int) string {
+	r := m.rows[i]
+	var s string
+	switch {
+	case r.header:
+		mark := "▾"
+		if m.collapsed[r.family] {
+			mark = "▸"
+		}
+		s = " " + theme.Bold(mark+" "+r.family.Title())
+	default:
+		suffix := ""
+		if r.def.Status == definition.StatusPlaceholder {
+			suffix = " ~"
+		}
+		indent := "   "
+		if m.query != "" {
+			indent = " "
+		}
+		s = indent + r.def.Name + suffix
+		if m.query != "" {
+			s += " " + theme.Faded(strings.ToLower(r.def.Family.Title()))
+		}
+	}
+	if i == m.hover {
+		return theme.Hovered(theme.Fit(s, m.w))
+	}
+	return s
+}
