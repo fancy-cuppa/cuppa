@@ -36,6 +36,7 @@ func (a *App) startup(ctx context.Context) {
 // quits from inside it.
 func (a *App) newModel() tea.Model {
 	app := shell.New(standard.Default())
+	app.RestoreLayout()
 	if a.openPath != "" {
 		app.OpenFileOrNotify(a.openPath)
 	}

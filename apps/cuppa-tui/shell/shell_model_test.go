@@ -21,8 +21,11 @@ var errNoFreeze = errors.New("no freeze")
 
 func send(m *Model, msg tea.Msg) { m.Update(msg) }
 
-func click(x, y int) tea.Msg   { return tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft} }
-func motion(x, y int) tea.Msg  { return tea.MouseMotionMsg{X: x, Y: y, Button: tea.MouseLeft} }
+func click(x, y int) tea.Msg  { return tea.MouseClickMsg{X: x, Y: y, Button: tea.MouseLeft} }
+func motion(x, y int) tea.Msg { return tea.MouseMotionMsg{X: x, Y: y, Button: tea.MouseLeft} }
+
+// motion2 is the pointer moving with no button held.
+func motion2(x, y int) tea.Msg { return tea.MouseMotionMsg{X: x, Y: y} }
 func release(x, y int) tea.Msg { return tea.MouseReleaseMsg{X: x, Y: y, Button: tea.MouseLeft} }
 
 func TestLayoutFillsTheTerminal(t *testing.T) {
@@ -204,7 +207,7 @@ func TestDialogCapturesTheMouse(t *testing.T) {
 }
 
 func TestNarrowTerminalStillHasAStage(t *testing.T) {
-	l := computeLayout(60, 20)
+	l := computeLayout(60, 20, 0, 0)
 	if l.stage.W < 1 || l.palette.W < 16 || l.inspector.W < 20 {
 		t.Fatalf("layout = %+v", l)
 	}
