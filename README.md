@@ -22,6 +22,8 @@ Think Lucidchart or Figma, but for [Bubble Tea](https://github.com/charmbracelet
 [TReactUI](https://github.com/meta-tui/treactui). Release zips for Windows, macOS and Linux are attached to each release; or build it with
 `npx nx run cuppa-desktop:bundle` (see [its README](apps/cuppa-desktop/README.md)).
 
+**In your browser.** [Try Cuppa online](https://meta-tui.github.io/cuppa/): the same app compiled to WebAssembly, nothing to install. Files cannot be opened or saved there yet (see [its README](apps/cuppa-web/README.md)).
+
 Cuppa is early: the previews are faithful sketches of each component, not live widgets, and keyboard navigation is still to come (see the [roadmap](#roadmap)).
 
 ## Install
