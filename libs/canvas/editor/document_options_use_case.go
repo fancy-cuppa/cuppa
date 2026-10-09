@@ -48,6 +48,54 @@ func (e *Editor) SetBackground(value string) error {
 	return nil
 }
 
+// Theme roles accepted by SetThemeColor (the background is SetBackground).
+const (
+	ThemeText      = "text"
+	ThemeMuted     = "muted"
+	ThemeBorder    = "border"
+	ThemeSecondary = "secondary"
+)
+
+// SetThemeColor sets one colour of the design's theme ("" for none: the
+// component defaults show again), as one undo step. Components that set their
+// own colour keep it.
+func (e *Editor) SetThemeColor(role, value string) error {
+	value, err := space.Normalise(value)
+	if err != nil {
+		return fmt.Errorf("editor: %w", err)
+	}
+	var field *string
+	switch role {
+	case ThemeText:
+		field = &e.doc.Theme.Text
+	case ThemeMuted:
+		field = &e.doc.Theme.Muted
+	case ThemeBorder:
+		field = &e.doc.Theme.Border
+	case ThemeSecondary:
+		field = &e.doc.Theme.Secondary
+	default:
+		return fmt.Errorf("editor: no theme colour %q", role)
+	}
+	if *field == value {
+		return nil
+	}
+	e.apply(func() bool {
+		switch role {
+		case ThemeText:
+			e.doc.Theme.Text = value
+		case ThemeMuted:
+			e.doc.Theme.Muted = value
+		case ThemeBorder:
+			e.doc.Theme.Border = value
+		case ThemeSecondary:
+			e.doc.Theme.Secondary = value
+		}
+		return true
+	})
+	return nil
+}
+
 // SetEffect turns one of the canvas options (grid, shadow, scanlines,
 // vignette) on or off, as one undo step.
 func (e *Editor) SetEffect(name string, on bool) error {

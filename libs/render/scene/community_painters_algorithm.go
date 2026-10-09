@@ -121,7 +121,7 @@ func paintFlexBox(g *grid.Grid, p Props) {
 			x, w := slot(g.W, cols, c)
 			g.Box(design.Rect{X: x, Y: y, W: w, H: h}, grid.BorderNamed("rounded"), style)
 			if h >= 3 && w >= 5 {
-				g.Text(x+2, y+h/2, fmt.Sprintf("%d,%d", r+1, c+1), dim, w-3)
+				g.Text(x+2, y+h/2, fmt.Sprintf("%d,%d", r+1, c+1), p.Dim(), w-3)
 			}
 		}
 	}
@@ -142,7 +142,7 @@ func paintBoxer(g *grid.Grid, p Props) {
 		}
 		g.Box(r, grid.BorderNamed("normal"), style)
 		if r.W >= 9 && r.H >= 3 {
-			g.Text(r.X+2, r.Y+r.H/2, fmt.Sprintf("model %d", i+1), dim, r.W-3)
+			g.Text(r.X+2, r.Y+r.H/2, fmt.Sprintf("model %d", i+1), p.Dim(), r.W-3)
 		}
 	}
 }
@@ -153,7 +153,7 @@ func paintDatePicker(g *grid.Grid, p Props) {
 	g.Text(0, 0, "◂", accent, 1)
 	g.Text((g.W-len([]rune(month)))/2, 0, month, bold, g.W)
 	g.Text(g.W-1, 0, "▸", accent, 1)
-	g.Text(0, 1, "Su Mo Tu We Th Fr Sa", dim, g.W)
+	g.Text(0, 1, "Su Mo Tu We Th Fr Sa", p.Dim(), g.W)
 	const firstWeekday = 4 // 1 October 2026 is a Thursday.
 	day := min(max(p.Int("day", 1), 1), 31)
 	for d := 1; d <= 31; d++ {

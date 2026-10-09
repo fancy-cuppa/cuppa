@@ -192,3 +192,24 @@ func TestTheGeneratedProjectCompiles(t *testing.T) {
 		}
 	}
 }
+
+func TestGeneratedProgramCarriesTheThemeColoursAndTheOverrides(t *testing.T) {
+	cat := standard.Default()
+	doc := design.NewDocument("themed", 60, 20)
+	doc.Theme = design.Theme{Border: "#336699", Muted: "#445566"}
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Follows", Rect: design.Rect{W: 10, H: 3}})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Own", Rect: design.Rect{X: 20, W: 10, H: 3},
+		Props: map[string]string{"color": "212"}})
+	layout := Generate(doc, cat).Files["layout.go"]
+	follows := layout[strings.Index(layout, `Name: "Follows"`):strings.Index(layout, `Name: "Own"`)]
+	if !strings.Contains(follows, `"color": "#336699"`) {
+		t.Errorf("a box with no colour follows the theme:\n%s", follows)
+	}
+	own := layout[strings.Index(layout, `Name: "Own"`):]
+	if !strings.Contains(own, `"color": "212"`) {
+		t.Errorf("an override stays:\n%s", own)
+	}
+	if !strings.Contains(layout, `"theme.muted": "#445566"`) {
+		t.Errorf("the muted colour reaches the widgets:\n%s", layout)
+	}
+}

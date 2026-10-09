@@ -20,7 +20,7 @@ func paintTextArea(g *grid.Grid, p Props) {
 	content := lines
 	style := grid.Style{}
 	if len(content) == 0 {
-		content, style = []string{p.Str("placeholder")}, dim
+		content, style = []string{p.Str("placeholder")}, p.Dim()
 	}
 	for i, l := range content {
 		if i >= g.H {
@@ -28,7 +28,7 @@ func paintTextArea(g *grid.Grid, p Props) {
 		}
 		x := x0
 		if showNumbers {
-			x += g.Text(x, i, fmt.Sprintf("%3d ", i+1), dim, g.W-x)
+			x += g.Text(x, i, fmt.Sprintf("%3d ", i+1), p.Dim(), g.W-x)
 		}
 		g.Text(x, i, l, style, g.W-x)
 	}
@@ -46,7 +46,7 @@ func paintBubbleList(g *grid.Grid, p Props) {
 		y += 2
 	}
 	if p.Bool("show_status") {
-		g.Text(2, y, fmt.Sprintf("%d items", len(items)), dim, g.W-2)
+		g.Text(2, y, fmt.Sprintf("%d items", len(items)), p.Dim(), g.W-2)
 		y += 2
 	}
 	room := max(g.H-y-4, 1)
@@ -62,7 +62,7 @@ func paintBubbleList(g *grid.Grid, p Props) {
 	if len(items) > room && g.H >= 3 {
 		pages := (len(items) + room - 1) / room
 		for i := 0; i < pages && 2+i < g.W; i++ {
-			style := dim
+			style := p.Dim()
 			if i == start/room {
 				style = grid.Style{Fg: accent}
 			}
@@ -70,7 +70,7 @@ func paintBubbleList(g *grid.Grid, p Props) {
 		}
 	}
 	if g.H >= 2 {
-		g.Text(2, g.H-1, "↑/k up • ↓/j down • / filter • q quit • ? more", dim, g.W-2)
+		g.Text(2, g.H-1, "↑/k up • ↓/j down • / filter • q quit • ? more", p.Dim(), g.W-2)
 	}
 }
 
@@ -161,7 +161,7 @@ func paintPaginator(g *grid.Grid, p Props) {
 		if i == page {
 			g.Set(i-1, 0, grid.Cell{Ch: '•', Style: accent})
 		} else {
-			g.Set(i-1, 0, grid.Cell{Ch: '○', Style: dim})
+			g.Set(i-1, 0, grid.Cell{Ch: '○', Style: p.Dim()})
 		}
 	}
 }
@@ -262,6 +262,6 @@ func paintBubbleTree(g *grid.Grid, p Props) {
 		ancestors = append(ancestors, it.last)
 	}
 	if p.Bool("show_help") && g.H >= rowsShown+2 {
-		g.Text(0, g.H-1, "↓/j down • ↑/k up • ⏎ toggle • ? more", dim, g.W)
+		g.Text(0, g.H-1, "↓/j down • ↑/k up • ⏎ toggle • ? more", p.Dim(), g.W)
 	}
 }

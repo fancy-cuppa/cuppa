@@ -56,6 +56,13 @@ func normalise(doc design.Document) design.Document {
 	} else {
 		doc.Background = ""
 	}
+	for _, c := range []*string{&doc.Theme.Text, &doc.Theme.Muted, &doc.Theme.Border, &doc.Theme.Secondary} {
+		if v, err := space.Normalise(*c); err == nil {
+			*c = v
+		} else {
+			*c = ""
+		}
+	}
 	if !design.ValidProfile(doc.Profile) {
 		doc.Profile = ""
 	}

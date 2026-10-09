@@ -153,30 +153,30 @@ func paintTable(g *grid.Grid, p Props) {
 
 func paintJoinH(g *grid.Grid, p Props) {
 	n := max(p.Int("columns", 2), 1)
-	g.Box(full(g), grid.BorderNamed("normal"), dim)
+	g.Box(full(g), grid.BorderNamed("normal"), p.Dim())
 	for i := 1; i < n; i++ {
 		x := g.W * i / n
 		for y := 1; y < g.H-1; y++ {
-			g.Set(x, y, grid.Cell{Ch: '┆', Style: dim})
+			g.Set(x, y, grid.Cell{Ch: '┆', Style: p.Dim()})
 		}
 	}
-	g.Text(2, 0, " JoinHorizontal ", dim, g.W-3)
+	g.Text(2, 0, " JoinHorizontal ", p.Dim(), g.W-3)
 }
 
 func paintJoinV(g *grid.Grid, p Props) {
 	n := max(p.Int("rows", 2), 1)
-	g.Box(full(g), grid.BorderNamed("normal"), dim)
+	g.Box(full(g), grid.BorderNamed("normal"), p.Dim())
 	for i := 1; i < n; i++ {
 		y := g.H * i / n
 		for x := 1; x < g.W-1; x++ {
-			g.Set(x, y, grid.Cell{Ch: '┄', Style: dim})
+			g.Set(x, y, grid.Cell{Ch: '┄', Style: p.Dim()})
 		}
 	}
-	g.Text(2, 0, " JoinVertical ", dim, g.W-3)
+	g.Text(2, 0, " JoinVertical ", p.Dim(), g.W-3)
 }
 
 func paintPlace(g *grid.Grid, p Props) {
-	g.Box(full(g), grid.BorderNamed("normal"), dim)
+	g.Box(full(g), grid.BorderNamed("normal"), p.Dim())
 	text := p.Str("text")
 	w := len([]rune(text))
 	x := 1
@@ -194,10 +194,10 @@ func paintPlace(g *grid.Grid, p Props) {
 		y = g.H - 2
 	}
 	g.Text(x, y, text, grid.Style{}, g.W-2)
-	g.Text(2, 0, " Place ", dim, g.W-3)
+	g.Text(2, 0, " Place ", p.Dim(), g.W-3)
 }
 
-// paintGeneric is the fallback: a dim box carrying the component name.
+// paintGeneric is the fallback: a p.Dim() box carrying the component name.
 func paintGeneric(g *grid.Grid, name string) {
 	g.Box(full(g), grid.BorderNamed("normal"), dim)
 	if g.H >= 3 {

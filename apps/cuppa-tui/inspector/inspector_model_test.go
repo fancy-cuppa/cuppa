@@ -174,7 +174,7 @@ func TestSnapCheckboxTogglesTheBoundSetting(t *testing.T) {
 	cat := standard.Default()
 	ed := editor.New(cat, design.NewDocument("t", 100, 40))
 	m := New(ed, cat)
-	m.SetSize(32, 30)
+	m.SetSize(32, 60) // the theme section made the pane longer
 	on := true
 	m.BindSnap(func() bool { return on }, func(v bool) { on = v })
 	m.Lines()

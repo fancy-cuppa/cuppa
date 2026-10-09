@@ -45,7 +45,9 @@ func (e *Editor) SetProp(id design.NodeID, key, value string) error {
 	if err != nil {
 		return err
 	}
-	if cur, set := n.Props[key]; (set && cur == value) || (!set && spec.Default == value) {
+	// A colour that follows the theme is only left alone when it already holds
+	// this value: picking the colour it shows is still a choice to override.
+	if cur, set := n.Props[key]; (set && cur == value) || (!set && spec.Default == value && spec.Role == definition.RoleNone) {
 		return nil
 	}
 	e.apply(func() bool {
@@ -91,4 +93,25 @@ func normalise(spec definition.PropSpec, value string) (string, error) {
 		}
 	}
 	return value, nil
+}
+
+// ClearProp removes the component's own value for key, so the property follows
+// the theme (or its default) again. It reports whether there was a value to
+// remove.
+func (e *Editor) ClearProp(id design.NodeID, key string) bool {
+	n, ok := e.doc.Get(id)
+	if !ok || n.Locked {
+		return false
+	}
+	if _, set := n.Props[key]; !set {
+		return false
+	}
+	return e.apply(func() bool {
+		return e.doc.Update(id, func(n *design.Node) {
+			delete(n.Props, key)
+			if len(n.Props) == 0 {
+				n.Props = nil
+			}
+		})
+	})
 }

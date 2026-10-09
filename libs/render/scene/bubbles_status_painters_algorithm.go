@@ -26,7 +26,7 @@ func paintClock(g *grid.Grid, p Props, label string) {
 	}
 	style := grid.Style{Fg: p.Str("color"), Bold: true}
 	if !p.Bool("running") {
-		style = dim
+		style = p.Dim()
 	}
 	g.Text(x, 0, p.Str("value"), style, g.W-x)
 }
@@ -48,16 +48,16 @@ func paintHelp(g *grid.Grid, p Props) {
 				break
 			}
 			g.Text(0, i, pr[0], key, keyW)
-			g.Text(keyW+2, i, pr[1], dim, g.W-keyW-2)
+			g.Text(keyW+2, i, pr[1], p.Dim(), g.W-keyW-2)
 		}
 		return
 	}
 	x := 0
 	for i, pr := range pairs {
 		if i > 0 {
-			x += g.Text(x, 0, " • ", dim, g.W-x)
+			x += g.Text(x, 0, " • ", p.Dim(), g.W-x)
 		}
 		x += g.Text(x, 0, pr[0], key, g.W-x)
-		x += g.Text(x, 0, " "+pr[1], dim, g.W-x)
+		x += g.Text(x, 0, " "+pr[1], p.Dim(), g.W-x)
 	}
 }
