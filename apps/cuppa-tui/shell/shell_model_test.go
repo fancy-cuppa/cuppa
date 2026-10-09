@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -15,6 +16,8 @@ func newShell(t *testing.T) *Model {
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 	return m
 }
+
+var errNoFreeze = errors.New("no freeze")
 
 func send(m *Model, msg tea.Msg) { m.Update(msg) }
 
@@ -204,5 +207,28 @@ func TestNarrowTerminalStillHasAStage(t *testing.T) {
 	l := computeLayout(60, 20)
 	if l.stage.W < 1 || l.palette.W < 16 || l.inspector.W < 20 {
 		t.Fatalf("layout = %+v", l)
+	}
+}
+
+func TestImageExportsAreGreyedOutWithoutFreezeAndExplainWhenClicked(t *testing.T) {
+	m := newShell(t)
+	m.flow.SetFreezeLookup(func() (string, error) { return "", errNoFreeze })
+	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
+	m.settle()
+	clickText(t, m, "Export")
+	clickText(t, m, "Image (PNG)")
+	dlg := m.flow.Modal()
+	if dlg == nil {
+		t.Fatal("clicking a greyed-out image export should explain")
+	}
+	if !strings.Contains(strings.Join(screenText(m), " "), "Freeze is needed") {
+		t.Fatal("popup not drawn")
+	}
+	// Text export is unaffected.
+	send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	clickText(t, m, "Export")
+	clickText(t, m, "Plain text")
+	if m.flow.Modal() == nil || strings.Contains(strings.Join(screenText(m), " "), "Freeze is needed") {
+		t.Fatal("plain text export should open the file dialog")
 	}
 }

@@ -27,12 +27,15 @@ type Model struct {
 	// hoverBar is the bar label under the pointer, or -1.
 	hoverBar int
 	disabled map[Action]bool
+	// unavailable items look greyed out but still report clicks, so the
+	// caller can explain why they do not work.
+	unavailable map[Action]bool
 	labelX   []int // left column of each label
 }
 
 // New returns a closed bar.
 func New() *Model {
-	return &Model{open: -1, hover: -1, hoverBar: -1, disabled: map[Action]bool{}}
+	return &Model{open: -1, hover: -1, hoverBar: -1, disabled: map[Action]bool{}, unavailable: map[Action]bool{}}
 }
 
 // SetWidth sets the screen width.
@@ -40,6 +43,9 @@ func (m *Model) SetWidth(w int) { m.w = w }
 
 // SetEnabled greys out (or restores) one action.
 func (m *Model) SetEnabled(a Action, enabled bool) { m.disabled[a] = !enabled }
+
+// SetUnavailable greys out an action that still reports clicks.
+func (m *Model) SetUnavailable(a Action, unavailable bool) { m.unavailable[a] = unavailable }
 
 // Open reports whether a dropdown is showing.
 func (m *Model) Open() bool { return m.open >= 0 }
@@ -118,7 +124,7 @@ func (m *Model) itemLine(i int, it item, w int) string {
 	gapW := max(w-2*itemPadX-ansi.StringWidth(it.label)-ansi.StringWidth(it.shortcut), 1)
 	text := strings.Repeat(" ", itemPadX) + it.label + strings.Repeat(" ", gapW) + it.shortcut + strings.Repeat(" ", itemPadX)
 	switch {
-	case m.disabled[it.action]:
+	case m.disabled[it.action] || m.unavailable[it.action]:
 		return theme.Faded(text)
 	case i == m.hover:
 		return theme.Selected(text)

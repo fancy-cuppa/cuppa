@@ -213,25 +213,75 @@ func TestExportPlainText(t *testing.T) {
 	}
 }
 
-func TestExportImageMissingFreezeShowsHowToInstall(t *testing.T) {
-	t.Setenv(image.EnvFreeze, filepath.Join(t.TempDir(), "nope"))
+func withoutFreeze(f *Flow) {
+	f.locate = func() (string, error) { return "", image.ErrFreezeMissing }
+	f.CheckFreeze()
+}
+
+func TestExportImageWithoutFreezeExplainsInsteadOfAsking(t *testing.T) {
 	f, _, dir := setup(t)
+	withoutFreeze(f)
+	if f.FreezeAvailable() {
+		t.Fatal("freeze should be reported missing")
+	}
 	f.ExportImage(image.PNG)
-	press(f, true, false)
-	job := f.TakeJob()
-	if job == nil {
-		t.Fatal("expected a job")
-	}
-	if f.TakeJob() != nil {
-		t.Fatal("a job is handed over once")
-	}
-	f.Finish(job.Run())
 	m := f.Modal()
-	if m == nil || !strings.Contains(bodyText(m.Lines()), "go install github.com/charmbracelet/freeze") {
-		t.Fatalf("expected install instructions, got %q", bodyText(m.Lines()))
+	if m == nil {
+		t.Fatal("expected the instructions popup")
+	}
+	body := bodyText(m.Lines())
+	for _, want := range []string{"go install github.com/charmbracelet/freeze", "brew install", "CUPPA_FREEZE"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("popup lacks %q:\n%s", want, body)
+		}
+	}
+	press(f, true, false)
+	if f.Modal() != nil || f.TakeJob() != nil {
+		t.Fatal("no file dialog or job without freeze")
 	}
 	if _, err := os.Stat(filepath.Join(dir, "Untitled.png")); err == nil {
 		t.Fatal("no picture should exist")
+	}
+}
+
+func TestExportImageFindsFreezeInstalledMidSession(t *testing.T) {
+	f, _, _ := setup(t)
+	withoutFreeze(f)
+	f.locate = func() (string, error) { return "freeze", nil }
+	f.ExportImage(image.PNG)
+	if f.Modal() == nil || !f.FreezeAvailable() {
+		t.Fatal("a fresh check should find freeze and ask for a file name")
+	}
+}
+
+func TestFreezeFailureAfterTheFactStillShowsAnError(t *testing.T) {
+	f, _, _ := setup(t)
+	f.Finish(os.ErrPermission)
+	if f.Modal() == nil || f.Status() != "Export failed" {
+		t.Fatal("expected a failure notice")
+	}
+}
+
+func TestWelcomeShowsOnceAndOnlyWithoutFreeze(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "cfg", "freeze-notice")
+	f, _, _ := setup(t)
+	withoutFreeze(f)
+	f.Welcome(marker)
+	if f.Modal() == nil {
+		t.Fatal("first run without freeze should show the notice")
+	}
+	press(f, true, false)
+	f.Welcome(marker)
+	if f.Modal() != nil {
+		t.Fatal("the notice must only show once")
+	}
+
+	g, _, _ := setup(t)
+	g.locate = func() (string, error) { return "freeze", nil }
+	g.CheckFreeze()
+	g.Welcome(filepath.Join(t.TempDir(), "other"))
+	if g.Modal() != nil {
+		t.Fatal("no notice when freeze is installed")
 	}
 }
 

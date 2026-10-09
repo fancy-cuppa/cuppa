@@ -24,6 +24,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	app.Welcome()
 	if _, err := tea.NewProgram(app).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "cuppa:", err)
 		os.Exit(1)

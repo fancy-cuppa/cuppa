@@ -5,6 +5,8 @@ package shell
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -79,6 +81,15 @@ func New(cat *registry.Registry) *Model {
 // OpenFile loads a design before the first frame, e.g. from the command line.
 func (m *Model) OpenFile(path string) error { return m.flow.OpenPath(path) }
 
+// Welcome shows the first-run notice, if one is due.
+func (m *Model) Welcome() {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return
+	}
+	m.flow.Welcome(filepath.Join(dir, "cuppa", "freeze-notice"))
+}
+
 // Editor exposes the editor, mainly for tests.
 func (m *Model) Editor() *editor.Editor { return m.ed }
 
@@ -119,6 +130,9 @@ func (m *Model) settle() tea.Cmd {
 	hasSel := len(m.ed.Selected()) > 0
 	m.bar.SetEnabled(menubar.EditDuplicate, hasSel)
 	m.bar.SetEnabled(menubar.EditDelete, hasSel)
+	for _, a := range []menubar.Action{menubar.ExportPNG, menubar.ExportSVG, menubar.ExportWebP} {
+		m.bar.SetUnavailable(a, !m.flow.FreezeAvailable())
+	}
 	if m.flow.Quitting() {
 		return tea.Quit
 	}
