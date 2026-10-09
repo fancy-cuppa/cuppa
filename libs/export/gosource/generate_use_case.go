@@ -16,6 +16,9 @@ var runtimeSource string
 //go:embed app_go.txt
 var appSource string
 
+//go:embed widgets_go.txt
+var widgetsSource string
+
 //go:embed bigtext_go.txt
 var bigTextSource string
 
@@ -36,6 +39,11 @@ var generated = map[string]bool{
 	"huh.spinner":     true,
 	"community.frame": true, "community.dialog": true, "community.statusmessage": true, "community.toast": true,
 	"community.bigtext": true, "community.qrcode": true, "community.image": true,
+	"lipgloss.table": true, "lipgloss.tree": true, "lipgloss.tabs": true,
+	"lipgloss.joinh": true, "lipgloss.joinv": true, "lipgloss.place": true,
+	"bubbles.help": true, "bubbles.filepicker": true,
+	"community.flexbox": true, "community.boxer": true, "community.datepicker": true,
+	"community.overlay": true, "community.statusbar": true, "community.filetree": true,
 }
 
 // extension is a component that needs a file of its own and, for some, a
@@ -85,6 +93,7 @@ func Generate(doc design.Document, cat Catalog) Project {
 	p.Files["go.mod"] = goMod(module, requires)
 	p.Files["main.go"] = appSource
 	p.Files["runtime.go"] = runtimeSource
+	p.Files["widgets.go"] = widgetsSource
 	p.Files["layout.go"] = layoutSource(doc, placed)
 	for _, l := range placed {
 		if !generated[l.Kind] {
@@ -161,6 +170,7 @@ func readme(doc design.Document, notes []string) string {
 	b.WriteString("Tab and Shift+Tab move between components that take input, clicks focus them, Esc quits.\n\n")
 	b.WriteString("- `layout.go` is the design: where each component sits and its properties.\n")
 	b.WriteString("- `runtime.go` wraps the real Bubbles models and draws boxes, labels, lists and the look of the community widgets with Lip Gloss. Change it freely.\n")
+	b.WriteString("- `widgets.go` draws the Lip Gloss tables, trees and tabs, the help and file picker, and the look of the community widgets.\n")
 	b.WriteString("- `bigtext.go`, `qrcode.go` and `image.go`, when present, hold the components that need a library of their own.\n")
 	b.WriteString("- `main.go` is the Bubble Tea model that runs them.\n")
 	if len(notes) > 0 {
