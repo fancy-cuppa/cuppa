@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
@@ -174,3 +175,20 @@ func (m *Model) Key(_ string, _, enter, esc bool) {
 
 // Outcome implements modal.Modal.
 func (m *Model) Outcome() (modal.Outcome, bool) { return m.outcome, m.done }
+
+// Describe reads the dialog out: each pack, whether it is on, and the buttons.
+func (m *Model) Describe() []a11y.Node {
+	var items []a11y.Node
+	for _, e := range m.entries {
+		state := "off"
+		if m.enabled(e.Pack.ID) {
+			state = "on"
+		}
+		label := fmt.Sprintf("%s, %s, %s, %s", e.Pack.Name, state, countText(e.Count), e.Pack.Description)
+		if e.Pack.Source != "" {
+			label += ", installed, can be removed"
+		}
+		items = append(items, a11y.Item(label, false))
+	}
+	return []a11y.Node{a11y.Heading("Component packs"), a11y.List("Packs", items...), a11y.Button("Add pack"), a11y.Button("Done")}
+}

@@ -5,6 +5,7 @@ package palette
 import (
 	"strings"
 
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
@@ -201,4 +202,28 @@ func (m *Model) renderRow(i int) string {
 		return theme.Hovered(theme.Fit(s, m.w))
 	}
 	return s
+}
+
+// Describe lists the components by pack, with folded packs said as such.
+func (m *Model) Describe() []a11y.Node {
+	label := "Components"
+	if m.query != "" {
+		label = "Components matching " + m.query
+	}
+	var items []a11y.Node
+	for _, r := range m.rows {
+		switch {
+		case r.header && m.collapsed[r.family]:
+			items = append(items, a11y.Item(m.cat.Title(r.family)+", pack, folded", false))
+		case r.header:
+			items = append(items, a11y.Item(m.cat.Title(r.family)+", pack", false))
+		default:
+			name := r.def.Name
+			if r.def.Status == definition.StatusPlaceholder {
+				name += ", approximate preview"
+			}
+			items = append(items, a11y.Item(name, false))
+		}
+	}
+	return []a11y.Node{a11y.Heading("Components"), a11y.List(label, items...)}
 }

@@ -34,6 +34,8 @@ The dot after the name means there are unsaved changes.
 
 **Component packs.** The palette is made of packs: Lip Gloss, Bubbles, Huh forms, Glamour, ntcharts and Community. *Edit → Component packs…* lists them with a checkbox each; click one to switch it off or on, and the palette follows at once. Switching a pack off only hides it from the palette: designs that already use its components keep drawing them. Your choice is remembered in `packs.json` in the Cuppa folder of your user config directory.
 
+**Screen readers (desktop app).** The desktop window describes the screen to assistive technology: the menus and their items, the palette, the canvas size, the selected component with its position, size and properties, each layer with whether it is hidden or locked, and every dialog as the whole screen while it is open. Feedback such as "Saved design.cuppa" is announced. The description follows what is on screen; operating Cuppa still needs the mouse until keyboard navigation is designed (issue #43).
+
 **Packs in depth.** [Component packs](packs.md) covers making, editing, installing, sharing and contributing packs, step by step.
 
 **Make your own component.** Select a group (or two or more components) and choose *Edit → Save as component…*, then type a name. The group is saved in the pack *My components* (`my-components.cupp`) and appears in the palette at once. Placed copies scale like a group, and the text properties of its parts (titles, labels, items…) become the component's own properties, so each copy can say something different. Saving again with the same name makes `name-2`.

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 )
@@ -214,4 +215,32 @@ func (m *Model) itemAt(x, y int) int {
 		return -1
 	}
 	return i
+}
+
+// Describe lists the menus and, when one is open, its items.
+func (m *Model) Describe() []a11y.Node {
+	var nodes []a11y.Node
+	for i, mn := range menus {
+		b := a11y.Button(mn.label + " menu")
+		b.Selected = i == m.open
+		nodes = append(nodes, b)
+	}
+	if m.open < 0 {
+		return []a11y.Node{a11y.List("Menus", nodes...)}
+	}
+	var items []a11y.Node
+	for _, it := range menus[m.open].items {
+		if it.label == separatorLabel {
+			continue
+		}
+		label := it.label
+		if it.shortcut != "" {
+			label += ", " + it.shortcut
+		}
+		if m.disabled[it.action] || m.unavailable[it.action] {
+			label += ", not available"
+		}
+		items = append(items, a11y.Item(label, false))
+	}
+	return []a11y.Node{a11y.List("Menus", nodes...), a11y.List(menus[m.open].label+" menu items", items...)}
 }
