@@ -25,7 +25,7 @@ const usage = `usage:
 // the process exit code.
 func Run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprint(stderr, usage)
+		_, _ = fmt.Fprint(stderr, usage)
 		return 2
 	}
 	var err error
@@ -39,11 +39,11 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	case "catalog":
 		err = need(args, 0, 1, func() error { return catalog(args[1:], stdout) })
 	default:
-		fmt.Fprint(stderr, usage)
+		_, _ = fmt.Fprint(stderr, usage)
 		return 2
 	}
 	if err != nil {
-		fmt.Fprintln(stderr, "cuppa pack:", err)
+		_, _ = fmt.Fprintln(stderr, "cuppa pack:", err)
 		return 1
 	}
 	return 0
@@ -64,13 +64,13 @@ func catalog(args []string, out io.Writer) error {
 		query = args[0]
 	}
 	for _, d := range standard.Default().Search(query) {
-		fmt.Fprintf(out, "%s  %q  %dx%d (min %dx%d)\n", d.ID, d.Name, d.DefaultSize.W, d.DefaultSize.H, d.MinSize.W, d.MinSize.H)
+		_, _ = fmt.Fprintf(out, "%s  %q  %dx%d (min %dx%d)\n", d.ID, d.Name, d.DefaultSize.W, d.DefaultSize.H, d.MinSize.W, d.MinSize.H)
 		for _, p := range d.Props {
 			extra := ""
 			if len(p.Choices) > 0 {
 				extra = " one of " + strings.Join(p.Choices, ", ")
 			}
-			fmt.Fprintf(out, "    %-14s %-7s default %q%s\n", p.Key, p.Kind, p.Default, extra)
+			_, _ = fmt.Fprintf(out, "    %-14s %-7s default %q%s\n", p.Key, p.Kind, p.Default, extra)
 		}
 	}
 	return nil
@@ -82,7 +82,7 @@ func toJSON(path string, out io.Writer) error {
 		return err
 	}
 	for _, i := range issues {
-		fmt.Fprintln(os.Stderr, "warning:", i)
+		_, _ = fmt.Fprintln(os.Stderr, "warning:", i)
 	}
 	data, err := cupp.ToJSON(p)
 	if err != nil {
@@ -116,7 +116,7 @@ func build(args []string, out io.Writer) error {
 	if err := os.WriteFile(dst, bytes, 0o644); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "wrote %s: pack %q with %d components\n", dst, p.ID, len(p.Components))
+	_, _ = fmt.Fprintf(out, "wrote %s: pack %q with %d components\n", dst, p.ID, len(p.Components))
 	return nil
 }
 
@@ -140,9 +140,9 @@ func check(path string, out io.Writer) error {
 		}
 		p = loaded
 	}
-	fmt.Fprintf(out, "ok: pack %q (%s) version %q\n", p.ID, p.Name, p.Version)
+	_, _ = fmt.Fprintf(out, "ok: pack %q (%s) version %q\n", p.ID, p.Name, p.Version)
 	for _, c := range p.Components {
-		fmt.Fprintf(out, "  %s.%s  %q  %dx%d  %d parts, %d properties\n", p.ID, c.ID, c.Name, c.W, c.H, len(c.Nodes), len(c.Props))
+		_, _ = fmt.Fprintf(out, "  %s.%s  %q  %dx%d  %d parts, %d properties\n", p.ID, c.ID, c.Name, c.W, c.H, len(c.Nodes), len(c.Props))
 	}
 	return nil
 }
