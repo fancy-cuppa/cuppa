@@ -163,3 +163,36 @@ func TestDocumentOptionsRoundTripAndBadOnesAreRepaired(t *testing.T) {
 		t.Fatalf("a damaged file is repaired: %+v", got)
 	}
 }
+
+func TestGroupsRoundTripAndDamagedGroupsAreRepaired(t *testing.T) {
+	doc := design.NewDocument("g", 80, 24)
+	doc.Add(design.Node{Component: design.GroupComponent, Name: "Group 1", Rect: design.Rect{X: 2, Y: 2, W: 30, H: 6}, BaseW: 30, BaseH: 6,
+		Children: []design.Node{
+			{ID: "a", Component: "lipgloss.box", Name: "Box", Rect: design.Rect{W: 10, H: 3}},
+			{ID: "a", Component: "lipgloss.box", Name: "Twin", Rect: design.Rect{X: 12, W: 10, H: 3}},
+			{ID: "b", Component: "lipgloss.box", Name: "Flat", Rect: design.Rect{X: 12, W: 0, H: 3}},
+		}})
+	doc.Add(design.Node{Component: design.GroupComponent, Name: "Empty", Rect: design.Rect{W: 5, H: 5}, BaseW: 5, BaseH: 5})
+	doc.Add(design.Node{Component: design.GroupComponent, Name: "No base", Rect: design.Rect{W: 5, H: 5},
+		Children: []design.Node{{ID: "z", Component: "lipgloss.box", Rect: design.Rect{W: 1, H: 1}}}})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Plain", Rect: design.Rect{W: 5, H: 5}, BaseW: 9,
+		Children: []design.Node{{ID: "z", Component: "lipgloss.box", Rect: design.Rect{W: 1, H: 1}}}})
+	data, err := Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Nodes) != 2 {
+		t.Fatalf("the good group and the plain node stay: %+v", got.Nodes)
+	}
+	g := got.Nodes[0]
+	if len(g.Children) != 1 || g.Children[0].Name != "Box" || g.BaseW != 30 {
+		t.Fatalf("children are cleaned: %+v", g.Children)
+	}
+	if p := got.Nodes[1]; p.Children != nil || p.BaseW != 0 {
+		t.Fatalf("a plain node cannot hold children: %+v", p)
+	}
+}

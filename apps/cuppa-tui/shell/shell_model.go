@@ -160,6 +160,8 @@ func (m *Model) settle() tea.Cmd {
 	hasSel := len(m.ed.Selected()) > 0
 	m.bar.SetEnabled(menubar.EditDuplicate, hasSel)
 	m.bar.SetEnabled(menubar.EditDelete, hasSel)
+	m.bar.SetEnabled(menubar.EditGroup, m.ed.CanGroup())
+	m.bar.SetEnabled(menubar.EditUngroup, m.ed.CanUngroup())
 	for _, a := range []menubar.Action{menubar.ExportPNG, menubar.ExportSVG, menubar.ExportWebP} {
 		m.bar.SetUnavailable(a, !m.flow.FreezeAvailable())
 	}
@@ -213,6 +215,10 @@ func (m *Model) perform(a menubar.Action) {
 		m.ed.Duplicate()
 	case menubar.EditDelete:
 		m.ed.Delete()
+	case menubar.EditGroup:
+		m.ed.Group()
+	case menubar.EditUngroup:
+		m.ed.Ungroup()
 	case menubar.EditPacks:
 		m.openPacks()
 	case menubar.ExportPNG:
@@ -235,6 +241,7 @@ func (m *Model) perform(a menubar.Action) {
 const shortcutsText = "Ctrl+N  New            Ctrl+O  Open\n" +
 	"Ctrl+S  Save           Ctrl+Q  Quit\n" +
 	"Ctrl+Z  Undo           Ctrl+Y  Redo\n" +
+	"Ctrl+G  Group          Ctrl+U  Ungroup\n" +
 	"Del     Delete         Esc     Deselect / cancel\n\n" +
 	"Everything else is the mouse: drag components from the left onto\n" +
 	"the canvas, drag to move, drag the corners to resize."
@@ -391,6 +398,10 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		m.ed.Clear()
 	case k.Code == tea.KeyDelete:
 		m.ed.Delete()
+	case text == "ctrl+g":
+		m.ed.Group()
+	case text == "ctrl+u":
+		m.ed.Ungroup()
 	case text == "ctrl+z":
 		m.ed.Undo()
 	case text == "ctrl+y":

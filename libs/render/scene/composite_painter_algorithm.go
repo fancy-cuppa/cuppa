@@ -35,15 +35,7 @@ func paintComposite(g *grid.Grid, c design.Composite, props Props, cat Catalog, 
 				part.Props[e.TargetProp] = e.Default
 			}
 		}
-		part.Rect = scaleRect(part.Rect, c.W, c.H, g.W, g.H)
+		part.Rect = part.Rect.Scale(c.W, c.H, g.W, g.H)
 		g.Blit(renderNode(part, cat, depth+1), part.Rect.X, part.Rect.Y)
 	}
-}
-
-// scaleRect maps r from a box of size fromW x fromH onto one of toW x toH,
-// keeping every edge on a whole cell and the result at least 1 x 1.
-func scaleRect(r design.Rect, fromW, fromH, toW, toH int) design.Rect {
-	x0, x1 := r.X*toW/fromW, (r.X+r.W)*toW/fromW
-	y0, y1 := r.Y*toH/fromH, (r.Y+r.H)*toH/fromH
-	return design.Rect{X: x0, Y: y0, W: max(x1-x0, 1), H: max(y1-y0, 1)}
 }

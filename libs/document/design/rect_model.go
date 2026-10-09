@@ -28,6 +28,17 @@ func (r Rect) Translate(dx, dy int) Rect {
 	return r
 }
 
+// Scale maps r from a box of size fromW x fromH onto one of toW x toH, keeping
+// every edge on a whole cell and the result at least 1 x 1.
+func (r Rect) Scale(fromW, fromH, toW, toH int) Rect {
+	if fromW < 1 || fromH < 1 {
+		return r
+	}
+	x0, x1 := r.X*toW/fromW, (r.X+r.W)*toW/fromW
+	y0, y1 := r.Y*toH/fromH, (r.Y+r.H)*toH/fromH
+	return Rect{X: x0, Y: y0, W: max(x1-x0, 1), H: max(y1-y0, 1)}
+}
+
 // MoveInto returns the rectangle shifted the least needed to lie inside
 // bounds. A rectangle larger than bounds is aligned to the top-left of bounds.
 func (r Rect) MoveInto(bounds Rect) Rect {

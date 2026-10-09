@@ -56,15 +56,37 @@ func normalise(doc design.Document) design.Document {
 	} else {
 		doc.Background = ""
 	}
+	nodes := cleanNodes(doc.Nodes, 0)
+	doc.Nodes = nodes
+	return doc
+}
+
+// maxGroupDepth bounds how deeply groups may nest in a file.
+const maxGroupDepth = 16
+
+// cleanNodes drops nodes with an empty or repeated id or a rect under 1×1, and
+// repairs groups: children are cleaned the same way, and a group left with no
+// children or no base size is dropped. Children on a plain node are ignored.
+func cleanNodes(in []design.Node, depth int) []design.Node {
 	seen := map[design.NodeID]bool{}
-	nodes := make([]design.Node, 0, len(doc.Nodes))
-	for _, n := range doc.Nodes {
+	out := make([]design.Node, 0, len(in))
+	for _, n := range in {
 		if n.ID == "" || seen[n.ID] || n.Rect.W < 1 || n.Rect.H < 1 {
 			continue
 		}
 		seen[n.ID] = true
-		nodes = append(nodes, n)
+		if n.Component == design.GroupComponent {
+			if depth >= maxGroupDepth || n.BaseW < 1 || n.BaseH < 1 {
+				continue
+			}
+			n.Children = cleanNodes(n.Children, depth+1)
+			if len(n.Children) == 0 {
+				continue
+			}
+		} else {
+			n.Children, n.BaseW, n.BaseH = nil, 0, 0
+		}
+		out = append(out, n)
 	}
-	doc.Nodes = nodes
-	return doc
+	return out
 }

@@ -178,6 +178,9 @@ func (m *Model) actions(b *builder) {
 	b.text(" ").
 		add(theme.Button("[Duplicate]", true), func() { m.ed.Duplicate() }).text(" ").
 		add(theme.Button("[Delete]", true), func() { m.ed.Delete() }).end()
+	b.text(" ").
+		add(theme.Button("[Group]", m.ed.CanGroup()), func() { m.ed.Group() }).text(" ").
+		add(theme.Button("[Ungroup]", m.ed.CanUngroup()), func() { m.ed.Ungroup() }).end()
 }
 
 // properties lists the component-specific properties from the catalog schema.
