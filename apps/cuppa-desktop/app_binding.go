@@ -41,6 +41,7 @@ func (a *App) startup(ctx context.Context) {
 // quits from inside it.
 func (a *App) newModel() tea.Model {
 	app := shell.New(standard.Default())
+	app.UseIconFont()
 	if goruntime.GOOS == "darwin" {
 		app.UseCommandKey() // the page turns Cmd into the Ctrl the app listens for
 	}

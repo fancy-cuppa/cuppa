@@ -24,6 +24,12 @@ func Title(s string) string {
 	return lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(Accent)).Render(s)
 }
 
+
+// Logo is the green of the Cuppa logo.
+func Logo(s string) string {
+	return lipgloss.NewStyle().Foreground(lipgloss.Color("#34c37b")).Render(s)
+}
+
 // Dim styles secondary text.
 func Dim(s string) string { return lipgloss.NewStyle().Foreground(lipgloss.Color(Muted)).Render(s) }
 

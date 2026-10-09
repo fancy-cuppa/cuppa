@@ -22,3 +22,17 @@ body,
   padding: 24px;
   font-family: system-ui, sans-serif;
 }
+
+/* The menu-bar logo is two private-use characters, drawn from a font that ships
+   with the page. The font is first in the terminal's rows and covers only those
+   two characters, so every other character still comes from the font the
+   terminal picked (the cell size is measured from that one, not from this). */
+@font-face {
+  font-family: 'Cuppa Icons';
+  src: url('./cuppa-icons.woff2') format('woff2'), url('./cuppa-icons.ttf') format('truetype');
+  unicode-range: U+E000-E001;
+}
+
+.xterm .xterm-rows {
+  font-family: 'Cuppa Icons', monospace !important;
+}

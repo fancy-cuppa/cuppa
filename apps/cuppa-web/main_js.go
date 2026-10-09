@@ -30,6 +30,7 @@ func onAMac() bool {
 
 func newModel() tea.Model {
 	app := shell.New(standard.Default())
+	app.UseIconFont()
 	if onAMac() {
 		app.UseCommandKey()
 	}

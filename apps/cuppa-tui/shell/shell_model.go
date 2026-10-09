@@ -142,6 +142,11 @@ func (m *Model) Welcome() {
 // Editor exposes the editor, mainly for tests.
 func (m *Model) Editor() *editor.Editor { return m.ed }
 
+// UseIconFont draws the logo in the menu bar from the Cuppa icon font. The
+// desktop app and the web page call it, because they ship the font; a
+// terminal would show empty boxes.
+func (m *Model) UseIconFont() { m.bar.SetIconFont(true) }
+
 // UseCommandKey makes the menus and the shortcuts list say Cmd where they say
 // Ctrl. The desktop app and the browser call it on a Mac; their page turns a
 // Cmd press into the Ctrl one the editor listens for.
