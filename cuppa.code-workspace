@@ -158,6 +158,13 @@
         "script": "cuppa-desktop:start",
         "problemMatcher": [],
         "isBackground": true
+      },
+      {
+        "label": "color: qa",
+        "type": "npm",
+        "script": "color:qa",
+        "problemMatcher": [],
+        "group": "qa"
       }
     ]
   },

@@ -6,6 +6,7 @@ use (
 	./libs/archcheck
 	./libs/canvas
 	./libs/catalog
+	./libs/color
 	./libs/cuppafile
 	./libs/document
 	./libs/export

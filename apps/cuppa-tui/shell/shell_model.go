@@ -10,9 +10,11 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/colorpicker"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/fileflow"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/inspector"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/menubar"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/palette"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
@@ -75,7 +77,17 @@ func New(cat *registry.Registry) *Model {
 		ins:  inspector.New(ed, cat),
 	}
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
+	m.ins.BindColorPicker(m.pickColor)
 	return m
+}
+
+// pickColor opens the colour dialog and applies the choice when it ends.
+func (m *Model) pickColor(title, current string, apply func(color string)) {
+	m.flow.Show(colorpicker.New(title, current), func(o modal.Outcome) {
+		if !o.Canceled {
+			apply(o.Value)
+		}
+	})
 }
 
 // OpenFile loads a design before the first frame, e.g. from the command line.
