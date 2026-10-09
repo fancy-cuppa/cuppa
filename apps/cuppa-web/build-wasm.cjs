@@ -19,7 +19,10 @@ function go (args, env) {
   return r.stdout.trim()
 }
 
-const dir = module => go(['list', '-m', '-f', '{{.Dir}}', module], { GOOS: '', GOARCH: '' })
+const dir = module => {
+  go(['mod', 'download', module], { GOOS: '', GOARCH: '' }) // a fresh checkout has not downloaded it yet
+  return go(['list', '-m', '-f', '{{.Dir}}', module], { GOOS: '', GOARCH: '' })
+}
 
 function writable (path) {
   chmodSync(path, 0o777)

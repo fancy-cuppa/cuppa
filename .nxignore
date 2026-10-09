@@ -1,2 +1,4 @@
 # The Wails frontend is built by `wails build`, not by Nx.
 /apps/cuppa-desktop/frontend
+# The browser frontend is built by vite (see apps/cuppa-web/README.md), not by Nx.
+/apps/cuppa-web/frontend
