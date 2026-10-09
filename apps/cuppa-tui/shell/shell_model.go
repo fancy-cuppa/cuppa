@@ -81,6 +81,14 @@ func New(cat *registry.Registry) *Model {
 // OpenFile loads a design before the first frame, e.g. from the command line.
 func (m *Model) OpenFile(path string) error { return m.flow.OpenPath(path) }
 
+// OpenFileOrNotify loads a design before the first frame, like OpenFile, but
+// tells the user in a dialog when it cannot, for front ends with no console.
+func (m *Model) OpenFileOrNotify(path string) {
+	if err := m.flow.OpenPath(path); err != nil {
+		m.flow.Notice("Cannot open file", err.Error())
+	}
+}
+
 // Welcome shows the first-run notice, if one is due.
 func (m *Model) Welcome() {
 	dir, err := os.UserConfigDir()

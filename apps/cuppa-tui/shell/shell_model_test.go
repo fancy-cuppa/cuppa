@@ -232,3 +232,14 @@ func TestImageExportsAreGreyedOutWithoutFreezeAndExplainWhenClicked(t *testing.T
 		t.Fatal("plain text export should open the file dialog")
 	}
 }
+
+func TestOpenFileOrNotifyShowsADialogWhenTheFileIsBad(t *testing.T) {
+	m := newShell(t)
+	m.OpenFileOrNotify(t.TempDir() + "/missing.cuppa")
+	if m.flow.Modal() == nil {
+		t.Fatal("a file that cannot be opened should be explained in a dialog")
+	}
+	if !strings.Contains(strings.Join(screenText(m), " "), "Cannot open file") {
+		t.Fatal("dialog not drawn")
+	}
+}
