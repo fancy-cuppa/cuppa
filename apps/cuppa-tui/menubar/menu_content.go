@@ -14,6 +14,7 @@ const (
 	EditRedo       Action = "edit.redo"
 	EditDuplicate  Action = "edit.duplicate"
 	EditDelete     Action = "edit.delete"
+	EditPacks      Action = "edit.packs"
 	ExportPNG      Action = "export.png"
 	ExportSVG      Action = "export.svg"
 	ExportWebP     Action = "export.webp"
@@ -53,6 +54,8 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Duplicate", "", EditDuplicate},
 		{"Delete", "Del", EditDelete},
+		{separatorLabel, "", nothing},
+		{"Component packs…", "", EditPacks},
 	}},
 	{"Export", []item{
 		{"Image (PNG)…", "", ExportPNG},

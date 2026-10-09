@@ -20,6 +20,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/catalog/packstate"
 	"github.com/meta-tui/cuppa/libs/catalog/registry"
 	"github.com/meta-tui/cuppa/libs/document/design"
 	"github.com/meta-tui/cuppa/libs/export/image"
@@ -43,10 +44,12 @@ const (
 
 // Model is the whole application.
 type Model struct {
-	cat  *registry.Registry
-	ed   *editor.Editor
-	bar  *menubar.Model
-	flow *fileflow.Flow
+	cat *registry.Registry
+	// packs says which component packs the palette lists.
+	packs *packstate.State
+	ed    *editor.Editor
+	bar   *menubar.Model
+	flow  *fileflow.Flow
 
 	pal *palette.Model
 	stg *stage.Model
@@ -74,13 +77,14 @@ type Model struct {
 func New(cat *registry.Registry) *Model {
 	ed := editor.New(cat, design.NewDocument("Untitled", defaultWidth, defaultHeight))
 	m := &Model{
-		cat:  cat,
-		ed:   ed,
-		bar:  menubar.New(),
-		flow: fileflow.New(ed, cat),
-		pal:  palette.New(cat),
-		stg:  stage.New(ed, cat),
-		ins:  inspector.New(ed, cat),
+		cat:   cat,
+		ed:    ed,
+		bar:   menubar.New(),
+		flow:  fileflow.New(ed, cat),
+		pal:   palette.New(cat),
+		packs: packstate.Open(""),
+		stg:   stage.New(ed, cat),
+		ins:   inspector.New(ed, cat),
 	}
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	m.ins.BindColorPicker(m.pickColor)
@@ -209,6 +213,8 @@ func (m *Model) perform(a menubar.Action) {
 		m.ed.Duplicate()
 	case menubar.EditDelete:
 		m.ed.Delete()
+	case menubar.EditPacks:
+		m.openPacks()
 	case menubar.ExportPNG:
 		m.flow.ExportImage(image.PNG)
 	case menubar.ExportSVG:

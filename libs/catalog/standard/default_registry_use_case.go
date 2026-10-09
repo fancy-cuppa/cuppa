@@ -20,7 +20,7 @@ func All() []definition.Definition {
 // Default builds the registry of shipped components. It panics if the shipped
 // definitions are inconsistent, which is a programming error caught by tests.
 func Default() *registry.Registry {
-	r, err := registry.New(All()...)
+	r, err := registry.NewWithPacks(Packs(), All()...)
 	if err != nil {
 		panic(err)
 	}

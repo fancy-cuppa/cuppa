@@ -60,7 +60,7 @@ type savedLayout struct {
 	Inspector int `json:"inspector"`
 }
 
-// RestoreLayout brings back the side bar widths used last time and starts
+// RestoreLayout brings back the side bar widths and the enabled packs used last time and starts
 // remembering changes. Front ends call it once at start; tests do not, so they
 // never touch the user's settings.
 func (m *Model) RestoreLayout() {
@@ -70,6 +70,7 @@ func (m *Model) RestoreLayout() {
 	}
 	m.layoutFile = filepath.Join(dir, "cuppa", "layout.json")
 	m.restoreLayoutFrom(m.layoutFile)
+	m.restorePacks()
 }
 
 func (m *Model) restoreLayoutFrom(path string) {

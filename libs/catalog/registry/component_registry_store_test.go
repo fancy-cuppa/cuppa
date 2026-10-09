@@ -56,3 +56,45 @@ func TestSearchAndGet(t *testing.T) {
 		t.Fatal("unknown id found")
 	}
 }
+
+func TestPacksKeepTheirOrderAndNames(t *testing.T) {
+	packs := []definition.Pack{
+		{ID: "mine", Name: "My pack"},
+		{ID: definition.FamilyBubbles, Name: "Bubbles"},
+	}
+	r, err := NewWithPacks(packs,
+		definition.Definition{ID: "bubbles.spinner", Name: "Spinner", Family: definition.FamilyBubbles},
+		definition.Definition{ID: "mine.card", Name: "Card", Family: "mine"},
+		definition.Definition{ID: "lipgloss.box", Name: "Box", Family: definition.FamilyLipgloss},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fams := r.Families()
+	if len(fams) != 3 || fams[0] != "mine" || fams[1] != definition.FamilyBubbles || fams[2] != definition.FamilyLipgloss {
+		t.Fatalf("families = %v", fams)
+	}
+	if r.Title("mine") != "My pack" || r.Title(definition.FamilyLipgloss) != "Lip Gloss" {
+		t.Fatalf("titles: %q %q", r.Title("mine"), r.Title(definition.FamilyLipgloss))
+	}
+	if _, err := NewWithPacks([]definition.Pack{{ID: "a"}, {ID: "a"}}); err == nil {
+		t.Fatal("duplicate pack accepted")
+	}
+}
+
+func TestOnlyHidesDisabledPacksWithoutTouchingTheOriginal(t *testing.T) {
+	r, _ := New(sample()...)
+	only := r.Only(func(f definition.Family) bool { return f != definition.FamilyBubbles })
+	if _, ok := only.Get("bubbles.spinner"); ok {
+		t.Fatal("disabled pack's component still listed")
+	}
+	if got := only.Search(""); len(got) != 2 {
+		t.Fatalf("search = %d", len(got))
+	}
+	if len(only.Families()) != 1 {
+		t.Fatalf("families = %v", only.Families())
+	}
+	if _, ok := r.Get("bubbles.spinner"); !ok {
+		t.Fatal("the full registry must still resolve it")
+	}
+}
