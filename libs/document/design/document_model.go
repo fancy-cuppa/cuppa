@@ -9,9 +9,32 @@ type Document struct {
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
 	Nodes  []Node `json:"nodes"`
+	// Background is the canvas colour ("" for the terminal's own, "0" to "255"
+	// or "#rrggbb"). It fills every cell no component colours itself.
+	Background string `json:"background,omitempty"`
+	// HideGrid turns off the dotted grid shown on an empty canvas in the editor.
+	// The grid is never part of an export.
+	HideGrid bool    `json:"hideGrid,omitempty"`
+	Effects  Effects `json:"effects,omitempty"`
 	// Seq is the counter behind generated node ids; it only ever grows.
 	Seq int `json:"seq"`
 }
+
+// Effects are looks applied over the whole canvas, in the editor and in exports.
+type Effects struct {
+	// Shadow drops a one-cell shadow below and to the right of every component.
+	Shadow bool `json:"shadow,omitempty"`
+	// Scanlines dims every other row, like a CRT.
+	Scanlines bool `json:"scanlines,omitempty"`
+	// Vignette dims the edges of the canvas.
+	Vignette bool `json:"vignette,omitempty"`
+}
+
+// Canvas size limits, in cells.
+const (
+	MaxWidth  = 400
+	MaxHeight = 200
+)
 
 // NewDocument returns an empty document of the given canvas size.
 func NewDocument(name string, width, height int) Document {

@@ -30,6 +30,8 @@ The dot after the name means there are unsaved changes.
 
 **Move and resize.** Drag a selected component to move it (a whole selection moves together). Drag a corner handle to resize. Components never go below their smallest sensible size or off the canvas. While you drag, edges and centres snap to neighbours and a guide line appears; switch this off with *Snap to guides* in the details bar.
 
+**Document options.** With nothing selected the details bar shows the canvas: its width and height (click a number to type one; up to 400 × 200), the background colour (click it to open the colour picker; *None* keeps the terminal's own) and effects applied over the whole design, in the editor and in every export: *Shadows* (a drop shadow under each component), *Scanlines* (every other row dimmed) and *Vignette* (dimmed edges). *Grid dots* only hides the editor's dotted grid; it is never exported. Each change is one undo step and is saved in the `.cuppa` file. Image exports use the background colour as the picture's backdrop.
+
 **Resize the side bars.** Drag the thin line between the left bar and the canvas, or between the canvas and the
 details bar, to make a bar wider or narrower. The line lights up when you hover it. The canvas keeps at least 20
 columns, and Cuppa remembers the widths for next time.

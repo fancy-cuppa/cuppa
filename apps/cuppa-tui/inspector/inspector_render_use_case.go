@@ -86,17 +86,12 @@ func (m *Model) history(b *builder) {
 }
 
 func (m *Model) empty(b *builder) {
-	doc := m.ed.Document()
 	b.text(theme.Dim(" Nothing selected.")).end()
 	b.text(theme.Faded(" Drag a component from")).end()
 	b.text(theme.Faded(" the left bar onto the")).end()
 	b.text(theme.Faded(" canvas.")).end()
 	b.blank()
-	b.text(theme.Bold(" Canvas")).end()
-	b.text(fmt.Sprintf(" %d × %d cells", doc.Width, doc.Height)).end()
-	b.text(fmt.Sprintf(" %d components", len(doc.Nodes))).end()
-	b.blank()
-	m.snapRow(b)
+	m.documentOptions(b)
 }
 
 // snapRow is the "snap to guides" checkbox.
