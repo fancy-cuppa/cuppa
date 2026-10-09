@@ -32,8 +32,8 @@ func communityEntries() []definition.Definition {
 		},
 		{
 			ID: "community.datepicker", Name: "Date picker", Family: definition.FamilyCommunity,
-			Description: "EthanEFung/bubble-datepicker: a month calendar (Bubble Tea v1-era).",
-			DefaultSize: size(26, 9), MinSize: size(22, 8), Import: "github.com/EthanEFung/bubble-datepicker", Status: definition.StatusPlaceholder,
+			Description: "CameronJHall/bubble-datepicker (v2 fork of EthanEFung's): a month calendar.",
+			DefaultSize: size(26, 9), MinSize: size(22, 8), Import: "github.com/CameronJHall/bubble-datepicker/v2", Status: definition.StatusPlaceholder,
 			Props: []definition.PropSpec{textProp("month", "Month label", "October 2026"), intProp("day", "Selected day", 9, 1, 31), accent},
 		},
 		{
@@ -53,11 +53,54 @@ func communityEntries() []definition.Definition {
 		},
 		{
 			ID: "community.filetree", Name: "File tree", Family: definition.FamilyCommunity,
-			Description: "knipferrc/teacup filetree: a navigable directory tree (Bubble Tea v1-era).",
+			Description: "knipferrc/teacup filetree (Bubble Tea v1-era; the Bubbles tree supersedes it).",
 			DefaultSize: size(28, 10), MinSize: size(10, 3), Import: "github.com/knipferrc/teacup/filetree", Status: definition.StatusPlaceholder,
 			Props: []definition.PropSpec{
 				textProp("entries", "Entries (comma separated, / = dir)", "apps/,libs/,docs/,go.work,README.md"),
 				intProp("selected", "Selected", 1, 0, 99), accent,
+			},
+		},
+		{
+			ID: "community.frame", Name: "Titled frame", Family: definition.FamilyCommunity,
+			Description: "clambin/bubbles frame: a border with the title set into the top edge.",
+			DefaultSize: size(36, 5), MinSize: size(6, 3), Import: "codeberg.org/clambin/bubbles/frame", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("title", "Title", "Tea menu"),
+				choiceProp("position", "Title position", "left", "left", "center", "right"),
+				choiceProp("border", "Border", "normal", borders...),
+				textProp("content", "Content", "Earl Grey, Sencha, Rooibos"),
+				accent,
+			},
+		},
+		{
+			ID: "community.dialog", Name: "Dialog", Family: definition.FamilyCommunity,
+			Description: "clambin/bubbles dialog: centred text and a row of buttons in a rounded box.",
+			DefaultSize: size(40, 7), MinSize: size(14, 5), Import: "codeberg.org/clambin/bubbles/dialog", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("text", "Text", "Pour the tea?"),
+				textProp("buttons", "Buttons (comma separated)", "OK,Cancel"),
+				intProp("active", "Active button", 0, 0, 5),
+				colorProp("color", "Border", "212"),
+			},
+		},
+		{
+			ID: "community.statusmessage", Name: "Status message", Family: definition.FamilyCommunity,
+			Description: "clambin/bubbles statusbar: one message line, styled by level, with an optional spinner.",
+			DefaultSize: size(40, 1), MinSize: size(8, 1), Import: "codeberg.org/clambin/bubbles/statusbar", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				textProp("text", "Message", "Steeping the tea"),
+				choiceProp("level", "Level", "info", "info", "warning", "error"),
+				boolProp("spinner", "Show spinner", true),
+			},
+		},
+		{
+			ID: "community.toast", Name: "Toast", Family: definition.FamilyCommunity,
+			Description: "DaltonSW/BubbleUp v2: a bordered notification coloured by kind, with a symbol prefix.",
+			DefaultSize: size(34, 3), MinSize: size(12, 3), Import: "go.dalton.dog/bubbleup/v2", Status: definition.StatusPlaceholder,
+			Props: []definition.PropSpec{
+				choiceProp("kind", "Kind", "info", "info", "warn", "error", "debug"),
+				textProp("message", "Message", "Tea is ready"),
+				choiceProp("symbols", "Symbols", "unicode", "unicode", "ascii"),
 			},
 		},
 	}
