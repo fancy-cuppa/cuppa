@@ -1,0 +1,16 @@
+//go:build js
+
+package tea
+
+// Added to Bubble Tea at build time (see build-wasm.cjs): a browser has no
+// terminal to put in raw mode and no process to suspend, so these do nothing.
+// The page owns input and output, and tells the program its size.
+
+func (p *Program) initInput() error { return nil }
+
+const suspendSupported = false
+
+func suspendProcess() {}
+
+// listenForResize has no signal to wait for: the page sends the size.
+func (p *Program) listenForResize(done chan struct{}) { close(done) }

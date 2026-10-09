@@ -1,0 +1,4 @@
+dist
+node_modules
+frontend/public/cuppa.wasm
+frontend/public/wasm_exec.js
