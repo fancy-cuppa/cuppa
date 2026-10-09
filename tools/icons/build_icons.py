@@ -7,9 +7,11 @@ Writes:
   - the menu-bar icon font (a font with two glyphs, U+E000 and U+E001, the left
     and right half of the cup, so together they make a square icon one cell tall)
     into apps/cuppa-desktop/frontend/src and apps/cuppa-web/frontend/src;
-  - the desktop app icon (apps/cuppa-desktop/build/appicon.png and
-    build/windows/icon.ico);
-  - the web favicon set (apps/cuppa-web/frontend/public).
+  - assets/icons: every size as a png, icon.ico, icon.icns, a maskable icon and a
+    Linux hicolor tree, all from the logo as drawn (frame included);
+  - the desktop app icons (apps/cuppa-desktop/build);
+  - the web icons and manifest (apps/cuppa-web/frontend/public), with the
+    logo's SVG as the vector favicon.
 
 Needs: fonttools, pillow, numpy (and brotli, for a woff2 font).
 """
@@ -127,21 +129,48 @@ def build_font(rects, path_ttf, path_woff2):
         f.save(path_woff2.replace('.woff2', '.woff'))
 
 
-def rounded_square(img, rects, size, radius=0.2, pad=0.0):
-    """The cup on its dark ground, cropped square, rounded, at size x size."""
-    # The square inside the logo's black frame, centred on the picture.
-    w, h = img.size
-    side = round(min(w, h) * 0.86)
-    left, top = (w - side) // 2, (h - side) // 2
-    crop = img.convert('RGBA').crop((left, top, left + side, top + side))
-    inner = round(size * (1 - 2 * pad))
-    crop = crop.resize((inner, inner), Image.LANCZOS)
-    mask = Image.new('L', (inner * 4, inner * 4), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, inner * 4 - 1, inner * 4 - 1), radius=round(inner * 4 * radius), fill=255)
-    mask = mask.resize((inner, inner), Image.LANCZOS)
-    out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    out.paste(crop, ((size - inner) // 2, (size - inner) // 2), mask)
+def logo_square(img):
+    """The logo as a 1024 by 1024 picture (the source is a pixel taller)."""
+    return img.convert('RGBA').resize((1024, 1024), Image.LANCZOS)
+
+
+def sized(full, size):
+    return full.resize((size, size), Image.LANCZOS)
+
+
+def maskable(full, size, ground):
+    """The logo on a solid ground with the margin Android's mask needs (the
+    safe zone is the middle 80%)."""
+    out = Image.new('RGBA', (size, size), ground + (255,))
+    inner = round(size * 0.72)
+    out.paste(sized(full, inner), ((size - inner) // 2, (size - inner) // 2), sized(full, inner))
     return out
+
+
+def save_ico(path, full, sizes):
+    sized(full, 256).save(path, sizes=[(s, s) for s in sizes])
+
+
+def save_icns(path, full):
+    full.save(path, format='ICNS', sizes=[(s, s) for s in (16, 32, 64, 128, 256, 512, 1024)])
+
+
+MANIFEST = """{
+  "name": "Cuppa",
+  "short_name": "Cuppa",
+  "description": "A visual designer for Bubble Tea terminal interfaces",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#07130d",
+  "theme_color": "#07130d",
+  "icons": [
+    { "src": "android-chrome-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "android-chrome-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
+"""
 
 
 def main():
@@ -150,24 +179,51 @@ def main():
     print('%d blocks found' % len(rects))
     if len(rects) < 10:
         sys.exit('the logo changed: expected the cup to be made of bright blocks')
+    full = logo_square(img)
+    ground = full.getpixel((200, 200))[:3]  # the dark green inside the frame
 
     for app in ('cuppa-desktop', 'cuppa-web'):
         src = os.path.join(ROOT, 'apps', app, 'frontend', 'src')
         build_font(rects, os.path.join(src, 'cuppa-icons.ttf'), os.path.join(src, 'cuppa-icons.woff2'))
 
-    # Desktop app icon: 1024 with the margin macOS expects, and a full-bleed .ico for Windows.
-    build = os.path.join(ROOT, 'apps', 'cuppa-desktop', 'build')
-    rounded_square(img, rects, 1024, radius=0.2, pad=0.1).save(os.path.join(build, 'appicon.png'))
-    bleed = rounded_square(img, rects, 256, radius=0.18)
-    bleed.save(os.path.join(build, 'windows', 'icon.ico'), sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])
+    # assets/icons: the whole set, to take from.
+    out = os.path.join(ROOT, 'assets', 'icons')
+    os.makedirs(out, exist_ok=True)
+    for size in (16, 24, 32, 48, 64, 96, 128, 180, 192, 256, 384, 512, 1024):
+        sized(full, size).save(os.path.join(out, 'icon-%d.png' % size))
+    save_ico(os.path.join(out, 'icon.ico'), full, (16, 24, 32, 48, 64, 128, 256))
+    save_icns(os.path.join(out, 'icon.icns'), full)
+    maskable(full, 512, ground).save(os.path.join(out, 'maskable-512.png'))
+    for size in (16, 22, 24, 32, 48, 64, 128, 256, 512):
+        d = os.path.join(out, 'hicolor', '%dx%d' % (size, size), 'apps')
+        os.makedirs(d, exist_ok=True)
+        sized(full, size).save(os.path.join(d, 'cuppa.png'))
 
-    # Web favicon set.
+    # Desktop app (Wails reads build/appicon.png; the others are used as they are).
+    build = os.path.join(ROOT, 'apps', 'cuppa-desktop', 'build')
+    sized(full, 1024).save(os.path.join(build, 'appicon.png'))
+    save_ico(os.path.join(build, 'windows', 'icon.ico'), full, (16, 24, 32, 48, 64, 128, 256))
+    save_icns(os.path.join(build, 'darwin', 'icon.icns'), full)
+
+    # Web.
     pub = os.path.join(ROOT, 'apps', 'cuppa-web', 'frontend', 'public')
-    for size in (16, 32, 48, 192, 512):
-        rounded_square(img, rects, size, radius=0.18).save(os.path.join(pub, 'favicon-%d.png' % size))
-    rounded_square(img, rects, 180, radius=0.0).save(os.path.join(pub, 'apple-touch-icon.png'))
-    rounded_square(img, rects, 256, radius=0.18).save(
-        os.path.join(pub, 'favicon.ico'), sizes=[(16, 16), (32, 32), (48, 48)])
+    for name in ('favicon-192.png', 'favicon-512.png'):  # names an earlier build used
+        old = os.path.join(pub, name)
+        if os.path.exists(old):
+            os.remove(old)
+    with open(os.path.join(ROOT, 'assets', 'cuppa.svg'), 'rb') as f:
+        svg = f.read()
+    with open(os.path.join(pub, 'favicon.svg'), 'wb') as f:
+        f.write(svg)
+    for size in (16, 32, 48):
+        sized(full, size).save(os.path.join(pub, 'favicon-%d.png' % size))
+    save_ico(os.path.join(pub, 'favicon.ico'), full, (16, 32, 48))
+    sized(full, 180).save(os.path.join(pub, 'apple-touch-icon.png'))
+    sized(full, 192).save(os.path.join(pub, 'android-chrome-192.png'))
+    sized(full, 512).save(os.path.join(pub, 'android-chrome-512.png'))
+    maskable(full, 512, ground).save(os.path.join(pub, 'maskable-512.png'))
+    with open(os.path.join(pub, 'site.webmanifest'), 'w', encoding='utf8', newline='\n') as f:
+        f.write(MANIFEST)
     print('done')
 
 
