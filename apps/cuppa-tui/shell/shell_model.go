@@ -180,6 +180,8 @@ func (m *Model) settle() tea.Cmd {
 	m.bar.SetEnabled(menubar.EditRedo, m.ed.CanRedo())
 	hasSel := len(m.ed.Selected()) > 0
 	m.bar.SetEnabled(menubar.EditDuplicate, hasSel)
+	m.bar.SetEnabled(menubar.EditCopy, hasSel)
+	m.bar.SetEnabled(menubar.EditPaste, m.ed.CanPaste())
 	m.bar.SetEnabled(menubar.EditDelete, hasSel)
 	m.bar.SetEnabled(menubar.EditGroup, m.ed.CanGroup())
 	m.bar.SetEnabled(menubar.EditUngroup, m.ed.CanUngroup())
@@ -238,6 +240,10 @@ func (m *Model) perform(a menubar.Action) {
 		m.ed.Undo()
 	case menubar.EditRedo:
 		m.ed.Redo()
+	case menubar.EditCopy:
+		m.ed.Copy()
+	case menubar.EditPaste:
+		m.ed.Paste()
 	case menubar.EditDuplicate:
 		m.ed.Duplicate()
 	case menubar.EditDelete:
@@ -269,7 +275,8 @@ func (m *Model) perform(a menubar.Action) {
 
 const shortcutsText = "Ctrl+N  New            Ctrl+O  Open\n" +
 	"Ctrl+S  Save           Ctrl+Q  Quit\n" +
-	"Ctrl+Z  Undo           Ctrl+Y  Redo\n" +
+	"Ctrl+Z  Undo           Ctrl+Y  Redo (also Ctrl+Shift+Z)\n" +
+	"Ctrl+C  Copy           Ctrl+V  Paste\n" +
 	"Ctrl+G  Group          Ctrl+U  Ungroup\n" +
 	"Del     Delete         Esc     Deselect / cancel\n\n" +
 	"Everything else is the mouse: drag components from the left onto\n" +
@@ -400,7 +407,7 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		return
 	}
 	switch text {
-	case "ctrl+c", "ctrl+q":
+	case "ctrl+q":
 		m.flow.Quit()
 		return
 	case "ctrl+p":
@@ -442,9 +449,13 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		m.ed.Group()
 	case text == "ctrl+u":
 		m.ed.Ungroup()
+	case text == "ctrl+c":
+		m.ed.Copy()
+	case text == "ctrl+v":
+		m.ed.Paste()
 	case text == "ctrl+z":
 		m.ed.Undo()
-	case text == "ctrl+y":
+	case text == "ctrl+y", text == "ctrl+shift+z":
 		m.ed.Redo()
 	}
 }

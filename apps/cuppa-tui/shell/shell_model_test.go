@@ -106,8 +106,8 @@ func TestKeyboardBasics(t *testing.T) {
 		t.Fatal("delete key should remove the selection")
 	}
 	// The design changed since it was loaded, so quitting asks first.
-	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}); cmd != nil {
-		t.Fatal("ctrl+c on unsaved work must ask, not quit")
+	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Mod: tea.ModCtrl}); cmd != nil {
+		t.Fatal("ctrl+q on unsaved work must ask, not quit")
 	}
 	if m.flow.Modal() == nil {
 		t.Fatal("expected the unsaved-changes dialog")
@@ -118,9 +118,9 @@ func TestKeyboardBasics(t *testing.T) {
 	}
 }
 
-func TestCtrlCQuitsAtOnceWhenNothingIsUnsaved(t *testing.T) {
+func TestCtrlQQuitsAtOnceWhenNothingIsUnsaved(t *testing.T) {
 	m := newShell(t)
-	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}); cmd == nil {
+	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'q', Mod: tea.ModCtrl}); cmd == nil {
 		t.Fatal("clean design should quit")
 	}
 }

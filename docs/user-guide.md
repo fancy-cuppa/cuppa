@@ -97,10 +97,11 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 | Key | Action |
 |---|---|
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
-| Ctrl+Z / Ctrl+Y | Undo / Redo |
+| Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) | Undo / Redo |
+| Ctrl+C / Ctrl+V | Copy / Paste the selection (each paste lands a little further on; works between designs) |
 | Del | Delete the selection |
 | Esc | Deselect, cancel a drag, close a menu or dialog |
-| Ctrl+Q or Ctrl+C | Quit |
+| Ctrl+Q | Quit (Ctrl+C is Copy) |
 
 ## Troubleshooting
 
