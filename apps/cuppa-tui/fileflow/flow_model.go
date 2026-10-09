@@ -50,10 +50,19 @@ type Flow struct {
 
 	job      *Job
 	jobLabel string
+
+	// locate finds freeze; tests replace it.
+	locate func() (string, error)
+	// freeze caches whether freeze was found at the last check.
+	freeze bool
 }
 
 // New returns a flow editing ed.
-func New(ed *editor.Editor, cat scene.Catalog) *Flow { return &Flow{ed: ed, cat: cat} }
+func New(ed *editor.Editor, cat scene.Catalog) *Flow {
+	f := &Flow{ed: ed, cat: cat, locate: image.Locate}
+	f.CheckFreeze()
+	return f
+}
 
 // Path is the file the design was last loaded from or saved to, or "".
 func (f *Flow) Path() string { return f.path }
@@ -246,6 +255,10 @@ func (f *Flow) guard(then func()) {
 
 // ExportImage asks for a file name and renders the design through Freeze.
 func (f *Flow) ExportImage(kind image.Format) {
+	if !f.CheckFreeze() {
+		f.Notice("Freeze is needed for images", freezeHelp)
+		return
+	}
 	f.askExport("Export "+strings.ToUpper(string(kind)), "."+string(kind), func(path string) {
 		ansi := text.ANSI(f.ed.Document(), f.cat)
 		f.job = &Job{Run: func() error { return image.Write(path, ansi, image.Options{Window: true}) }}
@@ -308,4 +321,44 @@ func describe(err error) string {
 		return "Permission denied."
 	}
 	return err.Error()
+}
+
+// freezeHelp tells the user how to get Freeze.
+const freezeHelp = "Exporting PNG, SVG and WebP pictures uses Freeze, a separate tool from Charm that is not installed on this computer.\n\n" +
+	"Install it with one of:\n" +
+	"  go install github.com/charmbracelet/freeze@latest\n" +
+	"  brew install charmbracelet/tap/freeze\n" +
+	"  or download it from github.com/charmbracelet/freeze/releases\n\n" +
+	"Then restart Cuppa. If it is installed somewhere unusual, set CUPPA_FREEZE to its path. Text export works without it."
+
+// SetFreezeLookup replaces how freeze is found, for tests of front ends.
+func (f *Flow) SetFreezeLookup(locate func() (string, error)) {
+	f.locate = locate
+	f.CheckFreeze()
+}
+
+// FreezeAvailable is whether freeze was found at the last check.
+func (f *Flow) FreezeAvailable() bool { return f.freeze }
+
+// CheckFreeze looks for freeze again and returns whether it was found.
+func (f *Flow) CheckFreeze() bool {
+	_, err := f.locate()
+	f.freeze = err == nil
+	return f.freeze
+}
+
+// Welcome tells a first-time user that picture export needs Freeze, once:
+// marker is a file recording that the notice was shown. It does nothing when
+// freeze is installed or the notice was shown before.
+func (f *Flow) Welcome(marker string) {
+	if f.freeze || marker == "" {
+		return
+	}
+	if _, err := os.Stat(marker); err == nil {
+		return
+	}
+	f.Notice("Welcome to Cuppa", freezeHelp)
+	if err := os.MkdirAll(filepath.Dir(marker), 0o755); err == nil {
+		_ = os.WriteFile(marker, []byte("shown\n"), 0o644)
+	}
 }
