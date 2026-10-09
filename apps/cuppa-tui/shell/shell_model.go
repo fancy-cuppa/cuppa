@@ -266,6 +266,8 @@ func (m *Model) perform(a menubar.Action) {
 		m.flow.ExportText(true)
 	case menubar.ExportText:
 		m.flow.ExportText(false)
+	case menubar.ExportGo:
+		m.flow.ExportGoSource()
 	case menubar.HelpShortcuts:
 		m.flow.Notice("Shortcuts", shortcutsText)
 	case menubar.HelpAbout:

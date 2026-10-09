@@ -48,7 +48,7 @@ func (m *Model) Rect() design.Rect { return m.rect }
 // Lines implements modal.Modal.
 func (m *Model) Lines() []string {
 	inner := m.rect.W - 6
-	field := theme.Fit(string(m.text)+"█", inner)
+	field := theme.Fit(tail(string(m.text)+"█", inner), inner)
 	hint := ""
 	if m.hint != "" {
 		hint = theme.Faded(m.hint)
@@ -142,4 +142,13 @@ func (m *Model) Describe() []a11y.Node {
 		nodes = append(nodes, a11y.Text(m.hint))
 	}
 	return append(nodes, a11y.Button("OK"), a11y.Button("Cancel"))
+}
+
+// tail keeps the end of a long text, where the cursor is, with an ellipsis in front.
+func tail(s string, width int) string {
+	if ansi.StringWidth(s) <= width {
+		return s
+	}
+	r := []rune(s)
+	return "…" + string(r[len(r)-(width-1):])
 }
