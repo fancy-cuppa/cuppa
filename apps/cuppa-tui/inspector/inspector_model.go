@@ -35,10 +35,17 @@ type Model struct {
 	editing string // field being typed into: "x", "y", "w", "h", "name" or "prop:<key>"
 	buf     string
 	message string
+
+	// snap reads and changes the stage setting this pane exposes as a checkbox.
+	snapGet func() bool
+	snapSet func(bool)
 }
 
 // New returns an inspector editing through ed.
 func New(ed *editor.Editor, cat Catalog) *Model { return &Model{ed: ed, cat: cat} }
+
+// BindSnap connects the "snap to guides" checkbox to the stage setting.
+func (m *Model) BindSnap(get func() bool, set func(bool)) { m.snapGet, m.snapSet = get, set }
 
 // SetSize sets the pane size in cells.
 func (m *Model) SetSize(w, h int) { m.w, m.h = w, h }

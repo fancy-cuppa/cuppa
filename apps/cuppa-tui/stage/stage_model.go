@@ -7,6 +7,7 @@ import (
 	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
 	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
 	"github.com/fancy-cuppa/cuppa/libs/canvas/hittest"
+	"github.com/fancy-cuppa/cuppa/libs/canvas/snap"
 	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
 	"github.com/fancy-cuppa/cuppa/libs/document/design"
 )
@@ -46,11 +47,14 @@ type Model struct {
 	marqueeAdditive        bool
 
 	ghost *design.Rect
+	// snapOn turns alignment snapping on; guides are the lines of the last snap.
+	snapOn bool
+	guides []snap.Guide
 }
 
 // New returns a stage editing through ed.
 func New(ed *editor.Editor, cat Catalog) *Model {
-	return &Model{ed: ed, cat: cat}
+	return &Model{ed: ed, cat: cat, snapOn: true}
 }
 
 // SetSize sets the pane size in cells.
@@ -67,6 +71,15 @@ func (m *Model) Canvas(x, y int) (int, int) { return x + m.offX, y + m.offY }
 
 // Contains reports whether pane coordinates lie inside the pane.
 func (m *Model) Contains(x, y int) bool { return x >= 0 && y >= 0 && x < m.w && y < m.h }
+
+// Snap reports whether moving snaps to other components and the canvas edges.
+func (m *Model) Snap() bool { return m.snapOn }
+
+// SetSnap turns snapping on or off.
+func (m *Model) SetSnap(on bool) {
+	m.snapOn = on
+	m.guides = nil
+}
 
 // SetGhost shows (or, with nil, hides) the outline of a component being
 // dragged in from the palette. The rectangle is in canvas cells.
@@ -146,7 +159,11 @@ func (m *Model) drag(cx, cy int) {
 		if !ok {
 			return
 		}
-		m.ed.MoveSelectionBy(cx-m.grabDX-n.Rect.X, cy-m.grabDY-n.Rect.Y)
+		dx, dy := cx-m.grabDX-n.Rect.X, cy-m.grabDY-n.Rect.Y
+		if m.snapOn {
+			dx, dy = m.snapDelta(dx, dy)
+		}
+		m.ed.MoveSelectionBy(dx, dy)
 	case resizing:
 		minW, minH := 1, 1
 		if n, ok := m.ed.Document().Get(m.target); ok {
@@ -162,6 +179,7 @@ func (m *Model) drag(cx, cy int) {
 }
 
 func (m *Model) release() {
+	m.guides = nil
 	switch m.mode {
 	case moving, resizing:
 		m.ed.EndGesture()
@@ -187,3 +205,30 @@ func (m *Model) marqueeRect() design.Rect {
 func (m *Model) Lines() []string {
 	return theme.Block(m.render().Lines(), m.w, m.h)
 }
+
+// snapDelta adjusts a proposed move of the selection so it aligns with the
+// other components or the canvas, remembering the guides to draw.
+func (m *Model) snapDelta(dx, dy int) (int, int) {
+	doc := m.ed.Document()
+	var union design.Rect
+	var others []design.Rect
+	first := true
+	for _, n := range doc.Nodes {
+		if !m.ed.IsSelected(n.ID) {
+			others = append(others, n.Rect)
+			continue
+		}
+		if first {
+			union, first = n.Rect, false
+		} else {
+			union = union.Union(n.Rect)
+		}
+	}
+	proposed := union.Translate(dx, dy).MoveInto(doc.Bounds())
+	res := snap.Snap(proposed, others, doc.Bounds(), snapThreshold)
+	m.guides = res.Guides
+	return dx + res.DX, dy + res.DY
+}
+
+// snapThreshold is how close, in cells, an edge must be to snap.
+const snapThreshold = 2

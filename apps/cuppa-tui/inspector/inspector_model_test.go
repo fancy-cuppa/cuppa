@@ -167,3 +167,17 @@ func TestEmptyStateAndSizing(t *testing.T) {
 		t.Fatalf("empty state wrong:\n%s", strings.Join(lines, "\n"))
 	}
 }
+
+func TestSnapCheckboxTogglesTheBoundSetting(t *testing.T) {
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 100, 40))
+	m := New(ed, cat)
+	m.SetSize(32, 30)
+	on := true
+	m.BindSnap(func() bool { return on }, func(v bool) { on = v })
+	m.Lines()
+	clickText(t, m, "Snap to guides", "[x]")
+	if on {
+		t.Fatal("clicking the checkbox should switch snapping off")
+	}
+}

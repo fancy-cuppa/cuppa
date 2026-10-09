@@ -142,3 +142,37 @@ func TestRenderIsExactlyPaneSized(t *testing.T) {
 		t.Fatal("selection handles not drawn")
 	}
 }
+
+func TestDraggingSnapsToANeighbourAndShowsAGuide(t *testing.T) {
+	m, ed, id := setup(t) // box at (10,5) 24x6
+	other, _ := ed.Add("lipgloss.label", 60, 20)
+	ed.Clear()
+	// Move the box so its left edge lands one cell off the label's left edge (60).
+	down(m, 15, 8)
+	drag(m, 15+49, 8) // box.X -> 59
+	if got := rect(ed, id); got.X != 60 {
+		t.Fatalf("X = %d, want 60 (snapped to the label at %v)", got.X, other)
+	}
+	if len(m.guides) == 0 {
+		t.Fatal("no guide recorded while snapped")
+	}
+	up(m, 15+49, 8)
+	if len(m.guides) != 0 {
+		t.Fatal("guides should clear on release")
+	}
+}
+
+func TestSnapCanBeSwitchedOff(t *testing.T) {
+	m, ed, id := setup(t)
+	if _, err := ed.Add("lipgloss.label", 60, 20); err != nil {
+		t.Fatal(err)
+	}
+	ed.Clear()
+	m.SetSnap(false)
+	down(m, 15, 8)
+	drag(m, 15+49, 8)
+	up(m, 15+49, 8)
+	if got := rect(ed, id); got.X != 59 {
+		t.Fatalf("X = %d, want the unsnapped 59", got.X)
+	}
+}

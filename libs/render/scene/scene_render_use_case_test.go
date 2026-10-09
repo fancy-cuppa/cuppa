@@ -71,3 +71,27 @@ func TestUnknownComponentFallsBackToPlaceholder(t *testing.T) {
 		t.Fatalf("placeholder missing name: %q", got)
 	}
 }
+
+func TestNewComponentsDrawRecognisableContent(t *testing.T) {
+	cat := standard.Default()
+	cases := []struct {
+		id    string
+		w, h  int
+		props map[string]string
+		want  string
+	}{
+		{"bubbles.paginator", 10, 1, map[string]string{"total": "3", "page": "2"}, "• • •"},
+		{"bubbles.timer", 20, 1, map[string]string{"value": "01:23", "label": "Steep"}, "Steep 01:23"},
+		{"huh.confirm", 30, 3, map[string]string{"title": "Sure?"}, "Sure?"},
+		{"ntcharts.sparkline", 8, 1, map[string]string{"values": "1,2,3,4,5,6,7,8"}, "▁"},
+		{"glamour.markdown", 30, 3, map[string]string{"markdown": "# Hi|**bold** word"}, "bold word"},
+		{"community.statusbar", 40, 1, map[string]string{"left": "main.go"}, "main.go"},
+		{"bubbles.help", 40, 1, map[string]string{"bindings": "q:quit"}, "q quit"},
+	}
+	for _, c := range cases {
+		n := design.Node{Component: c.id, Rect: design.Rect{W: c.w, H: c.h}, Props: c.props}
+		if got := text(RenderNode(n, cat).Lines()); !strings.Contains(got, c.want) {
+			t.Errorf("%s: %q not found in\n%s", c.id, c.want, got)
+		}
+	}
+}

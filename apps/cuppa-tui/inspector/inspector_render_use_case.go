@@ -75,6 +75,20 @@ func (m *Model) empty(b *builder) {
 	b.text(theme.Bold(" Canvas")).end()
 	b.text(fmt.Sprintf(" %d × %d cells", doc.Width, doc.Height)).end()
 	b.text(fmt.Sprintf(" %d components", len(doc.Nodes))).end()
+	b.blank()
+	m.snapRow(b)
+}
+
+// snapRow is the "snap to guides" checkbox.
+func (m *Model) snapRow(b *builder) {
+	if m.snapGet == nil {
+		return
+	}
+	mark := "[ ]"
+	if m.snapGet() {
+		mark = "[x]"
+	}
+	b.text(" ").add(theme.Button(mark+" Snap to guides", true), func() { m.snapSet(!m.snapGet()) }).end()
 }
 
 func (m *Model) group(b *builder) {
@@ -82,6 +96,8 @@ func (m *Model) group(b *builder) {
 	b.blank()
 	m.order(b)
 	m.actions(b)
+	b.blank()
+	m.snapRow(b)
 }
 
 func (m *Model) single(b *builder, n design.Node) {
@@ -99,6 +115,8 @@ func (m *Model) single(b *builder, n design.Node) {
 	b.text(fmt.Sprintf(" Layer %d of %d", doc.Index(n.ID)+1, len(doc.Nodes))).end()
 	m.order(b)
 	m.actions(b)
+	b.blank()
+	m.snapRow(b)
 	m.properties(b, n)
 	if m.message != "" {
 		b.blank()
