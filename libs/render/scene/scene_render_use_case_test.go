@@ -92,6 +92,12 @@ func TestNewComponentsDrawRecognisableContent(t *testing.T) {
 		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|  tui/|go.work", "selected": "0"}, "▾ apps/"},
 		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|  tui/|go.work", "selected": "0"}, "  ▸ tui/"},
 		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|libs/", "selected": "1"}, "▸ apps/"},
+		{"community.frame", 20, 3, map[string]string{"title": "Menu", "position": "center", "border": "normal"}, "┌────── Menu ──────┐"},
+		{"community.dialog", 30, 7, map[string]string{"text": "Pour?", "buttons": "Yes,No"}, "Pour?"},
+		{"community.dialog", 30, 7, map[string]string{"text": "Pour?", "buttons": "Yes,No"}, "  Yes    No  "},
+		{"community.statusmessage", 30, 1, map[string]string{"text": "Steeping", "spinner": "true"}, "Steeping ⣾"},
+		{"community.toast", 24, 3, map[string]string{"kind": "error", "message": "Spilled", "symbols": "ascii"}, "[!!] Spilled"},
+		{"community.toast", 24, 3, map[string]string{"kind": "info", "message": "Ready"}, "ⓘ Ready"},
 	}
 	for _, c := range cases {
 		n := design.Node{Component: c.id, Rect: design.Rect{W: c.w, H: c.h}, Props: c.props}

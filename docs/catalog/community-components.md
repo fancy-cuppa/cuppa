@@ -9,7 +9,7 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (56)
+## What the catalog has today (60)
 
 | Family | Components |
 |---|---|
@@ -18,7 +18,7 @@ and cannot mix v1 and v2, so v1-only components stay placeholders there.
 | Lip Gloss (9) | box, label, list, tabs, table, tree, joinh, joinv, place |
 | Glamour (1) | markdown |
 | ntcharts (7) | bar, line, sparkline, streamline, time series, heatmap, canvas |
-| Community (7) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree |
+| Community (11) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast |
 | Bundled pack (2) | Card, Alert |
 
 ## 1. Official libraries: what is missing
@@ -46,15 +46,15 @@ Bubble Tea column: the major version in the module's `go.mod`.
 | Evertras/bubble-table | Interactive, paginated, filterable table | v0.23.0 (2026-09) | 579 | MIT | **v2** | In catalog (`community.bubbletable`) |
 | NimbleMarkets/ntcharts/v2 | Seven chart types | v2.7.2 (2026-10) | 804 | MIT | **v2** | In catalog. Use the `/v2` module, not the root one (that is v1) |
 | lrstanley/bubblezone/v2 | Mouse regions | v2.0.0 (2026-02) | 918 | MIT | **v2** | Non-visual. README says it may not work with the Lip Gloss v2 compositor, which has its own mouse support |
-| clambin/bubbles (codeberg) | **frame** (titled container), **dialog** (buttons), **statusbar**, FilterTable, ticker, msglogger | v0.14.1 (2026-08) | n/a | MIT | **v2** | **Add** frame, dialog, statusbar. Best v2 source for these three |
-| DaltonSW/BubbleUp/v2 | Toast notifications: info, error, success, custom; six positions; NerdFont, Unicode or ASCII symbols | v2.0.0 (2026-08) | 52 | MIT | **v2** | **Add** `community.toast`. The root module is v1, so the generator must use `/v2` |
+| clambin/bubbles (codeberg) | **frame** (titled container), **dialog** (buttons), **statusbar**, FilterTable, ticker, msglogger | v0.14.1 (2026-08) | n/a | MIT | **v2** | **Added** (#107): `community.frame`, `community.dialog`, `community.statusmessage`. Its status bar is one message line with a level and a spinner, not teacup's four segments, so teacup's `community.statusbar` stays |
+| DaltonSW/BubbleUp/v2 | Toast notifications: info, error, success, custom; six positions; NerdFont, Unicode or ASCII symbols | v2.0.0 (2026-08) | 52 | MIT | **v2** | **Added** (#107): `community.toast`. The import path is `go.dalton.dog/bubbleup/v2` (the github.com path on the proxy is the v1 module) |
 | erikgeiser/promptkit | Selection, text input, confirmation prompts | v0.12.0 (2026-07) | 311 | MIT | **v2** | Still skip: Huh covers these |
-| CameronJHall/bubble-datepicker/v2 | Date picker (a fork of EthanEFung's) | v2.0.0 pre (2026-03) | 0 | MIT | **v2** | Switch `community.datepicker` to this; the original is v1 and unmaintained since January |
+| CameronJHall/bubble-datepicker/v2 | Date picker (a fork of EthanEFung's) | v2.0.0 pre (2026-03) | 0 | MIT | **v2** | **Done** (#107): `community.datepicker` now points at this; the original is v1 and unmaintained since January |
 | sraaaaaaay/bubbletea-modal/v2 | Modal, dialog and toast overlays using `lipgloss.NewLayer()` | pre-release (2026-04) | 0 | MIT | **v2** (but `go.mod` still lists Lip Gloss v1) | Backlog: watch; replaces `community.overlay` if it matures |
 | rmhubbert/bubbletea-overlay | Overlay compositing | v0.6.9 (2026-08) | 126 | MIT | v1 | Keep as placeholder; superseded by Lip Gloss v2 layers |
 | 76creates/stickers | FlexBox, responsive table | v1.5.0 (2025-09) | 402 | MIT | v1 | Keep `community.flexbox` as placeholder |
 | treilik/bubbleboxer | Layout tree | v0.2.0 (2023) | 87 | MIT | v1 (old) | Keep as placeholder; stale |
-| mistakenelf/teacup (statusbar, filetree) | Status bar, file tree | v0.4.1 (2023) | 272 | MIT | v1 (old) | **Replace**: statusbar by clambin's; filetree by `bubbles.tree` |
+| mistakenelf/teacup (statusbar, filetree) | Status bar, file tree | v0.4.1 (2023) | 272 | MIT | v1 (old) | Filetree is superseded by `bubbles.tree`; statusbar stays (different shape from clambin's) |
 | lrstanley/bubbletint/v2 | 340+ colour schemes, `color.Color` based | v2.0.2 (2026-05) | 150 | MIT | none | Not a component. Strong fit for the theme work: offer these palettes in the colour picker |
 | Digital-Shane/treeview/v2 | Tree with search and icon providers | v2.0.1 (2026-05) | 86 | **GPL-3.0** | v2 | **Skip**: a generated program that imports it would have to be GPL |
 | pgavlin/tea-grid | Data grid with sorting, filters, pinning | pre (2026-06) | 3 | **none** | v2 | **Skip**: no licence means no right to use it |

@@ -60,13 +60,17 @@ var painters = map[string]painter{
 	"ntcharts.heatmap":    paintHeatMap,
 	"ntcharts.canvas":     paintChartCanvas,
 
-	"community.bubbletable": paintBubbleTableCommunity,
-	"community.flexbox":     paintFlexBox,
-	"community.boxer":       paintBoxer,
-	"community.datepicker":  paintDatePicker,
-	"community.overlay":     paintOverlay,
-	"community.statusbar":   paintStatusBar,
-	"community.filetree":    paintFileTree,
+	"community.bubbletable":   paintBubbleTableCommunity,
+	"community.flexbox":       paintFlexBox,
+	"community.boxer":         paintBoxer,
+	"community.datepicker":    paintDatePicker,
+	"community.overlay":       paintOverlay,
+	"community.statusbar":     paintStatusBar,
+	"community.filetree":      paintFileTree,
+	"community.frame":         paintTitledFrame,
+	"community.dialog":        paintDialog,
+	"community.statusmessage": paintStatusMessage,
+	"community.toast":         paintToast,
 }
 
 // Render paints every visible node of doc, back to front, onto a new grid the

@@ -131,3 +131,102 @@ func paintFileTree(g *grid.Grid, p Props) {
 		g.Text(0, i, name, style, g.W)
 	}
 }
+
+// paintTitledFrame draws clambin's frame: the title sits in the top border,
+// padded by one cell each side, at the left, centre or right.
+func paintTitledFrame(g *grid.Grid, p Props) {
+	style := fg(p.Str("color"))
+	g.Box(full(g), grid.BorderNamed(p.Str("border")), style)
+	title := " " + p.Str("title") + " "
+	room := g.W - 2
+	if p.Str("title") != "" && len([]rune(title)) <= room {
+		x := 1
+		switch p.Str("position") {
+		case "center":
+			x = 1 + (room-len([]rune(title)))/2
+		case "right":
+			x = g.W - 1 - len([]rune(title))
+		}
+		g.Text(x, 0, title, grid.Style{Fg: p.Str("color"), Bold: true}, len([]rune(title)))
+	}
+	for i, l := range wrap(p.Str("content"), g.W-2) {
+		if 1+i >= g.H-1 {
+			break
+		}
+		g.Text(1, 1+i, l, grid.Style{}, g.W-2)
+	}
+}
+
+// paintDialog draws clambin's dialog: a rounded box, the text centred, and a
+// row of buttons below it with the active one inverted.
+func paintDialog(g *grid.Grid, p Props) {
+	g.Box(full(g), grid.BorderNamed("rounded"), fg(p.Str("color")))
+	inner := g.W - 2
+	buttons := p.List("buttons")
+	if g.H >= 5 {
+		row := g.H - 3
+		active := pick(p, "active", len(buttons))
+		total := 0
+		for _, b := range buttons {
+			total += len([]rune(b)) + 4
+		}
+		x := 1 + max((inner-total)/2, 0)
+		for i, b := range buttons {
+			label := "  " + b + "  "
+			style := grid.Style{Fg: "255", Bg: "238"}
+			if i == active {
+				style = grid.Style{Fg: "0", Bg: "255"}
+			}
+			x += g.Text(x, row, label, style, g.W-1-x)
+		}
+	}
+	for i, l := range wrap(p.Str("text"), inner) {
+		y := 2 + i
+		if y >= g.H-3 {
+			break
+		}
+		g.Text(1+max((inner-len([]rune(l)))/2, 0), y, l, grid.Style{Fg: "255"}, inner)
+	}
+}
+
+// paintStatusMessage draws clambin's status bar: one line of text styled by
+// its level, followed by a spinner frame when asked.
+func paintStatusMessage(g *grid.Grid, p Props) {
+	style := grid.Style{Fg: "252", Bg: "236"}
+	switch p.Str("level") {
+	case "warning":
+		style = grid.Style{Fg: "0", Bg: "220"}
+	case "error":
+		style = grid.Style{Fg: "255", Bg: "160"}
+	}
+	g.Fill(full(g), ' ', style)
+	text := " " + p.Str("text")
+	if p.Bool("spinner") {
+		text += " ⣾"
+	}
+	g.Text(0, 0, text, style, g.W)
+}
+
+// toastKinds are BubbleUp's built-in alert kinds: colour and the two prefix sets.
+var toastKinds = map[string]struct{ color, unicode, ascii string }{
+	"info":  {"#00ff00", "ⓘ", "(i)"},
+	"warn":  {"#ffff00", "⚠", "(!)"},
+	"error": {"#ff0000", "✘", "[!!]"},
+	"debug": {"#ff00ff", "?", "(?)"},
+}
+
+// paintToast draws a BubbleUp alert: a rounded border and the symbol and
+// message in the colour of the kind.
+func paintToast(g *grid.Grid, p Props) {
+	kind, ok := toastKinds[p.Str("kind")]
+	if !ok {
+		kind = toastKinds["info"]
+	}
+	prefix := kind.unicode
+	if p.Str("symbols") == "ascii" {
+		prefix = kind.ascii
+	}
+	style := fg(kind.color)
+	g.Box(full(g), grid.BorderNamed("rounded"), style)
+	g.Text(2, g.H/2, prefix+" "+p.Str("message"), style, g.W-4)
+}
