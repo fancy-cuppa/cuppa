@@ -74,7 +74,7 @@ jobs:
       # mnci:slot after-install  (your own steps go between these two lines; mnci upgrade keeps them)
       # WORKAROUND for MoNecromanCI#405: 'mnci ci setup' looks for a root go.mod, but mnci
       # generates a go.work, so Go and golangci-lint are skipped. Remove once fixed upstream.
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.work
           cache: false
