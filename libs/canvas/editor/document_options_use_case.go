@@ -73,6 +73,34 @@ func (e *Editor) SetEffect(name string, on bool) error {
 	return nil
 }
 
+// SetProfile chooses the colour profile the design targets ("" for true
+// colour, "256", "16" or "none"), as one undo step.
+func (e *Editor) SetProfile(profile string) error {
+	if !design.ValidProfile(profile) {
+		return fmt.Errorf("editor: the colour profile is true colour, 256, 16 or none")
+	}
+	if profile == e.doc.Profile {
+		return nil
+	}
+	e.apply(func() bool {
+		e.doc.Profile = profile
+		return true
+	})
+	return nil
+}
+
+// SetLight previews the design on a light (true) or dark (false) terminal, as
+// one undo step.
+func (e *Editor) SetLight(light bool) {
+	if light == e.doc.Light {
+		return
+	}
+	e.apply(func() bool {
+		e.doc.Light = light
+		return true
+	})
+}
+
 // Effect reports whether a canvas option is on. The grid is on unless hidden.
 func (e *Editor) Effect(name string) bool {
 	switch name {

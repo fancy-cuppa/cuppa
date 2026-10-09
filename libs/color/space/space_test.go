@@ -89,3 +89,11 @@ func TestLuma(t *testing.T) {
 		t.Fatal("luma should rank white above blue above black")
 	}
 }
+
+func TestNearest16PicksTheClosestSystemColour(t *testing.T) {
+	for c, want := range map[RGB]int{{250, 10, 10}: 9, {0, 0, 0}: 0, {255, 255, 255}: 15, {10, 10, 200}: 4} {
+		if got := Nearest16(c); got != want {
+			t.Errorf("Nearest16(%v) = %d, want %d", c, got, want)
+		}
+	}
+}
