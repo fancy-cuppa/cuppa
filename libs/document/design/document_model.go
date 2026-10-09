@@ -92,6 +92,10 @@ func (d *Document) ToFront(id NodeID) bool { return d.moveTo(id, len(d.Nodes)-1)
 // ToBack moves the node below every other node.
 func (d *Document) ToBack(id NodeID) bool { return d.moveTo(id, 0) }
 
+// MoveToIndex places the node at position to in z-order (0 is the back) and
+// reports whether the order changed.
+func (d *Document) MoveToIndex(id NodeID, to int) bool { return d.moveTo(id, to) }
+
 // moveTo places the node at position to in z-order and reports whether the
 // order changed.
 func (d *Document) moveTo(id NodeID, to int) bool {

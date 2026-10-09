@@ -11,6 +11,12 @@ type Node struct {
 	Name      string            `json:"name"`
 	Rect      Rect              `json:"rect"`
 	Props     map[string]string `json:"props,omitempty"`
+	// Hidden nodes are not drawn, exported or hit by the pointer; they stay in
+	// the layer list.
+	Hidden bool `json:"hidden,omitempty"`
+	// Locked nodes are drawn but cannot be moved, resized, deleted or have their
+	// properties changed.
+	Locked bool `json:"locked,omitempty"`
 }
 
 // Clone returns a deep copy of the node.
