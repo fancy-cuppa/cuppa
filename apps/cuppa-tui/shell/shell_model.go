@@ -58,13 +58,15 @@ type Model struct {
 // New returns the app with an empty design.
 func New(cat *registry.Registry) *Model {
 	ed := editor.New(cat, design.NewDocument("Untitled", defaultWidth, defaultHeight))
-	return &Model{
+	m := &Model{
 		cat: cat,
 		ed:  ed,
 		pal: palette.New(cat),
 		stg: stage.New(ed, cat),
 		ins: inspector.New(ed, cat),
 	}
+	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
+	return m
 }
 
 // Editor exposes the editor, mainly for tests.

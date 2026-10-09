@@ -37,6 +37,7 @@ func (m *Model) render() *grid.Grid {
 			m.drawSelection(view, n.Rect, len(m.ed.Selected()) == 1)
 		}
 	}
+	m.drawGuides(view)
 	if m.mode == marquee {
 		m.outline(view, m.marqueeRect(), '·', grid.Style{Fg: theme.Accent})
 	}
@@ -90,5 +91,32 @@ func (m *Model) outline(view *grid.Grid, canvas design.Rect, ch rune, s grid.Sty
 	for y := r.Y; y < r.Bottom(); y++ {
 		view.Set(r.X, y, grid.Cell{Ch: ch, Style: s})
 		view.Set(r.Right()-1, y, grid.Cell{Ch: ch, Style: s})
+	}
+}
+
+// drawGuides draws the snap guides over empty canvas cells only, so they never
+// hide a component.
+func (m *Model) drawGuides(view *grid.Grid) {
+	guide := grid.Style{Fg: theme.Accent, Dim: true}
+	blank := func(x, y int) bool {
+		c := view.At(x, y)
+		return c.Ch == 0 || c.Ch == ' ' || c.Ch == '·'
+	}
+	for _, gd := range m.guides {
+		if gd.Vertical {
+			x := gd.Pos - m.offX
+			for y := 0; y < view.H; y++ {
+				if blank(x, y) {
+					view.Set(x, y, grid.Cell{Ch: '┆', Style: guide})
+				}
+			}
+			continue
+		}
+		y := gd.Pos - m.offY
+		for x := 0; x < view.W; x++ {
+			if blank(x, y) {
+				view.Set(x, y, grid.Cell{Ch: '┄', Style: guide})
+			}
+		}
 	}
 }
