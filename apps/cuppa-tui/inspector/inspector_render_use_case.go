@@ -125,6 +125,9 @@ func (m *Model) single(b *builder, n design.Node) {
 	m.editable(b, "name", n.Name, n.Name)
 	b.end()
 	b.text(" ").add(theme.Dim("Type  "), nil).text(n.Component).end()
+	if n.Locked {
+		b.text(" " + theme.Faded("Locked: unlock it in Layers to edit")).end()
+	}
 	b.blank()
 	m.numeric(b, "X", "x", n.Rect.X)
 	m.numeric(b, "Y", "y", n.Rect.Y)
@@ -266,27 +269,5 @@ func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, v
 		}
 	default:
 		m.editable(b, field, value, value)
-	}
-}
-
-// layers lists nodes front to back; clicking one selects it.
-func (m *Model) layers(b *builder) {
-	doc := m.ed.Document()
-	b.blank()
-	b.text(theme.Bold(" Layers")).end()
-	if len(doc.Nodes) == 0 {
-		b.text(theme.Faded(" (none)")).end()
-		return
-	}
-	for i := len(doc.Nodes) - 1; i >= 0; i-- {
-		n := doc.Nodes[i]
-		id := n.ID
-		label := " " + n.Name
-		if m.ed.IsSelected(id) {
-			b.add(theme.Selected(theme.Fit(label, m.w)), func() { m.ed.Select(id) })
-		} else {
-			b.add(label, func() { m.ed.Select(id) })
-		}
-		b.end()
 	}
 }
