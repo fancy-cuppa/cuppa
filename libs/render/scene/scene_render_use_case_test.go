@@ -95,3 +95,37 @@ func TestNewComponentsDrawRecognisableContent(t *testing.T) {
 		}
 	}
 }
+
+func TestTabsOpenTheActiveTabIntoTheWindow(t *testing.T) {
+	cat := standard.Default()
+	n := design.Node{Component: "lipgloss.tabs", Rect: design.Rect{W: 36, H: 6}, Props: map[string]string{"tabs": "One,Two,Three", "active": "2"}}
+	var got []string
+	for _, l := range strings.Split(strings.TrimSuffix(text(RenderNode(n, cat).Lines()), "\n"), "\n") {
+		got = append(got, strings.TrimRight(l, " "))
+	}
+	want := []string{
+		"╭─────╮╭─────╮╭───────╮",
+		"│ One ││ Two ││ Three │",
+		"├─────┴┘     └────────┴────────────╮",
+		"│                                  │",
+		"│                                  │",
+		"╰──────────────────────────────────╯",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("got:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+func TestTabsThatDoNotFitAreCutAndTooSmallFallsBack(t *testing.T) {
+	cat := standard.Default()
+	narrow := design.Node{Component: "lipgloss.tabs", Rect: design.Rect{W: 14, H: 5}, Props: map[string]string{"tabs": "Alpha,Beta,Gamma,Delta"}}
+	for _, l := range strings.Split(text(RenderNode(narrow, cat).Lines()), "\n") {
+		if len([]rune(l)) > 14 {
+			t.Fatalf("a tab spilled past the component: %q", l)
+		}
+	}
+	tiny := design.Node{Component: "lipgloss.tabs", Rect: design.Rect{W: 6, H: 3}}
+	if g := RenderNode(tiny, cat); g.W != 6 || g.H != 3 {
+		t.Fatalf("grid %dx%d", g.W, g.H)
+	}
+}
