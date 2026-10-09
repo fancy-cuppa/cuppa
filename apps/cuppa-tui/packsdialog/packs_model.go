@@ -1,5 +1,6 @@
 // Package packsdialog is the Packs box: every component pack with a checkbox
-// that switches it on or off in the palette.
+// that switches it on or off in the palette, a Remove button on installed
+// packs and an Add button for new .cupp files.
 package packsdialog
 
 import (
@@ -13,7 +14,16 @@ import (
 	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
-const width = 56
+const (
+	width = 60
+	// removeW is the width of the "[Remove]" button, with its leading space.
+	removeW = 9
+	// AddButton and RemoveButton are the Outcome.Button values for those actions;
+	// a removal carries the pack id in Outcome.Value.
+	AddButton    = "Add"
+	RemoveButton = "Remove"
+	doneButton   = "Done"
+)
 
 // Entry is one pack with how many components it holds.
 type Entry struct {
@@ -22,7 +32,7 @@ type Entry struct {
 }
 
 // Model is the open dialog. Switching a pack calls toggle at once, so the
-// palette behind it follows; the box only ends with Done.
+// palette behind it follows; the box ends with Done, Add or Remove.
 type Model struct {
 	entries []Entry
 	enabled func(definition.Family) bool
@@ -30,7 +40,7 @@ type Model struct {
 
 	rect    design.Rect
 	hoverY  int
-	doneHot bool
+	hotBtn  string
 	outcome modal.Outcome
 	done    bool
 }
@@ -62,24 +72,36 @@ func (m *Model) Lines() []string {
 		if m.enabled(e.Pack.ID) {
 			mark = "[x]"
 		}
-		head := fmt.Sprintf(" %s %s", mark, e.Pack.Name)
-		count := theme.Faded(fmt.Sprintf("%d components", e.Count))
-		head = theme.Fit(head, max(inner-ansi.StringWidth(count)-1, 1))
-		head += " " + count
-		if m.hoverY >= rowTop(i) && m.hoverY < rowTop(i)+2 {
-			head = theme.Selected(ansi.Strip(head))
+		tail := theme.Faded(countText(e.Count))
+		if e.Pack.Source != "" {
+			tail += " " + theme.Button("[Remove]", true)
+		}
+		head := theme.Fit(fmt.Sprintf(" %s %s", mark, e.Pack.Name), max(inner-ansi.StringWidth(tail)-1, 1))
+		head += " " + tail
+		if m.hoverY == rowTop(i) {
+			head = theme.Hovered(ansi.Strip(head))
 		}
 		content = append(content, " "+head, "      "+theme.Faded(theme.Fit(e.Pack.Description, inner-6)), "")
 	}
-	button := "[ Done ]"
-	if m.doneHot {
-		button = theme.Selected(button)
-	} else {
-		button = theme.Button(button, true)
-	}
-	pad := max(m.rect.W-2-ansi.StringWidth(button)-1, 0)
-	content = append(content, spaces(pad)+button)
+	add, done := m.button(AddButton, "[ Add pack… ]"), m.button(doneButton, "[ Done ]")
+	row := add + " " + done
+	pad := max(m.rect.W-2-ansi.StringWidth(row)-1, 0)
+	content = append(content, spaces(pad)+row)
 	return theme.Panel("Component packs", content, m.rect.W)
+}
+
+func (m *Model) button(id, label string) string {
+	if m.hotBtn == id {
+		return theme.Selected(label)
+	}
+	return theme.Button(label, true)
+}
+
+func countText(n int) string {
+	if n == 1 {
+		return "1 component"
+	}
+	return fmt.Sprintf("%d components", n)
 }
 
 func spaces(n int) string {
@@ -90,24 +112,46 @@ func spaces(n int) string {
 	return string(out)
 }
 
+// buttonAt says which bottom button the box column x is over.
+func (m *Model) buttonAt(x int) string {
+	doneW, addW := ansi.StringWidth("[ Done ]"), ansi.StringWidth("[ Add pack… ]")
+	doneX := m.rect.W - 2 - doneW
+	addX := doneX - 1 - addW
+	switch {
+	case x >= doneX && x < doneX+doneW:
+		return doneButton
+	case x >= addX && x < addX+addW:
+		return AddButton
+	}
+	return ""
+}
+
 // Handle implements modal.Modal.
 func (m *Model) Handle(e pointer.Event) {
 	if m.done {
 		return
 	}
 	x, y := e.X-m.rect.X, e.Y-m.rect.Y
-	m.hoverY, m.doneHot = -1, false
+	m.hoverY, m.hotBtn = -1, ""
+	press := e.Phase == pointer.Down && e.Left
 	if i, ok := m.entryAt(y); ok && x > 0 && x < m.rect.W-1 {
+		pack := m.entries[i].Pack
+		if pack.Source != "" && y == rowTop(i) && x >= m.rect.W-1-removeW {
+			if press {
+				m.outcome, m.done = modal.Outcome{Button: RemoveButton, Value: string(pack.ID)}, true
+			}
+			return
+		}
 		m.hoverY = rowTop(i)
-		if e.Phase == pointer.Down && e.Left {
-			m.toggle(m.entries[i].Pack.ID)
+		if press {
+			m.toggle(pack.ID)
 		}
 		return
 	}
-	if y == m.rect.H-2 && x >= m.rect.W-12 && x < m.rect.W-1 {
-		m.doneHot = true
-		if e.Phase == pointer.Down && e.Left {
-			m.finish(false)
+	if y == m.rect.H-2 {
+		m.hotBtn = m.buttonAt(x)
+		if press && m.hotBtn != "" {
+			m.outcome, m.done = modal.Outcome{Button: m.hotBtn}, true
 		}
 	}
 }
@@ -124,13 +168,8 @@ func (m *Model) entryAt(y int) (int, bool) {
 // Key implements modal.Modal.
 func (m *Model) Key(_ string, _, enter, esc bool) {
 	if enter || esc {
-		m.finish(esc)
+		m.outcome, m.done = modal.Outcome{Button: doneButton, Canceled: esc}, true
 	}
-}
-
-func (m *Model) finish(canceled bool) {
-	m.done = true
-	m.outcome = modal.Outcome{Button: "Done", Canceled: canceled}
 }
 
 // Outcome implements modal.Modal.

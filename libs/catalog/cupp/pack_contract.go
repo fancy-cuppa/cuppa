@@ -36,6 +36,8 @@ type Pack struct {
 	Version     string             `json:"version,omitempty"`
 	Description string             `json:"description,omitempty"`
 	Components  []design.Composite `json:"components"`
+	// Path is where the pack was loaded from; it is not part of the file.
+	Path string `json:"-"`
 }
 
 // envelope is the JSON body of the current version.

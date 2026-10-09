@@ -7,7 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/meta-tui/cuppa/apps/cuppa-desktop/terminal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/shell"
-	"github.com/meta-tui/cuppa/libs/catalog/cupp"
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -36,14 +35,14 @@ func (a *App) startup(ctx context.Context) {
 // newModel builds the Cuppa terminal app. The window closes when the user
 // quits from inside it.
 func (a *App) newModel() tea.Model {
-	cat, packProblems := cupp.LoadUser(standard.Default())
-	app := shell.New(cat)
+	app := shell.New(standard.Default())
 	app.RestoreLayout()
+	app.LoadUserPacks()
 	if a.openPath != "" {
 		app.OpenFileOrNotify(a.openPath)
 	}
 	app.Welcome()
-	app.ReportPackProblems(packProblems)
+	app.ReportPackProblems()
 	return terminal.OnQuit(app, func() {
 		a.closing.Store(true)
 		runtime.Quit(a.ctx)

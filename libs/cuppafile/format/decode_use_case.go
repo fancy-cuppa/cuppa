@@ -57,8 +57,26 @@ func normalise(doc design.Document) design.Document {
 		doc.Background = ""
 	}
 	nodes := cleanNodes(doc.Nodes, 0)
+	doc.Embedded = cleanEmbedded(doc.Embedded)
 	doc.Nodes = nodes
 	return doc
+}
+
+// maxEmbedded bounds how many component copies a file may carry.
+const maxEmbedded = 256
+
+// cleanEmbedded keeps the embedded components that are usable and not repeated.
+func cleanEmbedded(in []design.Embedded) []design.Embedded {
+	var out []design.Embedded
+	seen := map[string]bool{}
+	for _, e := range in {
+		if e.ID == "" || seen[e.ID] || e.Composite.Check() != nil || len(out) >= maxEmbedded {
+			continue
+		}
+		seen[e.ID] = true
+		out = append(out, e)
+	}
+	return out
 }
 
 // maxGroupDepth bounds how deeply groups may nest in a file.

@@ -16,6 +16,7 @@ const (
 	EditDelete     Action = "edit.delete"
 	EditGroup      Action = "edit.group"
 	EditUngroup    Action = "edit.ungroup"
+	EditComponent  Action = "edit.component"
 	EditPacks      Action = "edit.packs"
 	ExportPNG      Action = "export.png"
 	ExportSVG      Action = "export.svg"
@@ -59,6 +60,7 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Group", "Ctrl+G", EditGroup},
 		{"Ungroup", "Ctrl+U", EditUngroup},
+		{"Save as component…", "", EditComponent},
 		{separatorLabel, "", nothing},
 		{"Component packs…", "", EditPacks},
 	}},

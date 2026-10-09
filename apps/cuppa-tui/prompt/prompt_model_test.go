@@ -1,0 +1,63 @@
+package prompt
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+)
+
+func open(initial string) *Model {
+	m := New("Save as component", "Name", initial)
+	m.Place(100, 40)
+	return m
+}
+
+func click(m *Model, x, y int) {
+	m.Handle(pointer.Event{X: m.Rect().X + x, Y: m.Rect().Y + y, Phase: pointer.Down, Left: true})
+}
+
+func TestTypingAndEnterReturnTheText(t *testing.T) {
+	m := open("Card")
+	m.Key("s", false, false, false)
+	m.Key("", true, false, false)
+	m.Key("!", false, false, false)
+	m.Key("", false, true, false)
+	o, done := m.Outcome()
+	if !done || o.Canceled || o.Value != "Card!" {
+		t.Fatalf("outcome = %+v %v", o, done)
+	}
+}
+
+func TestAnEmptyNameIsNotAccepted(t *testing.T) {
+	m := open("")
+	m.Key("", false, true, false)
+	if _, done := m.Outcome(); done {
+		t.Fatal("empty text must not confirm")
+	}
+	if !strings.Contains(ansi.Strip(strings.Join(m.Lines(), "\n")), "Type a name first") {
+		t.Fatal("it says why")
+	}
+}
+
+func TestEscAndCancelEndWithoutAValue(t *testing.T) {
+	m := open("x")
+	m.Key("", false, false, true)
+	if o, done := m.Outcome(); !done || !o.Canceled {
+		t.Fatalf("Esc: %+v", o)
+	}
+	m = open("x")
+	click(m, m.Rect().W-6, m.Rect().H-2)
+	if o, done := m.Outcome(); !done || !o.Canceled {
+		t.Fatalf("Cancel button: %+v", o)
+	}
+}
+
+func TestTheOKButtonConfirms(t *testing.T) {
+	m := open("Card")
+	click(m, m.Rect().W-2-ansi.StringWidth(noText)-1-3, m.Rect().H-2)
+	if o, done := m.Outcome(); !done || o.Canceled || o.Value != "Card" {
+		t.Fatalf("OK button: %+v %v", o, done)
+	}
+}

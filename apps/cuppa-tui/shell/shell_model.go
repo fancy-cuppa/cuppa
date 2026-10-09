@@ -44,9 +44,17 @@ const (
 
 // Model is the whole application.
 type Model struct {
-	cat *registry.Registry
+	// cat is what every pane reads components from; base is the built-in set
+	// it is rebuilt from when packs are added, removed or created.
+	cat  *registry.Live
+	base *registry.Registry
 	// packs says which component packs the palette lists.
 	packs *packstate.State
+	// userPacks is the folder of installed packs ("" until LoadUserPacks) and
+	// packProblems what could not be loaded from it.
+	userPacks    string
+	embedded     []design.Embedded
+	packProblems []error
 	ed    *editor.Editor
 	bar   *menubar.Model
 	flow  *fileflow.Flow
@@ -75,17 +83,20 @@ type Model struct {
 
 // New returns the app with an empty design.
 func New(cat *registry.Registry) *Model {
-	ed := editor.New(cat, design.NewDocument("Untitled", defaultWidth, defaultHeight))
+	live := registry.NewLive(cat)
+	ed := editor.New(live, design.NewDocument("Untitled", defaultWidth, defaultHeight))
 	m := &Model{
-		cat:   cat,
+		cat:   live,
+		base:  cat,
 		ed:    ed,
 		bar:   menubar.New(),
-		flow:  fileflow.New(ed, cat),
-		pal:   palette.New(cat),
+		flow:  fileflow.New(ed, live),
+		pal:   palette.New(live),
 		packs: packstate.Open(""),
-		stg:   stage.New(ed, cat),
-		ins:   inspector.New(ed, cat),
+		stg:   stage.New(ed, live),
+		ins:   inspector.New(ed, live),
 	}
+	m.flow.SetOnLoad(m.adoptEmbedded)
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	m.ins.BindColorPicker(m.pickColor)
 	return m
@@ -162,6 +173,7 @@ func (m *Model) settle() tea.Cmd {
 	m.bar.SetEnabled(menubar.EditDelete, hasSel)
 	m.bar.SetEnabled(menubar.EditGroup, m.ed.CanGroup())
 	m.bar.SetEnabled(menubar.EditUngroup, m.ed.CanUngroup())
+	m.bar.SetEnabled(menubar.EditComponent, m.canSaveComponent())
 	for _, a := range []menubar.Action{menubar.ExportPNG, menubar.ExportSVG, menubar.ExportWebP} {
 		m.bar.SetUnavailable(a, !m.flow.FreezeAvailable())
 	}
@@ -219,6 +231,8 @@ func (m *Model) perform(a menubar.Action) {
 		m.ed.Group()
 	case menubar.EditUngroup:
 		m.ed.Ungroup()
+	case menubar.EditComponent:
+		m.saveAsComponent()
 	case menubar.EditPacks:
 		m.openPacks()
 	case menubar.ExportPNG:

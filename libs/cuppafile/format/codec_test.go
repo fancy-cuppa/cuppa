@@ -196,3 +196,22 @@ func TestGroupsRoundTripAndDamagedGroupsAreRepaired(t *testing.T) {
 		t.Fatalf("a plain node cannot hold children: %+v", p)
 	}
 }
+
+func TestEmbeddedComponentsRoundTripAndBadCopiesAreDropped(t *testing.T) {
+	good := design.Composite{ID: "card", Name: "Card", W: 10, H: 3,
+		Nodes: []design.Node{{ID: "a", Component: "lipgloss.box", Name: "Frame", Rect: design.Rect{W: 10, H: 3}}}}
+	bad := design.Composite{ID: "Not Valid", Name: "Bad", W: 10, H: 3}
+	doc := design.NewDocument("e", 40, 10)
+	doc.Embedded = []design.Embedded{{ID: "tea.card", Composite: good}, {ID: "tea.card", Composite: good}, {ID: "tea.bad", Composite: bad}, {ID: "", Composite: good}}
+	data, err := Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Embedded) != 1 || got.Embedded[0].ID != "tea.card" || got.Embedded[0].Composite.W != 10 {
+		t.Fatalf("embedded = %+v", got.Embedded)
+	}
+}

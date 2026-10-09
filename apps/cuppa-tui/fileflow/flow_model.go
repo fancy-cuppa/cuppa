@@ -14,6 +14,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/filedialog"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/catalog/cupp"
 	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/cuppafile/disk"
 	"github.com/meta-tui/cuppa/libs/cuppafile/format"
@@ -39,6 +40,8 @@ type Job struct {
 type Flow struct {
 	ed  *editor.Editor
 	cat scene.Catalog
+	// onLoad is told about every loaded design.
+	onLoad func(design.Document)
 
 	path   string
 	dir    string
@@ -138,10 +141,21 @@ func (f *Flow) show(m modal.Modal, cb func(modal.Outcome)) {
 	f.modal, f.onDone = m, cb
 }
 
+// SetOnLoad sets a function told about every design that was just loaded (new, opened
+// or from the command line), so the app can adopt the components it embeds.
+func (f *Flow) SetOnLoad(fn func(design.Document)) { f.onLoad = fn }
+
+func (f *Flow) load(doc design.Document) {
+	f.ed.Load(doc)
+	if f.onLoad != nil {
+		f.onLoad(doc)
+	}
+}
+
 // NewDesign starts an empty design, offering to save the current one first.
 func (f *Flow) NewDesign() {
 	f.guard(func() {
-		f.ed.Load(design.NewDocument("Untitled", defaultWidth, defaultHeight))
+		f.load(design.NewDocument("Untitled", defaultWidth, defaultHeight))
 		f.path, f.status = "", "New design"
 	})
 }
@@ -162,7 +176,7 @@ func (f *Flow) Open() {
 				f.Notice("Cannot open file", describe(err))
 				return
 			}
-			f.ed.Load(doc)
+			f.load(doc)
 			f.path, f.dir = o.Path, filepath.Dir(o.Path)
 			f.status = "Opened " + filepath.Base(o.Path)
 		})
@@ -175,7 +189,7 @@ func (f *Flow) OpenPath(path string) error {
 	if err != nil {
 		return fmt.Errorf("%s: %s", path, describe(err))
 	}
-	f.ed.Load(doc)
+	f.load(doc)
 	f.path, f.dir = path, filepath.Dir(path)
 	f.status = "Opened " + filepath.Base(path)
 	return nil
@@ -228,7 +242,7 @@ func (f *Flow) confirmOverwrite(path string, ok func()) {
 }
 
 func (f *Flow) write(path string) bool {
-	saved, err := disk.Save(path, f.ed.Document())
+	saved, err := disk.Save(path, cupp.Embed(f.ed.Document(), f.cat))
 	if err != nil {
 		f.Notice("Cannot save file", describe(err))
 		return false
