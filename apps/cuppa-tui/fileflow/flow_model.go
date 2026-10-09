@@ -129,6 +129,9 @@ func (f *Flow) Notice(title, body string) {
 	f.show(confirm.New(title, body, "OK"), func(modal.Outcome) {})
 }
 
+// Show opens any dialog (for example a colour picker) and calls cb when it ends.
+func (f *Flow) Show(m modal.Modal, cb func(modal.Outcome)) { f.show(m, cb) }
+
 func (f *Flow) show(m modal.Modal, cb func(modal.Outcome)) {
 	m.Place(f.sw, f.sh)
 	f.modal, f.onDone = m, cb

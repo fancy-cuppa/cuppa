@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
@@ -75,6 +76,12 @@ func normalise(spec definition.PropSpec, value string) (string, error) {
 			return "false", nil
 		}
 		return "", fmt.Errorf("editor: %s must be true or false", spec.Label)
+	case definition.PropColor:
+		canon, err := space.Normalise(value)
+		if err != nil {
+			return "", fmt.Errorf("editor: %s: %w", spec.Label, err)
+		}
+		return canon, nil
 	case definition.PropChoice:
 		if !slices.Contains(spec.Choices, value) {
 			return "", fmt.Errorf("editor: %s must be one of %s", spec.Label, strings.Join(spec.Choices, ", "))

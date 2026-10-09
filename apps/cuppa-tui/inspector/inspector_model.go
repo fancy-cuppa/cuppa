@@ -39,6 +39,9 @@ type Model struct {
 	// snap reads and changes the stage setting this pane exposes as a checkbox.
 	snapGet func() bool
 	snapSet func(bool)
+
+	// pickColor opens the colour dialog; nil means colours are edited as text.
+	pickColor ColorPicker
 }
 
 // New returns an inspector editing through ed.
@@ -49,6 +52,15 @@ func (m *Model) BindSnap(get func() bool, set func(bool)) { m.snapGet, m.snapSet
 
 // SetSize sets the pane size in cells.
 func (m *Model) SetSize(w, h int) { m.w, m.h = w, h }
+
+// ColorPicker opens a colour dialog for a property: it shows title with the
+// current colour selected, and calls apply with the chosen one ("" for none).
+// The shell provides it.
+type ColorPicker func(title, current string, apply func(color string))
+
+// BindColorPicker sets how clicking a colour opens the picker. Without it a
+// click edits the colour as text.
+func (m *Model) BindColorPicker(p ColorPicker) { m.pickColor = p }
 
 // Editing reports whether a field is taking keyboard input.
 func (m *Model) Editing() bool { return m.editing != "" }

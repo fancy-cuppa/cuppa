@@ -13,6 +13,8 @@ type Outcome struct {
 	Button string
 	// Path is the file the user picked, for file dialogs.
 	Path string
+	// Value is what the user chose in a value dialog, such as a colour.
+	Value string
 	// Canceled is true when the user dismissed the dialog (Esc, Cancel).
 	Canceled bool
 }

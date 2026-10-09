@@ -258,7 +258,11 @@ func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, v
 			if value == "" {
 				swatch = theme.Faded("--")
 			}
-			b.text(swatch+" ").add(value+theme.Faded(" ✎"), func() { m.startEdit(field, value) })
+			open := func() { m.startEdit(field, value) }
+			if m.pickColor != nil {
+				open = func() { m.pickColor(p.Label, value, func(v string) { set(v)() }) }
+			}
+			b.text(swatch+" ").add(value+theme.Faded(" ✎"), open)
 		}
 	default:
 		m.editable(b, field, value, value)
