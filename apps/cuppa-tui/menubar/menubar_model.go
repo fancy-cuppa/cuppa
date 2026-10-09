@@ -13,6 +13,11 @@ import (
 
 const (
 	brand    = " ☕ Cuppa "
+	// iconBrand is the brand with the logo in place of the teacup character:
+	// two private-use characters, the left and right half of the cup, that the
+	// desktop app and the web page draw from a font they ship. They are one
+	// cell each, so the bar keeps its width.
+	iconBrand = " \ue000\ue001 Cuppa "
 	gap      = 1
 	itemPadX = 2
 )
@@ -34,11 +39,34 @@ type Model struct {
 	labelX   []int // left column of each label
 	// command shows Cmd where the shortcuts say Ctrl (on a Mac).
 	command bool
+	// iconFont draws the logo from the icon font instead of the teacup character.
+	iconFont bool
 }
 
 // New returns a closed bar.
 func New() *Model {
 	return &Model{open: -1, hover: -1, hoverBar: -1, disabled: map[Action]bool{}, unavailable: map[Action]bool{}}
+}
+
+// SetIconFont draws the logo in the bar from the Cuppa icon font. Only a host
+// that ships the font (the desktop app, the web page) may ask for it; in a
+// plain terminal the characters would show as empty boxes.
+func (m *Model) SetIconFont(on bool) { m.iconFont = on }
+
+// brandText is the brand as drawn.
+func (m *Model) brandText() string {
+	if m.iconFont {
+		return iconBrand
+	}
+	return brand
+}
+
+// styledBrand is the brand with the logo in its own green and the name in the title style.
+func (m *Model) styledBrand() string {
+	if !m.iconFont {
+		return theme.Title(brand)
+	}
+	return " " + theme.Logo("\ue000\ue001") + theme.Title(" Cuppa ")
 }
 
 // SetCommandKey makes the menus say Cmd where the shortcuts say Ctrl.
@@ -70,7 +98,7 @@ func (m *Model) Close() { m.open, m.hover = -1, -1 }
 // layout computes where each label sits.
 func (m *Model) layout() {
 	m.labelX = m.labelX[:0]
-	x := ansi.StringWidth(brand) + 2
+	x := ansi.StringWidth(m.brandText()) + 2
 	for _, mn := range menus {
 		m.labelX = append(m.labelX, x)
 		x += ansi.StringWidth(mn.label) + 2*gap + 1
@@ -81,7 +109,7 @@ func (m *Model) layout() {
 func (m *Model) Line(right string) string {
 	m.layout()
 	var b strings.Builder
-	b.WriteString(theme.Title(brand))
+	b.WriteString(m.styledBrand())
 	b.WriteString(theme.Faded("│ "))
 	for i, mn := range menus {
 		label := " " + mn.label + " "

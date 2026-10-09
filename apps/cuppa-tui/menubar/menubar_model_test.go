@@ -99,3 +99,28 @@ func TestDropdownStaysOnScreen(t *testing.T) {
 		t.Fatalf("dropdown spills: x=%d w=%d", x, ansi.StringWidth(lines[0]))
 	}
 }
+
+func TestIconFontBrandKeepsTheBarsWidthAndLayout(t *testing.T) {
+	plain := New()
+	plain.SetWidth(80)
+	icon := New()
+	icon.SetWidth(80)
+	icon.SetIconFont(true)
+	a, b := plain.Line("x"), icon.Line("x")
+	if ansi.StringWidth(a) != ansi.StringWidth(b) {
+		t.Fatalf("widths differ: %d and %d", ansi.StringWidth(a), ansi.StringWidth(b))
+	}
+	if !strings.Contains(b, "") || strings.Contains(b, "☕") {
+		t.Fatalf("the icon bar should hold the two logo characters: %q", ansi.Strip(b))
+	}
+	if strings.Contains(a, "") {
+		t.Fatal("a plain terminal must not get private-use characters")
+	}
+	plain.layout()
+	icon.layout()
+	for i := range plain.labelX {
+		if plain.labelX[i] != icon.labelX[i] {
+			t.Fatalf("menu %d moved from column %d to %d", i, plain.labelX[i], icon.labelX[i])
+		}
+	}
+}
