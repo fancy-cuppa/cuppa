@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/fancy-cuppa/cuppa/libs/catalog/standard"
 )
 
@@ -98,9 +99,104 @@ func TestKeyboardBasics(t *testing.T) {
 	if len(m.Editor().Document().Nodes) != 0 {
 		t.Fatal("delete key should remove the selection")
 	}
-	_, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
-	if cmd == nil {
-		t.Fatal("ctrl+c should quit")
+	// The design changed since it was loaded, so quitting asks first.
+	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}); cmd != nil {
+		t.Fatal("ctrl+c on unsaved work must ask, not quit")
+	}
+	if m.flow.Modal() == nil {
+		t.Fatal("expected the unsaved-changes dialog")
+	}
+	clickText(t, m, "Discard")
+	if !m.flow.Quitting() {
+		t.Fatal("discarding should quit")
+	}
+}
+
+func TestCtrlCQuitsAtOnceWhenNothingIsUnsaved(t *testing.T) {
+	m := newShell(t)
+	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}); cmd == nil {
+		t.Fatal("clean design should quit")
+	}
+}
+
+// screenText is the rendered screen without colour codes.
+func screenText(m *Model) []string {
+	lines := strings.Split(m.render(), "\n")
+	for i, l := range lines {
+		lines[i] = ansi.Strip(l)
+	}
+	return lines
+}
+
+// clickText clicks the first screen cell where text appears.
+func clickText(t *testing.T, m *Model, text string) {
+	t.Helper()
+	for y, l := range screenText(m) {
+		if i := strings.Index(l, text); i >= 0 {
+			x := len([]rune(l[:i])) + 1
+			send(m, click(x, y))
+			send(m, release(x, y))
+			return
+		}
+	}
+	t.Fatalf("%q not on screen:\n%s", text, strings.Join(screenText(m), "\n"))
+}
+
+func TestMenuBarIsOnTopAndDropdownsOverlayThePanes(t *testing.T) {
+	m := newShell(t)
+	top := screenText(m)[0]
+	for _, label := range []string{"File", "Edit", "Export", "Help"} {
+		if !strings.Contains(top, label) {
+			t.Fatalf("menu bar lacks %s: %q", label, top)
+		}
+	}
+	clickText(t, m, "Export")
+	screen := strings.Join(screenText(m), "\n")
+	if !strings.Contains(screen, "Image (PNG)") {
+		t.Fatalf("dropdown not shown:\n%s", screen)
+	}
+	if len(strings.Split(screen, "\n")) != 40 {
+		t.Fatal("dropdown must not change the screen height")
+	}
+	send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if strings.Contains(strings.Join(screenText(m), "\n"), "Image (PNG)") {
+		t.Fatal("Esc should close the dropdown")
+	}
+}
+
+func TestFileMenuSaveAsOpensDialogAndSaves(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+	m := newShell(t)
+	send(m, click(5, 4))
+	send(m, release(m.layout.stage.X+3, 5)) // drop a component so there is something to save
+	clickText(t, m, "File")
+	clickText(t, m, "Save As")
+	if m.flow.Modal() == nil {
+		t.Fatal("Save As should open a dialog")
+	}
+	if !strings.Contains(strings.Join(screenText(m), "\n"), "Save design") {
+		t.Fatal("dialog not drawn")
+	}
+	send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	if m.flow.Modal() != nil || m.Editor().Dirty() {
+		t.Fatalf("not saved: modal=%v dirty=%v", m.flow.Modal() != nil, m.Editor().Dirty())
+	}
+	if !strings.HasSuffix(m.flow.Path(), "Untitled.cuppa") {
+		t.Fatalf("path = %q", m.flow.Path())
+	}
+	if !strings.Contains(screenText(m)[0], "Untitled.cuppa") {
+		t.Fatal("title should show the file name")
+	}
+}
+
+func TestDialogCapturesTheMouse(t *testing.T) {
+	m := newShell(t)
+	m.flow.Notice("Hello", "world")
+	before := len(m.Editor().Document().Nodes)
+	send(m, click(5, 4)) // would start a palette drag if the dialog let it through
+	if m.dragging != "" || len(m.Editor().Document().Nodes) != before {
+		t.Fatal("clicks must not reach the panes behind a dialog")
 	}
 }
 
