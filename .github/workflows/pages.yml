@@ -1,0 +1,56 @@
+name: Pages
+
+# Hand-kept, separate from ci.yml (which mnci owns). Publishes the browser build
+# (apps/cuppa-web) to GitHub Pages whenever main changes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/cuppa-web/**'
+      - 'libs/**'
+      - 'go.work'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.work
+          cache: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Build cuppa.wasm
+        run: node apps/cuppa-web/build-wasm.cjs
+      - name: Build the page
+        working-directory: apps/cuppa-web/frontend
+        run: |
+          npm ci
+          npm run build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/cuppa-web/frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
