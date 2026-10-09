@@ -279,3 +279,22 @@ func TestThemeColoursUndoAndOverridesStayWhenTheThemeChanges(t *testing.T) {
 		t.Fatal("bad colour")
 	}
 }
+
+func TestSetThemeIsOneUndoStep(t *testing.T) {
+	e := newEditor()
+	err := e.SetTheme("#101010", design.Theme{Text: "#eeeeee", Muted: "#888888", Border: "#3366aa", Secondary: "#aa66cc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := e.Document()
+	if doc.Background != "#101010" || doc.Theme.Border != "#3366aa" {
+		t.Fatalf("theme = %q %+v", doc.Background, doc.Theme)
+	}
+	e.Undo()
+	if doc = e.Document(); doc.Background != "" || doc.Theme != (design.Theme{}) {
+		t.Fatalf("one undo should take back the whole preset: %q %+v", doc.Background, doc.Theme)
+	}
+	if err := e.SetTheme("nope", design.Theme{}); err == nil {
+		t.Fatal("a bad colour is refused")
+	}
+}

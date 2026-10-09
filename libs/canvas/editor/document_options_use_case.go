@@ -96,6 +96,29 @@ func (e *Editor) SetThemeColor(role, value string) error {
 	return nil
 }
 
+// SetTheme sets the background and the whole theme at once, as one undo step:
+// a preset. Each colour is validated like any other. Components that set their
+// own colour keep it.
+func (e *Editor) SetTheme(background string, t design.Theme) error {
+	var err error
+	if background, err = space.Normalise(background); err != nil {
+		return fmt.Errorf("editor: %w", err)
+	}
+	for _, c := range []*string{&t.Text, &t.Muted, &t.Border, &t.Secondary} {
+		if *c, err = space.Normalise(*c); err != nil {
+			return fmt.Errorf("editor: %w", err)
+		}
+	}
+	if background == e.doc.Background && t == e.doc.Theme {
+		return nil
+	}
+	e.apply(func() bool {
+		e.doc.Background, e.doc.Theme = background, t
+		return true
+	})
+	return nil
+}
+
 // SetEffect turns one of the canvas options (grid, shadow, scanlines,
 // vignette) on or off, as one undo step.
 func (e *Editor) SetEffect(name string, on bool) error {

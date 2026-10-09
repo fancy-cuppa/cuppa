@@ -44,6 +44,8 @@ type Model struct {
 
 	// pickColor opens the colour dialog; nil means colours are edited as text.
 	pickColor ColorPicker
+	// pickTheme opens the dialog that fills the theme from a colour scheme.
+	pickTheme ThemePicker
 
 	// The layer list: a drag in progress, where the list starts and how long it
 	// is (content rows, set at render), and where the trash button is.
@@ -65,6 +67,15 @@ func (m *Model) SetSize(w, h int) { m.w, m.h = w, h }
 // current colour selected, and calls apply with the chosen one ("" for none).
 // The shell provides it.
 type ColorPicker func(title, current string, apply func(color string))
+
+// ThemePicker opens the dialog that fills the theme from a colour scheme and
+// calls apply with the background and the theme colours it chose. The shell
+// provides it.
+type ThemePicker func(apply func(background string, t design.Theme))
+
+// BindThemePicker sets how the Theme section's scheme button opens the dialog.
+// Without it the button is not shown.
+func (m *Model) BindThemePicker(p ThemePicker) { m.pickTheme = p }
 
 // BindColorPicker sets how clicking a colour opens the picker. Without it a
 // click edits the colour as text.

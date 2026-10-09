@@ -45,3 +45,26 @@ func TestFindIgnoresCaseAndReturnsTheSixteenColours(t *testing.T) {
 		t.Error("an unknown name should not be found")
 	}
 }
+
+func TestThemeTakesPageTextAndThreeAccentsFromAScheme(t *testing.T) {
+	s, ok := Find("dracula")
+	if !ok {
+		t.Fatal("Dracula should be there")
+	}
+	th := s.Theme()
+	if th.Background != s.Background || th.Text != s.Foreground {
+		t.Error("page and text come straight from the scheme")
+	}
+	if th.Border != s.ANSI[4] || th.Secondary != s.ANSI[5] {
+		t.Error("border is blue and secondary is purple")
+	}
+	if th.Muted == th.Background || th.Muted == th.Text {
+		t.Errorf("muted must differ from both: %v", th.Muted)
+	}
+	for _, sc := range All() {
+		m := sc.Theme()
+		if m.Muted == m.Background && m.Background == m.Text {
+			t.Fatalf("%s has no usable muted colour", sc.Name)
+		}
+	}
+}

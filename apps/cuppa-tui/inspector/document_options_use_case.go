@@ -24,6 +24,11 @@ func (m *Model) documentOptions(b *builder) {
 	b.text(theme.Bold(" Theme")).end()
 	b.text(" " + theme.Faded("Components follow these,")).end()
 	b.text(" " + theme.Faded("unless they set their own.")).end()
+	if m.pickTheme != nil {
+		b.text(" ").add(theme.Button("[Colour scheme…]", true), func() {
+			m.pickTheme(func(background string, t design.Theme) { m.report(m.ed.SetTheme(background, t)) })
+		}).end()
+	}
 	m.themeRow(b, "Background", "background", doc.Background, "terminal default", m.ed.SetBackground)
 	for _, c := range []struct{ label, role, value string }{
 		{"Text", editor.ThemeText, doc.Theme.Text},
