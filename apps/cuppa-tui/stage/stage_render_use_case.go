@@ -32,10 +32,20 @@ func (m *Model) render() *grid.Grid {
 			}
 		}
 	}
-	for _, id := range m.ed.Selected() {
+	selected := m.ed.Selected()
+	var group design.Rect
+	for i, id := range selected {
 		if n, ok := doc.Get(id); ok {
-			m.drawSelection(view, n.Rect, len(m.ed.Selected()) == 1)
+			m.drawSelection(view, n.Rect, len(selected) == 1)
+			if i == 0 {
+				group = n.Rect
+			} else {
+				group = group.Union(n.Rect)
+			}
 		}
+	}
+	if len(selected) > 1 {
+		m.drawGroupFrame(view, group)
 	}
 	m.drawGuides(view)
 	if m.mode == marquee {
@@ -50,8 +60,10 @@ func (m *Model) render() *grid.Grid {
 // toView converts a canvas rectangle to pane coordinates.
 func (m *Model) toView(r design.Rect) design.Rect { return r.Translate(-m.offX, -m.offY) }
 
-// drawSelection recolours the outline of a selected node and, for a single
-// selection, marks the resize handles at the corners.
+// drawSelection recolours the outline of a selected node and marks its corners:
+// solid squares are resize handles (single selection), hollow ones only show
+// that the node is part of a multiple selection. Components without a border
+// (lists, pickers) would otherwise show no sign of being selected.
 func (m *Model) drawSelection(view *grid.Grid, canvas design.Rect, handles bool) {
 	r := m.toView(canvas)
 	accent := func(s grid.Style) grid.Style { s.Fg, s.Bold = theme.Accent, true; return s }
@@ -63,11 +75,12 @@ func (m *Model) drawSelection(view *grid.Grid, canvas design.Rect, handles bool)
 		view.Restyle(r.X, y, accent)
 		view.Restyle(r.Right()-1, y, accent)
 	}
-	if !handles {
-		return
+	glyph := '□'
+	if handles {
+		glyph = '■'
 	}
 	mark := func(x, y int) {
-		view.Set(x, y, grid.Cell{Ch: '■', Style: grid.Style{Fg: theme.Accent, Bold: true}})
+		view.Set(x, y, grid.Cell{Ch: glyph, Style: grid.Style{Fg: theme.Accent, Bold: true}})
 	}
 	switch {
 	case r.H == 1 && r.W >= 3:
@@ -78,6 +91,30 @@ func (m *Model) drawSelection(view *grid.Grid, canvas design.Rect, handles bool)
 		mark(r.Right()-1, r.Y)
 		mark(r.X, r.Bottom()-1)
 		mark(r.Right()-1, r.Bottom()-1)
+	}
+}
+
+// drawGroupFrame draws a dashed frame around everything selected, over empty
+// canvas cells only so it never hides a component.
+func (m *Model) drawGroupFrame(view *grid.Grid, canvas design.Rect) {
+	r := m.toView(canvas)
+	r = design.Rect{X: r.X - 1, Y: r.Y - 1, W: r.W + 2, H: r.H + 2}
+	style := grid.Style{Fg: theme.Accent}
+	put := func(x, y int, ch rune) {
+		if !view.In(x, y) {
+			return
+		}
+		if c := view.At(x, y); c.Ch == 0 || c.Ch == ' ' || c.Ch == '·' {
+			view.Set(x, y, grid.Cell{Ch: ch, Style: style})
+		}
+	}
+	for x := r.X; x < r.Right(); x++ {
+		put(x, r.Y, '╌')
+		put(x, r.Bottom()-1, '╌')
+	}
+	for y := r.Y; y < r.Bottom(); y++ {
+		put(r.X, y, '╎')
+		put(r.Right()-1, y, '╎')
 	}
 }
 

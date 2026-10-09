@@ -1,6 +1,7 @@
 package inspector
 
 import (
+	"github.com/charmbracelet/x/ansi"
 	"strings"
 	"testing"
 
@@ -179,5 +180,38 @@ func TestSnapCheckboxTogglesTheBoundSetting(t *testing.T) {
 	clickText(t, m, "Snap to guides", "[x]")
 	if on {
 		t.Fatal("clicking the checkbox should switch snapping off")
+	}
+}
+
+func TestLongTextPropertyWrapsInsidePaneAndStaysClickable(t *testing.T) {
+	m, ed, id := setup(t, "huh.filepicker")
+	long := "docs/,libs/,apps/,README.md,go.work,package.json,tsconfig.base.json,CLAUDE.md,commitlint.config.mjs"
+	if err := ed.SetProp(id, "entries", long); err != nil {
+		t.Fatal(err)
+	}
+	lines := m.Lines()
+	first, last := -1, -1
+	for y, l := range lines {
+		if strings.Contains(l, "\n") {
+			t.Fatalf("line %d contains a newline: %q", y, l)
+		}
+		if w := ansi.StringWidth(l); w != 32 {
+			t.Fatalf("line %d is %d cells wide, want the pane width 32", y, w)
+		}
+		plain := strings.TrimSpace(stripANSI(l))
+		if first < 0 && strings.HasPrefix(plain, "docs/,") {
+			first = y
+		}
+		if strings.Contains(plain, "commitlint.config.mjs") {
+			last = y
+		}
+	}
+	if first < 0 || last-first < 2 {
+		t.Fatalf("the long value should wrap over several lines (first=%d last=%d):\n%s", first, last, strings.Join(lines, "\n"))
+	}
+	// Clicking the last wrapped line starts editing, like clicking the first.
+	m.Handle(pointer.Event{X: 4, Y: last, Phase: pointer.Down, Left: true})
+	if !m.Editing() {
+		t.Fatal("every wrapped line should start the edit")
 	}
 }
