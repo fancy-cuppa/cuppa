@@ -31,7 +31,7 @@ func huhEntries() []definition.Definition {
 			ID: "huh.multiselect", Name: "Multi-select", Family: definition.FamilyHuh,
 			Description: "Pick several options.",
 			DefaultSize: size(32, 6), MinSize: size(14, 3), Import: huhImport, Status: definition.StatusSupported,
-			Props: []definition.PropSpec{title("Extras"), desc, textProp("options", "Options (comma separated)", "Milk,Sugar,Lemon"), textProp("checked", "Checked indexes (comma separated)", "0"), intProp("cursor", "Cursor", 1, 0, 99), accent},
+			Props: []definition.PropSpec{title("Extras"), desc, textProp("options", "Options (comma separated)", "Milk,Sugar,Lemon"), textProp("checked", "Checked indexes (comma separated)", "0"), intProp("cursor", "Cursor", 0, 0, 99), accent},
 		},
 		{
 			ID: "huh.confirm", Name: "Confirm", Family: definition.FamilyHuh,

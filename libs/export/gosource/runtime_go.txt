@@ -6,6 +6,7 @@ package main
 // layout.go is the part that comes from the design.
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -319,12 +320,42 @@ func tablePart(p props, w, h int) *part {
 }
 
 func viewportPart(p props, w, h int) *part {
-	m := viewport.New(viewport.WithWidth(w), viewport.WithHeight(h))
-	m.SetContent(strings.ReplaceAll(p.str("content"), "|", "\n"))
+	bar := p.flag("show_scrollbar") && w > 3
+	inner := w
+	if bar {
+		inner = w - 2
+	}
+	m := viewport.New(viewport.WithWidth(inner), viewport.WithHeight(h))
+	m.SetContent(strings.ReplaceAll(p.str("content"), "|", string(rune(10))))
+	if total := m.TotalLineCount(); total > h {
+		m.SetYOffset(p.integer("percent", 0) * (total - h) / 100)
+	}
+	view := func() string {
+		if !bar {
+			return m.View()
+		}
+		// A scrollbar two cells in from the text: a track with a thumb whose
+		// size and place follow the visible part of the content.
+		lines := strings.Split(m.View(), string(rune(10)))
+		total := max(m.TotalLineCount(), h)
+		thumb := max(h*h/total, 1)
+		top := 0
+		if total > h {
+			top = m.YOffset() * (h - thumb) / (total - h)
+		}
+		for i := range lines {
+			track := "│"
+			if i >= top && i < top+thumb {
+				track = "█"
+			}
+			lines[i] = lipgloss.NewStyle().Width(inner).Render(lines[i]) + " " + fg(p.str("color")).Render(track)
+		}
+		return strings.Join(lines, string(rune(10)))
+	}
 	return &part{
 		keys:   true,
 		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
-		view:   func() string { return m.View() },
+		view:   view,
 	}
 }
 
@@ -358,7 +389,7 @@ func spinnerPart(p props) *part {
 	return &part{
 		start:  m.Tick,
 		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
-		view:   func() string { return m.View() + " " + p.str("label") },
+		view:   func() string { return strings.ReplaceAll(m.View(), " ", "") + " " + p.str("label") },
 	}
 }
 
@@ -369,9 +400,10 @@ func progressPart(p props, w int) *part {
 	}
 	m := progress.New(opts...)
 	percent := float64(p.integer("percent", 0)) / 100
+	// The bar is drawn at the percent as it is, not animated towards it, so
+	// the first frame is the design.
 	return &part{
-		keys:  true,
-		start: m.SetPercent(percent),
+		keys: true,
 		update: func(msg tea.Msg) tea.Cmd {
 			if k, ok := msg.(tea.KeyPressMsg); ok {
 				switch k.String() {
@@ -379,16 +411,11 @@ func progressPart(p props, w int) *part {
 					percent = min(percent+0.1, 1)
 				case "left", "down", "-":
 					percent = max(percent-0.1, 0)
-				default:
-					return nil
 				}
-				return m.SetPercent(percent)
 			}
-			var c tea.Cmd
-			m, c = m.Update(msg)
-			return c
+			return nil
 		},
-		view: func() string { return m.View() },
+		view: func() string { return m.ViewAs(percent) },
 	}
 }
 
@@ -397,9 +424,20 @@ func isToggle(k tea.KeyPressMsg) bool {
 	return s == "space" || s == "enter" || s == " "
 }
 
+// clock writes d as mm:ss.t, or as mm:ss without the tenths.
+func clock(d time.Duration, tenths bool) string {
+	d = max(d, 0)
+	text := fmt.Sprintf("%02d:%02d", int(d.Minutes()), int(d.Seconds())%60)
+	if tenths {
+		text += fmt.Sprintf(".%d", d.Milliseconds()/100%10)
+	}
+	return text
+}
+
 func stopwatchPart(p props) *part {
 	m := stopwatch.New(stopwatch.WithInterval(100 * time.Millisecond))
-	l := &part{keys: true, view: func() string { return fg(p.str("color")).Render(m.View()) }}
+	start := parseReading(p.str("value")) // the reading in the design; it counts on from there
+	l := &part{keys: true, view: func() string { return fg(p.str("color")).Render(clock(start+m.Elapsed(), true)) }}
 	if p.flag("running") {
 		l.start = m.Start()
 	}
@@ -419,7 +457,9 @@ func stopwatchPart(p props) *part {
 
 func timerPart(p props) *part {
 	m := timer.New(parseClock(p.str("value")), timer.WithInterval(100*time.Millisecond))
-	l := &part{keys: true, view: func() string { return fg(p.str("color")).Render(p.str("label") + " " + m.View()) }}
+	l := &part{keys: true, view: func() string {
+		return fg(p.str("color")).Render(strings.TrimSpace(p.str("label") + " " + clock(m.Timeout, false)))
+	}}
 	if p.flag("running") {
 		l.start = m.Start()
 	}
@@ -604,7 +644,7 @@ func dialog(w, h int, p props) string {
 	body := lipgloss.JoinVertical(lipgloss.Center, p.str("text"), "", lipgloss.JoinHorizontal(lipgloss.Top, row...))
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color(orDefault(p.str("color"), "212"))).
-		Width(max(w-2, 1)).Height(max(h-2, 1)).Align(lipgloss.Center).AlignVertical(lipgloss.Center).
+		Width(max(w, 1)).Height(max(h, 1)).Align(lipgloss.Center).AlignVertical(lipgloss.Center).
 		MaxWidth(w).MaxHeight(h).Render(body)
 }
 
@@ -654,5 +694,19 @@ func toast(w, h int, p props) string {
 	}
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color(k[0])).Foreground(lipgloss.Color(k[0])).
-		Padding(0, 1).Width(max(w-2, 1)).MaxWidth(w).MaxHeight(h).Render(prefix + " " + p.str("message"))
+		Padding(0, 1).Width(max(w, 1)).MaxWidth(w).MaxHeight(h).Render(prefix + " " + p.str("message"))
+}
+
+// parseReading reads "12.3", "00:12.3" or "1:02:03.5" as a duration; anything
+// else is zero.
+func parseReading(s string) time.Duration {
+	seconds := 0.0
+	for _, piece := range strings.Split(strings.TrimSpace(s), ":") {
+		n, err := strconv.ParseFloat(piece, 64)
+		if err != nil {
+			return 0
+		}
+		seconds = seconds*60 + n
+	}
+	return time.Duration(seconds * float64(time.Second))
 }

@@ -6,18 +6,16 @@ import (
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
+// paintTextInput draws the text input as it is before it has the keyboard: the
+// prompt and the value, or the placeholder in the muted colour.
 func paintTextInput(g *grid.Grid, p Props) {
 	accent := fg(p.Str("color"))
-	prompt := p.Str("prompt")
-	n := g.Text(0, 0, prompt, accent, g.W)
-	value := p.Str("value")
-	if value == "" {
-		g.Text(n+1, 0, p.Str("placeholder"), dim, g.W-n-1)
-		g.Set(n, 0, grid.Cell{Ch: '█', Style: accent})
+	n := g.Text(0, 0, p.Str("prompt"), accent, g.W)
+	if value := p.Str("value"); value != "" {
+		g.Text(n, 0, value, grid.Style{}, g.W-n)
 		return
 	}
-	m := g.Text(n, 0, value, grid.Style{}, g.W-n)
-	g.Set(n+m, 0, grid.Cell{Ch: '█', Style: accent})
+	g.Text(n, 0, p.Str("placeholder"), dim, g.W-n)
 }
 
 var spinnerFrames = map[string]string{
@@ -44,7 +42,7 @@ func paintProgress(g *grid.Grid, p Props) {
 	barW := max(g.W-len(label), 1)
 	filled := barW * pct / 100
 	accent := fg(p.Str("color"))
-	g.Text(0, 0, strings.Repeat("█", filled), accent, barW)
+	g.Text(0, 0, strings.Repeat("▌", filled), accent, barW)
 	g.Text(filled, 0, strings.Repeat("░", barW-filled), dim, barW-filled)
 	g.Text(barW, 0, label, grid.Style{}, 0)
 }

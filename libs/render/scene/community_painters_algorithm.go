@@ -8,13 +8,100 @@ import (
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
+// paintBubbleTableCommunity draws Evertras' bubble table: a heavy frame, equal
+// columns with right-aligned cells, the header, and the footer in its own row.
 func paintBubbleTableCommunity(g *grid.Grid, p Props) {
-	paintTable(g, Props{"headers": p.Str("columns"), "rows": p.Str("rows"), "border": "rounded", "color": p.Str("color")})
-	if f := p.Str("footer"); f != "" {
-		rows := len(splitList(p.Str("rows"), ";"))
-		if g.H >= rows+6 {
-			g.Text(g.W-len([]rune(f))-1, g.H-1, f, dim, g.W)
+	cols := p.List("columns")
+	var rows [][]string
+	for _, r := range splitList(p.Str("rows"), ";") {
+		rows = append(rows, splitList(r, ","))
+	}
+	n := len(cols)
+	if n == 0 || g.W < n+2 {
+		paintGeneric(g, "Table")
+		return
+	}
+	each := max((g.W-n-1)/n-2, 3)
+	style := fg(p.Str("color"))
+	rule := func(y int, l, m, r string) {
+		x := 0
+		put := func(s string) {
+			for _, ch := range s {
+				g.Set(x, y, grid.Cell{Ch: ch, Style: style})
+				x++
+			}
 		}
+		put(l)
+		for i := 0; i < n; i++ {
+			if i > 0 {
+				put(m)
+			}
+			put(strings.Repeat("━", each))
+		}
+		put(r)
+	}
+	row := func(y int, cells []string, s grid.Style) {
+		x := 0
+		g.Set(x, y, grid.Cell{Ch: '┃', Style: style})
+		x++
+		for i := 0; i < n; i++ {
+			text := ""
+			if i < len(cells) {
+				text = cells[i]
+			}
+			r := []rune(text)
+			if len(r) > each {
+				r = r[:each]
+			}
+			g.Text(x+each-len(r), y, string(r), s, each)
+			x += each
+			g.Set(x, y, grid.Cell{Ch: '┃', Style: style})
+			x++
+		}
+	}
+	y := 0
+	rule(y, "┏", "┳", "┓")
+	y++
+	row(y, cols, bold)
+	y++
+	rule(y, "┣", "╋", "┫")
+	y++
+	for _, r := range rows {
+		if y >= g.H-1 {
+			break
+		}
+		row(y, r, grid.Style{})
+		y++
+	}
+	footer := p.Str("footer")
+	if footer == "" {
+		if y < g.H {
+			rule(y, "┗", "┻", "┛")
+		}
+		return
+	}
+	if y < g.H {
+		rule(y, "┣", "┻", "┫")
+		y++
+	}
+	if y < g.H {
+		width := n*each + n - 1
+		row2 := []rune(footer)
+		if len(row2) > width {
+			row2 = row2[:width]
+		}
+		g.Set(0, y, grid.Cell{Ch: '┃', Style: style})
+		g.Text(1+width-len(row2), y, string(row2), grid.Style{}, width)
+		g.Set(width+1, y, grid.Cell{Ch: '┃', Style: style})
+		y++
+	}
+	if y < g.H {
+		x := 0
+		g.Set(x, y, grid.Cell{Ch: '┗', Style: style})
+		for i := 1; i <= n*each+n-1; i++ {
+			g.Set(i, y, grid.Cell{Ch: '━', Style: style})
+		}
+		g.Set(n*each+n, y, grid.Cell{Ch: '┛', Style: style})
 	}
 }
 
@@ -185,7 +272,7 @@ func paintDialog(g *grid.Grid, p Props) {
 		if y >= g.H-3 {
 			break
 		}
-		g.Text(1+max((inner-len([]rune(l)))/2, 0), y, l, grid.Style{Fg: "255"}, inner)
+		g.Text(1+max((inner-len([]rune(l))+1)/2, 0), y, l, grid.Style{Fg: "255"}, inner)
 	}
 }
 
