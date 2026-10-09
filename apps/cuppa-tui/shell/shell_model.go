@@ -58,6 +58,12 @@ type Model struct {
 	// owner is the pane a held-button gesture started in; it keeps receiving
 	// events even when the pointer leaves it.
 	owner pane
+	// wantPalette and wantInspector are the side bar widths the user chose (0 for the default).
+	wantPalette, wantInspector int
+	// grab is the divider being dragged and hover the one under the pointer.
+	grab, hover divider
+	// layoutFile is where the widths are remembered, or "" for nowhere.
+	layoutFile string
 	// dragging is the component being dragged out of the palette, or "".
 	dragging string
 	mouseX   int
@@ -176,6 +182,9 @@ func (m *Model) route(e pointer.Event) {
 			return
 		}
 	}
+	if m.handleDivider(e) {
+		return
+	}
 	m.mouse(e)
 }
 
@@ -231,7 +240,12 @@ func (m *Model) resize(w, h int) {
 	m.w, m.h = w, h
 	m.bar.SetWidth(w)
 	m.flow.SetScreen(w, h)
-	m.layout = computeLayout(w, h)
+	m.relayout()
+}
+
+// relayout sizes the panes for the current terminal and chosen widths.
+func (m *Model) relayout() {
+	m.layout = computeLayout(m.w, m.h, m.wantPalette, m.wantInspector)
 	m.pal.SetSize(m.layout.palette.W, m.layout.palette.H)
 	m.stg.SetSize(m.layout.stage.W, m.layout.stage.H)
 	m.ins.SetSize(m.layout.inspector.W, m.layout.inspector.H)
@@ -389,11 +403,11 @@ func (m *Model) render() string {
 	}
 	l := m.layout
 	pal, stg, ins := m.pal.Lines(), m.stg.Lines(), m.ins.Lines()
-	sep := theme.Faded("│")
+	left, right := m.separator(leftDivider), m.separator(rightDivider)
 	out := make([]string, 0, m.h)
 	out = append(out, m.bar.Line(m.titleText()))
 	for i := 0; i < l.stage.H; i++ {
-		out = append(out, pal[i]+sep+stg[i]+sep+ins[i])
+		out = append(out, pal[i]+left+stg[i]+right+ins[i])
 	}
 	out = append(out, m.statusBar())
 	if x, drop := m.bar.Dropdown(); drop != nil {
@@ -427,6 +441,8 @@ func (m *Model) titleText() string {
 func (m *Model) statusBar() string {
 	hint := "Drag a component from the left bar onto the canvas"
 	switch {
+	case m.grab != noDivider || m.hover != noDivider:
+		hint = "Drag to change the width of the panel"
 	case m.dragging != "":
 		hint = "Release over the canvas to place it · Esc cancels"
 	case m.stg.Busy():

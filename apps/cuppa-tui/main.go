@@ -18,6 +18,7 @@ func main() {
 		return
 	}
 	app := shell.New(standard.Default())
+	app.RestoreLayout()
 	if len(os.Args) > 1 {
 		if err := app.OpenFile(os.Args[1]); err != nil {
 			fmt.Fprintln(os.Stderr, "cuppa:", err)

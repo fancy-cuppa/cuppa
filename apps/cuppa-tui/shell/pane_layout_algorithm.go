@@ -11,18 +11,29 @@ type layout struct {
 const (
 	preferredPaletteW   = 26
 	preferredInspectorW = 32
+	minPaletteW         = 16
+	minInspectorW       = 20
 	minStageW           = 20
 	chromeRows          = 2 // title bar + status bar
 )
 
-func computeLayout(w, h int) layout {
-	pal, ins := preferredPaletteW, preferredInspectorW
-	// Give the stage room first: shrink the side bars on narrow terminals.
-	for w-pal-ins-2 < minStageW && (pal > 16 || ins > 20) {
-		if pal > 16 {
+// computeLayout sizes the panes for a terminal of w by h cells. palW and insW
+// are the side bars' wanted widths (0 for the default). The side bars give way
+// first when the terminal is narrow, so the stage always keeps room.
+func computeLayout(w, h, palW, insW int) layout {
+	pal, ins := palW, insW
+	if pal <= 0 {
+		pal = preferredPaletteW
+	}
+	if ins <= 0 {
+		ins = preferredInspectorW
+	}
+	pal, ins = max(pal, minPaletteW), max(ins, minInspectorW)
+	for w-pal-ins-2 < minStageW && (pal > minPaletteW || ins > minInspectorW) {
+		if pal > minPaletteW {
 			pal--
 		}
-		if ins > 20 {
+		if ins > minInspectorW {
 			ins--
 		}
 	}
@@ -33,6 +44,41 @@ func computeLayout(w, h int) layout {
 		stage:     design.Rect{X: pal + 1, Y: 1, W: stageW, H: body},
 		inspector: design.Rect{X: pal + 1 + stageW + 1, Y: 1, W: ins, H: body},
 	}
+}
+
+// divider is one of the two columns between the panes that can be dragged.
+type divider int
+
+const (
+	noDivider divider = iota
+	leftDivider
+	rightDivider
+)
+
+// dividerAt returns the divider under a screen cell, if any.
+func (l layout) dividerAt(x, y int) divider {
+	if y < l.palette.Y || y >= l.palette.Y+l.palette.H {
+		return noDivider
+	}
+	switch x {
+	case l.palette.X + l.palette.W:
+		return leftDivider
+	case l.inspector.X - 1:
+		return rightDivider
+	}
+	return noDivider
+}
+
+// widthsFor returns the side bar widths that put the divider at screen column
+// x, within the limits (stage at least minStageW wide).
+func widthsFor(w, pal, ins int, d divider, x int) (int, int) {
+	switch d {
+	case leftDivider:
+		pal = min(max(x, minPaletteW), max(w-ins-2-minStageW, minPaletteW))
+	case rightDivider:
+		ins = min(max(w-x-1, minInspectorW), max(w-pal-2-minStageW, minInspectorW))
+	}
+	return pal, ins
 }
 
 // paneAt returns the pane under a screen cell.
