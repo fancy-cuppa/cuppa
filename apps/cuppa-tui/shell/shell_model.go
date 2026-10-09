@@ -21,6 +21,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/preview"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/themepicker"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
 	"github.com/meta-tui/cuppa/libs/catalog/packstate"
 	"github.com/meta-tui/cuppa/libs/catalog/registry"
@@ -107,6 +108,7 @@ func New(cat *registry.Registry) *Model {
 	m.flow.SetOnLoad(m.adoptEmbedded)
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	m.ins.BindColorPicker(m.pickColor)
+	m.ins.BindThemePicker(m.pickTheme)
 	return m
 }
 
@@ -115,6 +117,19 @@ func (m *Model) pickColor(title, current string, apply func(color string)) {
 	m.flow.Show(colorpicker.New(title, current), func(o modal.Outcome) {
 		if !o.Canceled {
 			apply(o.Value)
+		}
+	})
+}
+
+// pickTheme opens the dialog that fills the theme from a colour scheme and
+// applies the choice, as one undo step, when it ends.
+func (m *Model) pickTheme(apply func(background string, t design.Theme)) {
+	m.flow.Show(themepicker.New("Theme from a colour scheme", "Dracula"), func(o modal.Outcome) {
+		if o.Canceled {
+			return
+		}
+		if background, t, ok := themepicker.Parse(o.Value); ok {
+			apply(background, t)
 		}
 	})
 }
