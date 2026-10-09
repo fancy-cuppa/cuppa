@@ -23,6 +23,9 @@ type Model struct {
 	title   string
 	body    []string
 	buttons []string
+	// art is a picture shown centred above the message (the logo), one string
+	// per row, possibly with colour codes.
+	art []string
 
 	rect    design.Rect
 	hover   int
@@ -41,15 +44,31 @@ func New(title, body string, buttons ...string) *Model {
 	return &Model{title: title, body: strings.Split(body, "\n"), buttons: buttons, hover: -1}
 }
 
+// WithArt puts a picture above the message and returns the dialog.
+func (m *Model) WithArt(art []string) *Model {
+	m.art = art
+	return m
+}
+
+func (m *Model) artHeight() int {
+	if len(m.art) == 0 {
+		return 0
+	}
+	return len(m.art) + 1
+}
+
 // Place implements modal.Modal.
 func (m *Model) Place(sw, sh int) {
 	w := minW
 	for _, l := range m.body {
 		w = max(w, ansi.StringWidth(l)+6)
 	}
+	for _, l := range m.art {
+		w = max(w, ansi.StringWidth(l)+6)
+	}
 	w = min(w, min(maxW, sw))
 	lines := m.wrapped(w - 4)
-	h := len(lines) + 5
+	h := len(lines) + 5 + m.artHeight()
 	m.rect = design.Rect{X: max((sw-w)/2, 0), Y: max((sh-h)/3, 0), W: w, H: h}
 }
 
@@ -68,6 +87,13 @@ func (m *Model) wrapped(w int) []string {
 func (m *Model) Lines() []string {
 	body := m.wrapped(m.rect.W - 4)
 	content := []string{""}
+	for _, l := range m.art {
+		pad := max((m.rect.W-2-ansi.StringWidth(l))/2, 0)
+		content = append(content, strings.Repeat(" ", pad)+l)
+	}
+	if len(m.art) > 0 {
+		content = append(content, "")
+	}
 	for _, l := range body {
 		content = append(content, "  "+l)
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/confirm"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/filedialog"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/logo"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
 	"github.com/meta-tui/cuppa/libs/catalog/cupp"
@@ -134,6 +135,11 @@ func (f *Flow) Finish(err error) {
 // Notice shows a message with an OK button.
 func (f *Flow) Notice(title, body string) {
 	f.show(confirm.New(title, body, "OK"), func(modal.Outcome) {})
+}
+
+// NoticeWithArt is Notice with a picture above the message, such as the logo.
+func (f *Flow) NoticeWithArt(title, body string, art []string) {
+	f.show(confirm.New(title, body, "OK").WithArt(art), func(modal.Outcome) {})
 }
 
 // Show opens any dialog (for example a colour picker) and calls cb when it ends.
@@ -383,7 +389,7 @@ func (f *Flow) Welcome(marker string) {
 	if _, err := os.Stat(marker); err == nil {
 		return
 	}
-	f.Notice("Welcome to Cuppa", freezeHelp)
+	f.NoticeWithArt("Welcome to Cuppa", freezeHelp, logo.Dialog())
 	if err := os.MkdirAll(filepath.Dir(marker), 0o755); err == nil {
 		_ = os.WriteFile(marker, []byte("shown\n"), 0o644)
 	}

@@ -90,3 +90,23 @@ func TestDescribeReadsTitleMessageAndButtons(t *testing.T) {
 		t.Fatal("the default button, the one Enter presses, is focused")
 	}
 }
+
+func TestArtMakesTheDialogTallerAndStaysInsideTheBox(t *testing.T) {
+	plain := New("T", "hello")
+	plain.Place(100, 40)
+	art := []string{"\x1b[31m████\x1b[0m", "\x1b[32m████\x1b[0m"}
+	with := New("T", "hello").WithArt(art)
+	with.Place(100, 40)
+	if with.Rect().H != plain.Rect().H+len(art)+1 {
+		t.Fatalf("height %d, want %d", with.Rect().H, plain.Rect().H+len(art)+1)
+	}
+	lines := with.Lines()
+	if len(lines) != with.Rect().H {
+		t.Fatalf("%d lines for a rect %d tall", len(lines), with.Rect().H)
+	}
+	for i, l := range lines {
+		if w := ansi.StringWidth(l); w != with.Rect().W {
+			t.Errorf("line %d is %d wide, box %d", i, w, with.Rect().W)
+		}
+	}
+}

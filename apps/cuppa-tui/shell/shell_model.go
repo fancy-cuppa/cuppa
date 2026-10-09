@@ -13,6 +13,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/colorpicker"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/fileflow"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/inspector"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/logo"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/menubar"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/palette"
@@ -292,7 +293,7 @@ func (m *Model) perform(a menubar.Action) {
 	case menubar.HelpShortcuts:
 		m.flow.Notice("Shortcuts", shortcutsText(m.command))
 	case menubar.HelpAbout:
-		m.flow.Notice("About Cuppa", aboutText)
+		m.flow.NoticeWithArt("About Cuppa", aboutText, logo.Dialog())
 	}
 }
 
