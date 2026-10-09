@@ -19,12 +19,22 @@ var assets embed.FS
 // version is stamped at build time via -ldflags "-X main.version=...".
 var version = "dev"
 
+// fileArgument is the design to open: the first argument that is not a flag.
+func fileArgument(args []string) string {
+	for _, a := range args {
+		if a != "" && a[0] != '-' {
+			return a
+		}
+	}
+	return ""
+}
+
 func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
 		fmt.Println("cuppa-desktop", version)
 		return
 	}
-	app := newApp()
+	app := newApp(fileArgument(os.Args[1:]))
 	err := wails.Run(&options.App{
 		Title:            "Cuppa",
 		Width:            1280,

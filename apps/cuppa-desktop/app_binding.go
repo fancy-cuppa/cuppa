@@ -15,6 +15,8 @@ import (
 // page can call.
 type App struct {
 	ctx      context.Context
+	// openPath is a design to open at start, from the command line.
+	openPath string
 	server   *terminal.Server
 	startErr error
 	// closing is set once the app itself has decided to quit, so closing the
@@ -22,7 +24,8 @@ type App struct {
 	closing atomic.Bool
 }
 
-func newApp() *App { return &App{} }
+// newApp takes the design to open at start, or "".
+func newApp(openPath string) *App { return &App{openPath: openPath} }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
@@ -33,6 +36,9 @@ func (a *App) startup(ctx context.Context) {
 // quits from inside it.
 func (a *App) newModel() tea.Model {
 	app := shell.New(standard.Default())
+	if a.openPath != "" {
+		app.OpenFileOrNotify(a.openPath)
+	}
 	app.Welcome()
 	return terminal.OnQuit(app, func() {
 		a.closing.Store(true)
