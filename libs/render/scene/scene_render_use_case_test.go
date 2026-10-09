@@ -88,6 +88,10 @@ func TestNewComponentsDrawRecognisableContent(t *testing.T) {
 		{"glamour.markdown", 30, 3, map[string]string{"markdown": "# Hi|**bold** word"}, "bold word"},
 		{"community.statusbar", 40, 1, map[string]string{"left": "main.go"}, "main.go"},
 		{"bubbles.help", 40, 1, map[string]string{"bindings": "q:quit"}, "q quit"},
+		{"huh.spinner", 30, 1, map[string]string{"title": "Steeping", "style": "line"}, "Steeping"},
+		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|  tui/|go.work", "selected": "0"}, "▾ apps/"},
+		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|  tui/|go.work", "selected": "0"}, "  ▸ tui/"},
+		{"bubbles.tree", 30, 4, map[string]string{"items": "apps/|libs/", "selected": "1"}, "▸ apps/"},
 	}
 	for _, c := range cases {
 		n := design.Node{Component: c.id, Rect: design.Rect{W: c.w, H: c.h}, Props: c.props}

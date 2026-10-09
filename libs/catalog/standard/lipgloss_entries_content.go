@@ -16,6 +16,7 @@ func lipglossEntries() []definition.Definition {
 				textProp("title", "Title", ""),
 				choiceProp("border", "Border", "rounded", borders...),
 				colorProp("color", "Border color", "212"),
+				colorProp("gradient", "Gradient to (blend the border)", ""),
 			},
 		},
 		{

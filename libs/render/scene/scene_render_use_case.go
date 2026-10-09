@@ -30,6 +30,7 @@ var painters = map[string]painter{
 	"bubbles.textarea":   paintTextArea,
 	"bubbles.list":       paintBubbleList,
 	"bubbles.table":      paintBubbleTable,
+	"bubbles.tree":       paintBubbleTree,
 	"bubbles.viewport":   paintViewport,
 	"bubbles.paginator":  paintPaginator,
 	"bubbles.filepicker": paintFilePicker,
@@ -45,6 +46,7 @@ var painters = map[string]painter{
 	"huh.multiselect": paintHuhMultiSelect,
 	"huh.confirm":     paintHuhConfirm,
 	"huh.note":        paintHuhNote,
+	"huh.spinner":     paintHuhSpinner,
 	"huh.filepicker":  paintHuhFilePicker,
 	"huh.form":        paintHuhForm,
 

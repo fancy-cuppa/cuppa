@@ -73,7 +73,7 @@ func TestSearchFiltersComponents(t *testing.T) {
 	for _, r := range "spin" {
 		m.Key(string(r), false, false, false)
 	}
-	if len(m.rows) != 1 || m.rows[0].def.ID != "bubbles.spinner" {
+	if len(m.rows) != 2 || m.rows[0].def.ID != "bubbles.spinner" || m.rows[1].def.ID != "huh.spinner" {
 		t.Fatalf("rows = %+v", m.rows)
 	}
 	m.Key("", false, false, true)
