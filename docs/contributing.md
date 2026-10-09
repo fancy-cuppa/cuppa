@@ -115,6 +115,12 @@ Helpers such as `full`, `fg` and `dim` (`lipgloss_painters_algorithm.go`) and
 Run `cd libs/catalog && go test ./... && cd ../render && go test ./...`.
 The component then appears in the palette and inspector with no further work.
 
+### A bundled pack instead
+
+If what you want to add can be built out of components that already exist, make it a pack and
+send the `.cupp` file: no Go code needed. See
+[Component packs](packs.md#6-get-your-pack-bundled-with-cuppa-pull-request).
+
 ### Community components
 
 Unofficial components need research before they are listed: confirm the module

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/packsdialog"
+	"github.com/meta-tui/cuppa/libs/catalog/bundled"
 	"github.com/meta-tui/cuppa/libs/catalog/cupp"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/catalog/packstate"
@@ -23,8 +24,8 @@ func (m *Model) restorePacks() {
 	m.refreshPalette()
 }
 
-// LoadUserPacks adds the packs installed in the user's packs folder to the
-// catalog. Front ends call it once at start; ReportPackProblems then tells the
+// LoadUserPacks adds the packs bundled with Cuppa and the ones installed in the
+// user's packs folder to the catalog. Front ends call it once at start; ReportPackProblems then tells the
 // user about any file that could not be used. Tests do not call it, so they
 // never read the user's folder.
 func (m *Model) LoadUserPacks() {
@@ -35,13 +36,13 @@ func (m *Model) LoadUserPacks() {
 // reloadPacks rebuilds the catalog from the built-ins and the packs folder,
 // e.g. after a pack was added, removed or created.
 func (m *Model) reloadPacks() {
-	reg := m.base
+	packs, problems := bundled.Packs() // shipped inside Cuppa, listed first
 	if m.userPacks != "" {
-		packs, problems := cupp.LoadDir(m.userPacks)
-		var more []error
-		reg, more = cupp.Extend(m.base, packs)
-		m.packProblems = append(problems, more...)
+		installed, more := cupp.LoadDir(m.userPacks)
+		packs, problems = append(packs, installed...), append(problems, more...)
 	}
+	reg, more := cupp.Extend(m.base, packs)
+	m.packProblems = append(problems, more...)
 	m.cat.Set(cupp.Adopt(reg, m.embedded))
 	m.refreshPalette()
 }

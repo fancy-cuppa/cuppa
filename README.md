@@ -52,6 +52,7 @@ Colour and plain-text export work without it.
 | | |
 |---|---|
 | [User guide](docs/user-guide.md) | Every mouse gesture, menu and shortcut |
+| [Component packs](docs/packs.md) | Make your own components, write and install `.cupp` packs, and get one bundled with Cuppa |
 | [Concept and architecture](docs/architecture.md) | Why it is built as a headless engine with thin front ends |
 | [Contributing](docs/contributing.md) | Setup, conventions, adding a component to the catalog |
 | [`.cuppa` format](docs/spec/cuppa-format.md) | The file format |

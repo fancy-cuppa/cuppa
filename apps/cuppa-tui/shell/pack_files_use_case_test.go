@@ -91,3 +91,20 @@ func TestRemovingAPackDeletesItsFileAfterAsking(t *testing.T) {
 		t.Fatal("the pack is gone from the catalog")
 	}
 }
+
+func TestBundledPacksAreInTheCatalogAndCannotBeRemoved(t *testing.T) {
+	m := newShell(t)
+	m.reloadPacks() // what LoadUserPacks does, without reading the user's folder
+	if _, ok := m.cat.Get("starter.card"); !ok {
+		t.Fatal("the starter pack ships with Cuppa")
+	}
+	for _, p := range m.cat.Packs() {
+		if p.ID == "starter" && (!p.Builtin || p.Source != "") {
+			t.Fatalf("a bundled pack is built in, with no file to delete: %+v", p)
+		}
+	}
+	m.afterPacksDialog(modal.Outcome{Button: packsdialog.RemoveButton, Value: "starter"})
+	if m.flow.Modal() != nil {
+		t.Fatal("removing a bundled pack asks nothing and does nothing")
+	}
+}

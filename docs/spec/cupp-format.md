@@ -1,5 +1,7 @@
 # The `.cupp` format
 
+How to make, install, share and contribute packs: [Component packs](../packs.md).
+
 A `.cupp` file (a "cuppa component" pack) holds components that a user made out of
 other components. It is a sibling of the [`.cuppa` design format](cuppa-format.md)
 and is built the same way.
