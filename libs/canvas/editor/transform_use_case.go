@@ -29,6 +29,12 @@ func (e *Editor) MoveSelectionBy(dx, dy int) bool {
 	return true
 }
 
+// Nudge moves the selection by (dx, dy) as one undo step, for keyboard moves.
+// It leaves no step when nothing moved (locked, or already at the canvas edge).
+func (e *Editor) Nudge(dx, dy int) bool {
+	return e.apply(func() bool { return e.MoveSelectionBy(dx, dy) })
+}
+
 // MoveTo puts the node's top-left at (x, y), clamped to the canvas, as one undo step.
 func (e *Editor) MoveTo(id design.NodeID, x, y int) bool {
 	n, ok := e.doc.Get(id)

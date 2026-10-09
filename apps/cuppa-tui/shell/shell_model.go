@@ -76,6 +76,8 @@ type Model struct {
 	owner pane
 	// wantPalette and wantInspector are the side bar widths the user chose (0 for the default).
 	wantPalette, wantInspector int
+	// command is true on a Mac, where the keys are named Cmd.
+	command bool
 	// grab is the divider being dragged and hover the one under the pointer.
 	grab, hover divider
 	// layoutFile is where the widths are remembered, or "" for nowhere.
@@ -139,6 +141,14 @@ func (m *Model) Welcome() {
 // Editor exposes the editor, mainly for tests.
 func (m *Model) Editor() *editor.Editor { return m.ed }
 
+// UseCommandKey makes the menus and the shortcuts list say Cmd where they say
+// Ctrl. The desktop app and the browser call it on a Mac; their page turns a
+// Cmd press into the Ctrl one the editor listens for.
+func (m *Model) UseCommandKey() {
+	m.command = true
+	m.bar.SetCommandKey(true)
+}
+
 // Init implements tea.Model.
 func (m *Model) Init() tea.Cmd { return nil }
 
@@ -183,6 +193,9 @@ func (m *Model) settle() tea.Cmd {
 	m.bar.SetEnabled(menubar.EditCopy, hasSel)
 	m.bar.SetEnabled(menubar.EditPaste, m.ed.CanPaste())
 	m.bar.SetEnabled(menubar.EditDelete, hasSel)
+	for _, a := range []menubar.Action{menubar.EditToFront, menubar.EditForward, menubar.EditBackward, menubar.EditToBack} {
+		m.bar.SetEnabled(a, hasSel)
+	}
 	m.bar.SetEnabled(menubar.EditGroup, m.ed.CanGroup())
 	m.bar.SetEnabled(menubar.EditUngroup, m.ed.CanUngroup())
 	m.bar.SetEnabled(menubar.EditComponent, m.canSaveComponent())
@@ -248,6 +261,14 @@ func (m *Model) perform(a menubar.Action) {
 		m.ed.Duplicate()
 	case menubar.EditDelete:
 		m.ed.Delete()
+	case menubar.EditToFront:
+		m.ed.Reorder(editor.BringToFront)
+	case menubar.EditForward:
+		m.ed.Reorder(editor.BringForward)
+	case menubar.EditBackward:
+		m.ed.Reorder(editor.SendBackward)
+	case menubar.EditToBack:
+		m.ed.Reorder(editor.SendToBack)
 	case menubar.EditGroup:
 		m.ed.Group()
 	case menubar.EditUngroup:
@@ -269,20 +290,34 @@ func (m *Model) perform(a menubar.Action) {
 	case menubar.ExportGo:
 		m.flow.ExportGoSource()
 	case menubar.HelpShortcuts:
-		m.flow.Notice("Shortcuts", shortcutsText)
+		m.flow.Notice("Shortcuts", shortcutsText(m.command))
 	case menubar.HelpAbout:
 		m.flow.Notice("About Cuppa", aboutText)
 	}
 }
 
-const shortcutsText = "Ctrl+N  New            Ctrl+O  Open\n" +
-	"Ctrl+S  Save           Ctrl+Q  Quit\n" +
+// shortcutsTemplate is the Shortcuts dialog; Ctrl becomes Cmd on a Mac.
+const shortcutsTemplate = "Ctrl+N  New            Ctrl+O  Open\n" +
+	"Ctrl+S  Save           Ctrl+Shift+S  Save As\n" +
+	"Ctrl+Q  Quit           Ctrl+F  Search components\n" +
 	"Ctrl+Z  Undo           Ctrl+Y  Redo (also Ctrl+Shift+Z)\n" +
 	"Ctrl+C  Copy           Ctrl+V  Paste\n" +
+	"Ctrl+D  Duplicate      Del     Delete\n" +
 	"Ctrl+G  Group          Ctrl+U  Ungroup\n" +
-	"Del     Delete         Esc     Deselect / cancel\n\n" +
+	"Ctrl+]  Forward one    Ctrl+[  Back one\n" +
+	"Ctrl+Shift+]  To front Ctrl+Shift+[  To back\n" +
+	"Arrows  Move the selection 1 cell (Shift: 10)\n" +
+	"Up/Down in a number: +1 / -1 (Shift: 10)\n" +
+	"Esc     Deselect / cancel\n\n" +
 	"Everything else is the mouse: drag components from the left onto\n" +
-	"the canvas, drag to move, drag the corners to resize."
+	"the canvas, drag the corners to resize."
+
+func shortcutsText(command bool) string {
+	if command {
+		return strings.ReplaceAll(shortcutsTemplate, "Ctrl", "Cmd")
+	}
+	return shortcutsTemplate
+}
 
 const aboutText = "A designer for Bubble Tea interfaces, made with Bubble Tea.\n" +
 	"Export images need Freeze: github.com/charmbracelet/freeze"
@@ -402,7 +437,12 @@ func (m *Model) stageCell(x, y int) (int, int, bool) {
 
 func (m *Model) key(msg tea.KeyPressMsg) {
 	k := msg.Key()
-	text := msg.String()
+	// Terminals that report the Cmd key (Kitty protocol) send it as Super; it
+	// does what Ctrl does, so Cmd+S saves on a Mac.
+	if k.Mod&tea.ModSuper != 0 {
+		k.Mod = k.Mod&^tea.ModSuper | tea.ModCtrl
+	}
+	text := k.Keystroke()
 	enter, esc, back := k.Code == tea.KeyEnter, k.Code == tea.KeyEscape, k.Code == tea.KeyBackspace
 	if dlg := m.flow.Modal(); dlg != nil {
 		dlg.Key(k.Text, back, enter, esc)
@@ -426,6 +466,9 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	case "ctrl+s":
 		m.flow.Save()
 		return
+	case "ctrl+shift+s":
+		m.flow.SaveAs()
+		return
 	}
 	switch {
 	case m.bar.Open():
@@ -439,7 +482,14 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 			m.ins.CancelDrag()
 		}
 	case m.ins.Editing():
-		m.ins.Key(k.Text, back, enter, esc)
+		switch k.Code {
+		case tea.KeyUp:
+			m.ins.Step(stepSize(k))
+		case tea.KeyDown:
+			m.ins.Step(-stepSize(k))
+		default:
+			m.ins.Key(k.Text, back, enter, esc)
+		}
 	case m.pal.Searching():
 		m.pal.Key(k.Text, back, enter, esc)
 	case esc:
@@ -447,6 +497,20 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		m.ed.Clear()
 	case k.Code == tea.KeyDelete:
 		m.ed.Delete()
+	case text == "ctrl+d":
+		m.ed.Duplicate()
+	case text == "ctrl+f":
+		m.pal.FocusSearch()
+	case text == "ctrl+shift+]":
+		m.ed.Reorder(editor.BringToFront)
+	case text == "ctrl+]":
+		m.ed.Reorder(editor.BringForward)
+	case text == "ctrl+[":
+		m.ed.Reorder(editor.SendBackward)
+	case text == "ctrl+shift+[":
+		m.ed.Reorder(editor.SendToBack)
+	case isArrow(k.Code) && len(m.ed.Selected()) > 0:
+		m.nudge(k)
 	case text == "ctrl+g":
 		m.ed.Group()
 	case text == "ctrl+u":
@@ -460,6 +524,35 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	case text == "ctrl+y", text == "ctrl+shift+z":
 		m.ed.Redo()
 	}
+}
+
+// stepSize is 1, or 10 with Shift held.
+func stepSize(k tea.Key) int {
+	if k.Mod&tea.ModShift != 0 {
+		return 10
+	}
+	return 1
+}
+
+func isArrow(code rune) bool {
+	return code == tea.KeyUp || code == tea.KeyDown || code == tea.KeyLeft || code == tea.KeyRight
+}
+
+// nudge moves the selection with an arrow key: 1 cell, or 10 with Shift.
+func (m *Model) nudge(k tea.Key) {
+	step := stepSize(k)
+	dx, dy := 0, 0
+	switch k.Code {
+	case tea.KeyLeft:
+		dx = -step
+	case tea.KeyRight:
+		dx = step
+	case tea.KeyUp:
+		dy = -step
+	case tea.KeyDown:
+		dy = step
+	}
+	m.ed.Nudge(dx, dy)
 }
 
 // View implements tea.Model.
