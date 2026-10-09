@@ -17,7 +17,14 @@ func main() {
 		fmt.Println("cuppa", version)
 		return
 	}
-	if _, err := tea.NewProgram(shell.New(standard.Default())).Run(); err != nil {
+	app := shell.New(standard.Default())
+	if len(os.Args) > 1 {
+		if err := app.OpenFile(os.Args[1]); err != nil {
+			fmt.Fprintln(os.Stderr, "cuppa:", err)
+			os.Exit(1)
+		}
+	}
+	if _, err := tea.NewProgram(app).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "cuppa:", err)
 		os.Exit(1)
 	}

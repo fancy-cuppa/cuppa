@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/fileflow"
 	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/inspector"
+	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/menubar"
 	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/palette"
 	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
 	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/stage"
@@ -16,6 +18,7 @@ import (
 	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
 	"github.com/fancy-cuppa/cuppa/libs/catalog/registry"
 	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/fancy-cuppa/cuppa/libs/export/image"
 )
 
 // pane identifies which pane owns a pointer gesture.
@@ -36,8 +39,10 @@ const (
 
 // Model is the whole application.
 type Model struct {
-	cat *registry.Registry
-	ed  *editor.Editor
+	cat  *registry.Registry
+	ed   *editor.Editor
+	bar  *menubar.Model
+	flow *fileflow.Flow
 
 	pal *palette.Model
 	stg *stage.Model
@@ -59,15 +64,20 @@ type Model struct {
 func New(cat *registry.Registry) *Model {
 	ed := editor.New(cat, design.NewDocument("Untitled", defaultWidth, defaultHeight))
 	m := &Model{
-		cat: cat,
-		ed:  ed,
-		pal: palette.New(cat),
-		stg: stage.New(ed, cat),
-		ins: inspector.New(ed, cat),
+		cat:  cat,
+		ed:   ed,
+		bar:  menubar.New(),
+		flow: fileflow.New(ed, cat),
+		pal:  palette.New(cat),
+		stg:  stage.New(ed, cat),
+		ins:  inspector.New(ed, cat),
 	}
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	return m
 }
+
+// OpenFile loads a design before the first frame, e.g. from the command line.
+func (m *Model) OpenFile(path string) error { return m.flow.OpenPath(path) }
 
 // Editor exposes the editor, mainly for tests.
 func (m *Model) Editor() *editor.Editor { return m.ed }
@@ -75,27 +85,118 @@ func (m *Model) Editor() *editor.Editor { return m.ed }
 // Init implements tea.Model.
 func (m *Model) Init() tea.Cmd { return nil }
 
+// exportDoneMsg reports a finished background export.
+type exportDoneMsg struct{ err error }
+
 // Update implements tea.Model.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.resize(msg.Width, msg.Height)
 	case tea.MouseClickMsg:
-		m.mouse(toEvent(tea.Mouse(msg), pointer.Down))
+		m.route(toEvent(tea.Mouse(msg), pointer.Down))
 	case tea.MouseReleaseMsg:
-		m.mouse(toEvent(tea.Mouse(msg), pointer.Up))
+		m.route(toEvent(tea.Mouse(msg), pointer.Up))
 	case tea.MouseMotionMsg:
-		m.mouse(toEvent(tea.Mouse(msg), pointer.Move))
+		m.route(toEvent(tea.Mouse(msg), pointer.Move))
 	case tea.MouseWheelMsg:
-		m.mouse(toEvent(tea.Mouse(msg), pointer.Wheel))
+		m.route(toEvent(tea.Mouse(msg), pointer.Wheel))
 	case tea.KeyPressMsg:
-		return m, m.key(msg)
+		m.key(msg)
+	case exportDoneMsg:
+		m.flow.Finish(msg.err)
 	}
-	return m, nil
+	return m, m.settle()
 }
+
+// settle runs what the last input set in motion: a finished dialog, a
+// background export, quitting. It also keeps the menu items' enabled state
+// in step with the editor.
+func (m *Model) settle() tea.Cmd {
+	m.flow.Resolve()
+	m.bar.SetEnabled(menubar.EditUndo, m.ed.CanUndo())
+	m.bar.SetEnabled(menubar.EditRedo, m.ed.CanRedo())
+	hasSel := len(m.ed.Selected()) > 0
+	m.bar.SetEnabled(menubar.EditDuplicate, hasSel)
+	m.bar.SetEnabled(menubar.EditDelete, hasSel)
+	if m.flow.Quitting() {
+		return tea.Quit
+	}
+	if job := m.flow.TakeJob(); job != nil {
+		return func() tea.Msg { return exportDoneMsg{err: job.Run()} }
+	}
+	return nil
+}
+
+// route sends a pointer event to the open dialog, else the menu bar, else
+// the panes.
+func (m *Model) route(e pointer.Event) {
+	if dlg := m.flow.Modal(); dlg != nil {
+		m.mouseX, m.mouseY = e.X, e.Y
+		dlg.Handle(e)
+		return
+	}
+	if m.owner == nowhere && m.dragging == "" {
+		if act, used := m.bar.Handle(e); used {
+			m.perform(act)
+			return
+		}
+	}
+	m.mouse(e)
+}
+
+// perform carries out a menu choice.
+func (m *Model) perform(a menubar.Action) {
+	switch a {
+	case menubar.FileNew:
+		m.flow.NewDesign()
+	case menubar.FileOpen:
+		m.flow.Open()
+	case menubar.FileSave:
+		m.flow.Save()
+	case menubar.FileSaveAs:
+		m.flow.SaveAs()
+	case menubar.FileQuit:
+		m.flow.Quit()
+	case menubar.EditUndo:
+		m.ed.Undo()
+	case menubar.EditRedo:
+		m.ed.Redo()
+	case menubar.EditDuplicate:
+		m.ed.Duplicate()
+	case menubar.EditDelete:
+		m.ed.Delete()
+	case menubar.ExportPNG:
+		m.flow.ExportImage(image.PNG)
+	case menubar.ExportSVG:
+		m.flow.ExportImage(image.SVG)
+	case menubar.ExportWebP:
+		m.flow.ExportImage(image.WebP)
+	case menubar.ExportANSI:
+		m.flow.ExportText(true)
+	case menubar.ExportText:
+		m.flow.ExportText(false)
+	case menubar.HelpShortcuts:
+		m.flow.Notice("Shortcuts", shortcutsText)
+	case menubar.HelpAbout:
+		m.flow.Notice("About Cuppa", aboutText)
+	}
+}
+
+const shortcutsText = "Ctrl+N  New            Ctrl+O  Open\n" +
+	"Ctrl+S  Save           Ctrl+Q  Quit\n" +
+	"Ctrl+Z  Undo           Ctrl+Y  Redo\n" +
+	"Del     Delete         Esc     Deselect / cancel\n\n" +
+	"Everything else is the mouse: drag components from the left onto\n" +
+	"the canvas, drag to move, drag the corners to resize."
+
+const aboutText = "A designer for Bubble Tea interfaces, made with Bubble Tea.\n" +
+	"Export images need Freeze: github.com/charmbracelet/freeze"
 
 func (m *Model) resize(w, h int) {
 	m.w, m.h = w, h
+	m.bar.SetWidth(w)
+	m.flow.SetScreen(w, h)
 	m.layout = computeLayout(w, h)
 	m.pal.SetSize(m.layout.palette.W, m.layout.palette.H)
 	m.stg.SetSize(m.layout.stage.W, m.layout.stage.H)
@@ -196,15 +297,33 @@ func (m *Model) stageCell(x, y int) (int, int, bool) {
 	return cx, cy, true
 }
 
-func (m *Model) key(msg tea.KeyPressMsg) tea.Cmd {
+func (m *Model) key(msg tea.KeyPressMsg) {
 	k := msg.Key()
 	text := msg.String()
+	enter, esc, back := k.Code == tea.KeyEnter, k.Code == tea.KeyEscape, k.Code == tea.KeyBackspace
+	if dlg := m.flow.Modal(); dlg != nil {
+		dlg.Key(k.Text, back, enter, esc)
+		return
+	}
 	switch text {
 	case "ctrl+c", "ctrl+q":
-		return tea.Quit
+		m.flow.Quit()
+		return
+	case "ctrl+n":
+		m.flow.NewDesign()
+		return
+	case "ctrl+o":
+		m.flow.Open()
+		return
+	case "ctrl+s":
+		m.flow.Save()
+		return
 	}
-	enter, esc, back := k.Code == tea.KeyEnter, k.Code == tea.KeyEscape, k.Code == tea.KeyBackspace
 	switch {
+	case m.bar.Open():
+		if esc {
+			m.bar.Close()
+		}
 	case m.ins.Editing():
 		m.ins.Key(k.Text, back, enter, esc)
 	case m.pal.Searching():
@@ -219,7 +338,6 @@ func (m *Model) key(msg tea.KeyPressMsg) tea.Cmd {
 	case text == "ctrl+y":
 		m.ed.Redo()
 	}
-	return nil
 }
 
 // View implements tea.Model.
@@ -239,20 +357,37 @@ func (m *Model) render() string {
 	pal, stg, ins := m.pal.Lines(), m.stg.Lines(), m.ins.Lines()
 	sep := theme.Faded("│")
 	out := make([]string, 0, m.h)
-	out = append(out, m.titleBar())
+	out = append(out, m.bar.Line(m.titleText()))
 	for i := 0; i < l.stage.H; i++ {
 		out = append(out, pal[i]+sep+stg[i]+sep+ins[i])
 	}
 	out = append(out, m.statusBar())
+	if x, drop := m.bar.Dropdown(); drop != nil {
+		m.overlay(out, drop, x, 1)
+	}
+	if dlg := m.flow.Modal(); dlg != nil {
+		r := dlg.Rect()
+		m.overlay(out, dlg.Lines(), r.X, r.Y)
+	}
 	return strings.Join(out, "\n")
 }
 
-func (m *Model) titleBar() string {
-	name := m.ed.Document().Name
+// overlay draws lines over the screen rows starting at (x, y), clipped to the screen.
+func (m *Model) overlay(screen, lines []string, x, y int) {
+	for i, l := range lines {
+		if row := y + i; row >= 0 && row < len(screen) {
+			screen[row] = theme.Overlay(screen[row], l, x)
+		}
+	}
+}
+
+// titleText is the design name at the right of the menu bar.
+func (m *Model) titleText() string {
+	name := m.flow.Title()
 	if m.ed.Dirty() {
 		name += " •"
 	}
-	return theme.Fit(" "+theme.Title("☕ Cuppa")+theme.Faded("  ·  ")+name, m.w)
+	return theme.Dim(name)
 }
 
 func (m *Model) statusBar() string {
@@ -265,6 +400,8 @@ func (m *Model) statusBar() string {
 	default:
 		if n, ok := m.ed.Primary(); ok {
 			hint = fmt.Sprintf("%s  (%d,%d)  %d×%d", n.Name, n.Rect.X, n.Rect.Y, n.Rect.W, n.Rect.H)
+		} else if st := m.flow.Status(); st != "" {
+			hint = st
 		}
 	}
 	return theme.Fit(" "+theme.Dim(hint), m.w)
