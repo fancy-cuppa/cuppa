@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
@@ -311,4 +312,23 @@ func (m *Model) acceptText() {
 		m.setRGB(c)
 	}
 	m.finish("OK", false)
+}
+
+// Describe reads the dialog out: the current colour, the tab and the buttons.
+func (m *Model) Describe() []a11y.Node {
+	value := string(m.text)
+	if m.empty {
+		value = "none"
+	}
+	field := a11y.Field("Colour value", value)
+	field.Focused = true
+	nodes := []a11y.Node{
+		a11y.Heading(m.title),
+		a11y.Text("Tab " + tabNames[m.tab] + ". Type a number from 0 to 255 or a hex colour like #ff5fd7."),
+		field,
+	}
+	if m.errMsg != "" {
+		nodes = append(nodes, a11y.Text(m.errMsg))
+	}
+	return append(nodes, a11y.Button("None"), a11y.Button("OK"), a11y.Button("Cancel"))
 }

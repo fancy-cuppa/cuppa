@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
@@ -286,3 +287,22 @@ func (m *Model) accept() {
 
 // Outcome implements modal.Modal.
 func (m *Model) Outcome() (modal.Outcome, bool) { return m.outcome, m.done }
+
+// Describe reads the dialog out: the folder, its entries, the file name and buttons.
+func (m *Model) Describe() []a11y.Node {
+	var items []a11y.Node
+	for i, e := range m.entries {
+		label := e.name
+		if e.dir {
+			label += ", folder"
+		}
+		items = append(items, a11y.Item(label, i == m.picked))
+	}
+	name := a11y.Field("File name", string(m.name))
+	name.Focused = true
+	nodes := []a11y.Node{a11y.Heading(m.spec.Title), a11y.Text("Folder " + m.dir), a11y.List("Files", items...), name}
+	if m.errMsg != "" {
+		nodes = append(nodes, a11y.Text(m.errMsg))
+	}
+	return append(nodes, a11y.Button("OK"), a11y.Button("Cancel"))
+}

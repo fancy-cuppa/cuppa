@@ -69,3 +69,24 @@ func TestClicksOutsideButtonsDoNothing(t *testing.T) {
 		t.Fatal("ended by a stray click")
 	}
 }
+
+func TestDescribeReadsTitleMessageAndButtons(t *testing.T) {
+	m := New("Save changes?", "Save changes to a.cuppa?\nThey will be lost.", "Save", "Discard", "Cancel")
+	nodes := m.Describe()
+	var got []string
+	for _, n := range nodes {
+		got = append(got, n.Role+":"+n.Label)
+	}
+	want := []string{"heading:Save changes?", "text:Save changes to a.cuppa?", "text:They will be lost.", "button:Save", "button:Discard", "button:Cancel"}
+	if len(got) != len(want) {
+		t.Fatalf("got %v", got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("node %d = %q, want %q", i, got[i], want[i])
+		}
+	}
+	if !nodes[3].Focused || nodes[4].Focused {
+		t.Fatal("the default button, the one Enter presses, is focused")
+	}
+}

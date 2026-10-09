@@ -47,10 +47,11 @@ func (a *App) newModel() tea.Model {
 	}
 	app.Welcome()
 	app.ReportPackProblems()
-	return terminal.OnQuit(app, func() {
+	quit := terminal.OnQuit(app, func() {
 		a.closing.Store(true)
 		runtime.Quit(a.ctx)
 	})
+	return terminal.Describe(quit, app)
 }
 
 // beforeClose turns "the user closed the window" into Ctrl+Q inside the app,

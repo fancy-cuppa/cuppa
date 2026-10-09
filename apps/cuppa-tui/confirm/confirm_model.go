@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/a11y"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
@@ -145,3 +146,19 @@ func (m *Model) finish(button string, canceled bool) {
 
 // Outcome implements modal.Modal.
 func (m *Model) Outcome() (modal.Outcome, bool) { return m.outcome, m.done }
+
+// Describe reads the dialog out: its title, message and buttons.
+func (m *Model) Describe() []a11y.Node {
+	nodes := []a11y.Node{a11y.Heading(m.title)}
+	for _, l := range m.body {
+		if l != "" {
+			nodes = append(nodes, a11y.Text(l))
+		}
+	}
+	for i, b := range m.buttons {
+		btn := a11y.Button(b)
+		btn.Focused = i == 0 // Enter presses the first one
+		nodes = append(nodes, btn)
+	}
+	return nodes
+}
