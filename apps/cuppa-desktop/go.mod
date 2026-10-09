@@ -4,10 +4,9 @@ go 1.27
 
 require (
 	charm.land/bubbletea/v2 v2.1.0
-	github.com/coder/websocket v1.8.15
 	github.com/meta-tui/cuppa/apps/cuppa-tui v0.0.0-20261009072816-3dfdeccc01f3
 	github.com/meta-tui/cuppa/libs/catalog v0.0.0-20261009072816-3dfdeccc01f3
-	github.com/meta-tui/treactui/packages/tty-go v0.1.2
+	github.com/meta-tui/treactui/packages/tty-go v0.1.3
 	github.com/wailsapp/wails/v2 v2.16.0
 )
 
@@ -23,6 +22,7 @@ require (
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+	github.com/coder/websocket v1.8.15 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect

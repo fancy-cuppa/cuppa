@@ -7,8 +7,8 @@ same terminal app as `cuppa-tui`, shown in a real terminal emulator by
 
 ```
 window (web view)                       Go process
-  <TTY url=…>  ──── ws://127.0.0.1:port/term/<secret> ────▶  tty-go  ──▶  shell.New(...)
-  React page      ◀── App.TerminalURL() (Wails binding) ──   terminal.Start
+  <TTY createSocket={createWailsSocket()}>  ◀── Wails events ──▶  ttygo.BindShared  ──▶  shell.New(...)
+  React page                                  treactui:up / :down   (no server, no port)
 ```
 
 ## Run
@@ -41,14 +41,15 @@ Installers and signing are tracked in #68.
 | | |
 |---|---|
 | `main.go` | Starts Wails: window options and the embedded page |
-| `app_binding.go` | What the page can call, and the window lifecycle (start, close, shutdown) |
-| `terminal/` | The loopback WebSocket server (`Start`), and `OnQuit` which closes the window when the app quits |
+| `app_binding.go` | The window lifecycle (start, close, shutdown) and the shared program bound to the window |
+| `wails_events_adapter.go` | Gives tty-go Wails' `EventsOn` / `EventsEmit`, so tty-go needs no Wails dependency |
+| `terminal/` | `OnQuit`, which closes the window when the app quits |
 | `frontend/` | The React page: one `<TTY>`. Built by `wails build`, not by Nx |
 
 ## Behaviour worth knowing
 
-- The server only listens on `127.0.0.1`, with a random secret in the address
-  and an origin check, because it runs a program.
+- The page and the program talk over Wails events, so there is no server, no
+  open port and nothing for another program on the computer to connect to.
 - Closing the window asks the app to quit first, so unsaved changes prompt.
 - Reloading the window (`wails dev`) keeps the design: the program is shared.
 - `frontend/dist` only holds a `.gitkeep` in git so the Go code compiles; real

@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react'
-import { TTY } from '@treactui/tty'
-import { TerminalURL } from '../wailsjs/go/main/App'
+import { TTY, createWailsSocket } from '@treactui/tty'
 
-/** The whole window: one terminal showing the Cuppa terminal app. */
+// Created once, outside the component: a new function on every render would
+// reconnect the terminal each time.
+const wailsSocket = createWailsSocket()
+
+/** The whole window: one terminal showing the Cuppa terminal app, over Wails events. */
 export default function App () {
-  const [url, setUrl] = useState('')
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    TerminalURL().then(setUrl).catch((e: unknown) => setError(String(e)))
-  }, [])
-
-  if (error) {
-    return <p role='alert' className='startup-error'>Cuppa could not start its terminal: {error}</p>
-  }
-  return <main className='window'>{url && <TTY url={url} label='Cuppa' className='terminal' />}</main>
+  return <main className='window'><TTY createSocket={wailsSocket} label='Cuppa' className='terminal' /></main>
 }
