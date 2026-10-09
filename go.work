@@ -1,0 +1,12 @@
+go 1.27
+
+use (
+	./apps/cuppa-tui
+	./libs/archcheck
+	./libs/canvas
+	./libs/catalog
+	./libs/cuppafile
+	./libs/document
+	./libs/export
+	./libs/render
+)

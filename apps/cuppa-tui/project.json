@@ -1,0 +1,96 @@
+{
+  "name": "cuppa-tui",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/cuppa-tui",
+  "tags": [
+    "type:go-app",
+    "release:go"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx-go/nx-go:build",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/cuppa-tui"
+      ],
+      "options": {
+        "outputPath": "../../dist/apps/cuppa-tui/cuppa-tui"
+      }
+    },
+    "test": {
+      "executor": "@nx-go/nx-go:test"
+    },
+    "lint": {
+      "executor": "@nx-go/nx-go:lint",
+      "parallelism": false,
+      "options": {
+        "linter": "golangci-lint",
+        "args": [
+          "run"
+        ]
+      }
+    },
+    "package": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "build"
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/drop/go-app-cuppa-tui.zip"
+      ],
+      "options": {
+        "command": "node -e \"const fs=require('node:fs');fs.mkdirSync('dist/drop',{recursive:true});const A=require('adm-zip');const z=new A();z.addLocalFolder('dist/apps/cuppa-tui');z.writeZip('dist/drop/go-app-cuppa-tui.zip')\""
+      }
+    },
+    "build-all": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/go.mod",
+        "{workspaceRoot}/go.sum",
+        {
+          "env": "VERSION"
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/platforms/cuppa-tui"
+      ],
+      "options": {
+        "command": "node -e \"const{spawnSync}=require('node:child_process');const v=process.env.VERSION||'dev';for(const p of ['windows/amd64','windows/arm64','linux/amd64','linux/arm64','darwin/amd64','darwin/arm64']){const[os,arch]=p.split('/');const out='../../dist/platforms/cuppa-tui/'+os+'-'+arch+'/cuppa-tui'+(os==='windows'?'.exe':'');const r=spawnSync('go',['build','-trimpath','-ldflags','-s -w -X main.version='+v,'-o',out,'.'],{cwd:'apps/cuppa-tui',stdio:'inherit',env:{...process.env,CGO_ENABLED:'0',GOOS:os,GOARCH:arch}});if(r.status!==0)process.exit(r.status??1)}\""
+      }
+    },
+    "package-all": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "build-all"
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/drop/go-app-cuppa-tui-*.zip"
+      ],
+      "options": {
+        "command": "node -e \"const fs=require('node:fs');const A=require('adm-zip');fs.mkdirSync('dist/drop',{recursive:true});for(const d of fs.readdirSync('dist/platforms/cuppa-tui')){const z=new A();z.addLocalFolder('dist/platforms/cuppa-tui/'+d);z.writeZip('dist/drop/go-app-cuppa-tui-'+d+'.zip')}\""
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "go run .",
+        "cwd": "apps/cuppa-tui"
+      }
+    },
+    "nx-release-publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node -e \"console.log('Published by its git tag; the platform zips are attached to the GitHub Release by tools/go-app-release.cjs assets.')\""
+      }
+    }
+  },
+  "release": {
+    "version": {
+      "versionActions": "tools/go-app-release.cjs",
+      "currentVersionResolver": "git-tag"
+    }
+  }
+}
