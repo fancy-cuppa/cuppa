@@ -6,13 +6,9 @@ import (
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
-// huhFrame draws the focus bar, the title and the description shared by every
-// form field, and returns the first free row for the field's own content.
-func huhFrame(g *grid.Grid, p Props) int {
-	accent := grid.Style{Fg: p.Str("color")}
-	for y := 0; y < g.H; y++ {
-		g.Set(0, y, grid.Cell{Ch: '┃', Style: accent})
-	}
+// huhHead draws the title and the description shared by every form field and
+// returns the first free row for the field's own content.
+func huhHead(g *grid.Grid, p Props) int {
 	y := 0
 	if t := p.Str("title"); t != "" {
 		g.Text(2, y, t, grid.Style{Fg: p.Str("color"), Bold: true}, g.W-2)
@@ -25,42 +21,52 @@ func huhFrame(g *grid.Grid, p Props) int {
 	return y
 }
 
+// huhBars draws the focus bar down the first rows of the field.
+func huhBars(g *grid.Grid, p Props, rows int) {
+	accent := grid.Style{Fg: p.Str("color")}
+	for y := 0; y < rows && y < g.H; y++ {
+		g.Set(0, y, grid.Cell{Ch: '┃', Style: accent})
+	}
+}
+
+// huhFrame is huhHead with the bar down every row, for the fields that fill
+// their box.
+func huhFrame(g *grid.Grid, p Props) int {
+	huhBars(g, p, g.H)
+	return huhHead(g, p)
+}
+
 func paintHuhInput(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
-	accent := fg(p.Str("color"))
-	n := g.Text(2, y, "> ", accent, g.W-2)
+	y := huhHead(g, p)
+	huhBars(g, p, y+1)
+	n := g.Text(2, y, "> ", fg(p.Str("color")), g.W-2)
 	if v := p.Str("value"); v != "" {
-		m := g.Text(2+n, y, v, grid.Style{}, g.W-2-n)
-		g.Set(2+n+m, y, grid.Cell{Ch: '█', Style: accent})
+		g.Text(2+n, y, v, grid.Style{}, g.W-2-n)
 		return
 	}
-	g.Set(2+n, y, grid.Cell{Ch: '█', Style: accent})
-	g.Text(3+n, y, p.Str("placeholder"), dim, g.W-3-n)
+	g.Text(2+n, y, p.Str("placeholder"), dim, g.W-2-n)
 }
 
 func paintHuhText(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
-	accent := fg(p.Str("color"))
+	y := huhHead(g, p)
+	huhBars(g, p, y+max(g.H-3, 1))
 	lines := pipeLines(p.Str("value"))
 	if len(lines) == 0 {
-		g.Set(2, y, grid.Cell{Ch: '█', Style: accent})
-		g.Text(3, y, p.Str("placeholder"), dim, g.W-3)
+		g.Text(2, y, p.Str("placeholder"), dim, g.W-2)
 		return
 	}
 	for i, l := range lines {
 		if y+i >= g.H {
 			break
 		}
-		n := g.Text(2, y+i, l, grid.Style{}, g.W-2)
-		if i == len(lines)-1 {
-			g.Set(2+n, y+i, grid.Cell{Ch: '█', Style: accent})
-		}
+		g.Text(2, y+i, l, grid.Style{}, g.W-2)
 	}
 }
 
 func paintHuhSelect(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
+	y := huhHead(g, p)
 	opts := p.List("options")
+	huhBars(g, p, y+len(opts)+1)
 	sel := pick(p, "selected", len(opts))
 	for i, o := range opts {
 		if y+i >= g.H {
@@ -75,8 +81,9 @@ func paintHuhSelect(g *grid.Grid, p Props) {
 }
 
 func paintHuhMultiSelect(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
+	y := huhHead(g, p)
 	opts := p.List("options")
+	huhBars(g, p, y+len(opts)+1)
 	checked := map[string]bool{}
 	for _, c := range p.List("checked") {
 		checked[c] = true
@@ -86,22 +93,25 @@ func paintHuhMultiSelect(g *grid.Grid, p Props) {
 		if y+i >= g.H {
 			break
 		}
-		box := "[ ] "
+		mark := "• "
 		if checked[strings.TrimSpace(itoa(i))] {
-			box = "[•] "
+			mark = "✓ "
 		}
-		prefix := "  "
-		style := grid.Style{}
+		prefix, style := "  ", grid.Style{}
 		if i == cursor {
 			prefix, style = "> ", grid.Style{Fg: p.Str("color"), Bold: true}
 		}
-		g.Text(2, y+i, prefix+box+o, style, g.W-2)
+		g.Text(2, y+i, prefix+mark+o, style, g.W-2)
 	}
 }
 
 func paintHuhConfirm(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
-	yes, no := " "+p.Str("affirmative")+" ", " "+p.Str("negative")+" "
+	y := huhHead(g, p)
+	if p.Str("description") == "" {
+		y++ // the description's row stays, empty
+	}
+	huhBars(g, p, y+1)
+	yes, no := "  "+p.Str("affirmative")+"  ", "  "+p.Str("negative")+"  "
 	on, off := selected(p.Str("color")), grid.Style{Fg: "250", Bg: "238"}
 	ys, ns := off, on
 	if p.Bool("value") {
@@ -112,8 +122,14 @@ func paintHuhConfirm(g *grid.Grid, p Props) {
 }
 
 func paintHuhNote(g *grid.Grid, p Props) {
-	y := huhFrame(g, p)
-	for i, l := range wrap(p.Str("body"), g.W-2) {
+	lines := wrap(p.Str("body"), g.W-2)
+	y := 0
+	if t := p.Str("title"); t != "" {
+		g.Text(2, y, t, grid.Style{Fg: p.Str("color"), Bold: true}, g.W-2)
+		y += 2 // the title, then a blank row
+	}
+	huhBars(g, p, y+len(lines)+1)
+	for i, l := range lines {
 		if y+i >= g.H {
 			break
 		}

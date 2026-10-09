@@ -213,7 +213,8 @@ func lgTablePart(c placed, p props) *part {
 		Headers(split(p.str("headers"), ",")...).
 		Rows(rows...).
 		Border(borderOf(p.str("border"))).
-		BorderStyle(fg(p.str("color")))
+		BorderStyle(fg(p.str("color"))).
+		StyleFunc(func(row, col int) lipgloss.Style { return lipgloss.NewStyle().Padding(0, 1) })
 	return staticPart(t.String())
 }
 
@@ -225,7 +226,7 @@ func lgTreePart(c placed, p props) *part {
 	t := ltree.Root(p.str("root")).Child(items...).
 		RootStyle(fg(p.str("color")).Bold(true)).
 		EnumeratorStyle(fg(p.str("color"))).
-		ItemStyle(fg(p.str("color")))
+		ItemStyle(fg(p.str("color")).PaddingLeft(1))
 	return staticPart(t.String())
 }
 

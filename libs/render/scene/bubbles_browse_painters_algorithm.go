@@ -7,66 +7,75 @@ import (
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
+// paintTextArea draws the text area: the prompt bar down its left edge, the
+// line numbers when asked for, and the text or the placeholder.
 func paintTextArea(g *grid.Grid, p Props) {
 	accent := fg(p.Str("color"))
 	lines := pipeLines(p.Str("value"))
 	showNumbers := p.Bool("line_numbers")
-	gutter := 0
-	if showNumbers {
-		gutter = 4
+	x0 := 2
+	for y := 0; y < g.H; y++ {
+		g.Set(0, y, grid.Cell{Ch: '┃', Style: accent})
 	}
-	if len(lines) == 0 {
-		if showNumbers {
-			g.Text(0, 0, "  1 ", dim, g.W)
-		}
-		g.Set(gutter, 0, grid.Cell{Ch: '█', Style: accent})
-		g.Text(gutter+1, 0, p.Str("placeholder"), dim, g.W-gutter-1)
-		return
+	content := lines
+	style := grid.Style{}
+	if len(content) == 0 {
+		content, style = []string{p.Str("placeholder")}, dim
 	}
-	for i, l := range lines {
+	for i, l := range content {
 		if i >= g.H {
 			break
 		}
+		x := x0
 		if showNumbers {
-			g.Text(0, i, fmt.Sprintf("%3d ", i+1), dim, gutter)
+			x += g.Text(x, i, fmt.Sprintf("%3d ", i+1), dim, g.W-x)
 		}
-		n := g.Text(gutter, i, l, grid.Style{}, g.W-gutter)
-		if i == len(lines)-1 {
-			g.Set(gutter+n, i, grid.Cell{Ch: '█', Style: accent})
-		}
+		g.Text(x, i, l, style, g.W-x)
 	}
 }
 
+// paintBubbleList draws the Bubbles list as it lays itself out: the title, a
+// blank row, the status line, a blank row, a page of items, the page dots and
+// the key help. A page holds what is left after those rows.
 func paintBubbleList(g *grid.Grid, p Props) {
 	items := p.List("items")
-	sel := pick(p, "selected", len(items))
+	accent := p.Str("color")
 	y := 0
-	g.Text(1, y, " "+p.Str("title")+" ", grid.Style{Fg: "0", Bg: p.Str("color"), Bold: true}, g.W-1)
-	y++
-	if p.Bool("show_filter") && g.H > 3 {
-		g.Text(2, y, "/ filter", dim, g.W-2)
-		y++
+	if t := p.Str("title"); t != "" {
+		g.Text(2, y, " "+t+" ", grid.Style{Fg: "0", Bg: accent, Bold: true}, g.W-2)
+		y += 2
 	}
-	footer := 0
-	if p.Bool("show_status") && g.H > 4 {
-		footer = 1
+	if p.Bool("show_status") {
+		g.Text(2, y, fmt.Sprintf("%d items", len(items)), dim, g.W-2)
+		y += 2
 	}
-	room := g.H - y - footer
-	for i, it := range items {
-		if i >= room {
-			break
-		}
-		if i == sel {
-			g.Text(0, y+i, "┃ "+it, grid.Style{Fg: p.Str("color"), Bold: true}, g.W)
+	room := max(g.H-y-4, 1)
+	sel := pick(p, "selected", len(items))
+	start := sel / room * room
+	for i := 0; i < room && start+i < len(items); i++ {
+		if start+i == sel {
+			g.Text(0, y+i, "│ "+items[start+i], grid.Style{Fg: accent, Bold: true}, g.W)
 		} else {
-			g.Text(2, y+i, it, grid.Style{}, g.W-2)
+			g.Text(2, y+i, items[start+i], grid.Style{}, g.W-2)
 		}
 	}
-	if footer == 1 {
-		g.Text(2, g.H-1, fmt.Sprintf("%d items", len(items)), dim, g.W-2)
+	if len(items) > room && g.H >= 3 {
+		pages := (len(items) + room - 1) / room
+		for i := 0; i < pages && 2+i < g.W; i++ {
+			style := dim
+			if i == start/room {
+				style = grid.Style{Fg: accent}
+			}
+			g.Set(2+i, g.H-3, grid.Cell{Ch: '•', Style: style})
+		}
+	}
+	if g.H >= 2 {
+		g.Text(2, g.H-1, "↑/k up • ↓/j down • / filter • q quit • ? more", dim, g.W-2)
 	}
 }
 
+// paintBubbleTable draws the Bubbles table: equal columns, a space of padding
+// each side, the header in bold and the selected row highlighted.
 func paintBubbleTable(g *grid.Grid, p Props) {
 	cols := p.List("columns")
 	var rows [][]string
@@ -81,31 +90,16 @@ func paintBubbleTable(g *grid.Grid, p Props) {
 		paintGeneric(g, "Table")
 		return
 	}
-	widths := make([]int, n)
-	measure := func(cells []string) {
-		for i, c := range cells {
-			widths[i] = max(widths[i], len([]rune(c)))
-		}
-	}
-	measure(cols)
-	for _, r := range rows {
-		measure(r)
-	}
+	each := max((g.W-2*n)/n, 3)
 	draw := func(y int, cells []string, s grid.Style) {
-		x := 1
-		for i, w := range widths {
-			if i < len(cells) {
-				g.Text(x, y, cells[i], s, min(w, g.W-x))
-			}
-			x += w + 2
+		for i := 0; i < n && i < len(cells); i++ {
+			g.Text(i*(each+2)+1, y, cells[i], s, each)
 		}
 	}
 	sel := pick(p, "selected", len(rows))
 	y := 0
 	if len(cols) > 0 {
 		draw(y, cols, bold)
-		y++
-		g.Text(0, y, strings.Repeat("─", g.W), dim, g.W)
 		y++
 	}
 	for i, r := range rows {
@@ -153,6 +147,8 @@ func paintViewport(g *grid.Grid, p Props) {
 	}
 }
 
+// paintPaginator draws the page dots (a filled dot for this page, hollow for
+// the others, with no gaps) or "page/pages".
 func paintPaginator(g *grid.Grid, p Props) {
 	total := max(p.Int("total", 1), 1)
 	page := min(max(p.Int("page", 1), 1), total)
@@ -161,11 +157,11 @@ func paintPaginator(g *grid.Grid, p Props) {
 		g.Text(0, 0, fmt.Sprintf("%d/%d", page, total), accent, g.W)
 		return
 	}
-	for i := 1; i <= total && (i-1)*2 < g.W; i++ {
+	for i := 1; i <= total && i-1 < g.W; i++ {
 		if i == page {
-			g.Set((i-1)*2, 0, grid.Cell{Ch: '•', Style: accent})
+			g.Set(i-1, 0, grid.Cell{Ch: '•', Style: accent})
 		} else {
-			g.Set((i-1)*2, 0, grid.Cell{Ch: '•', Style: dim})
+			g.Set(i-1, 0, grid.Cell{Ch: '○', Style: dim})
 		}
 	}
 }
@@ -266,6 +262,6 @@ func paintBubbleTree(g *grid.Grid, p Props) {
 		ancestors = append(ancestors, it.last)
 	}
 	if p.Bool("show_help") && g.H >= rowsShown+2 {
-		g.Text(2, g.H-1, "↓/j down • ↑/k up • ⏎ toggle • ? more", dim, g.W-2)
+		g.Text(0, g.H-1, "↓/j down • ↑/k up • ⏎ toggle • ? more", dim, g.W)
 	}
 }

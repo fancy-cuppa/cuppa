@@ -81,7 +81,7 @@ func TestNewComponentsDrawRecognisableContent(t *testing.T) {
 		props map[string]string
 		want  string
 	}{
-		{"bubbles.paginator", 10, 1, map[string]string{"total": "3", "page": "2"}, "• • •"},
+		{"bubbles.paginator", 10, 1, map[string]string{"total": "3", "page": "2"}, "○•○"},
 		{"bubbles.timer", 20, 1, map[string]string{"value": "01:23", "label": "Steep"}, "Steep 01:23"},
 		{"huh.confirm", 30, 3, map[string]string{"title": "Sure?"}, "Sure?"},
 		{"ntcharts.sparkline", 8, 1, map[string]string{"values": "1,2,3,4,5,6,7,8"}, "▁"},
