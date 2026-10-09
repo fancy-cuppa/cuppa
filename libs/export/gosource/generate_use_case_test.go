@@ -37,7 +37,10 @@ func richDesign() (design.Document, Catalog) {
 		"lipgloss.table", "lipgloss.tree", "lipgloss.tabs", "lipgloss.joinh", "lipgloss.joinv", "lipgloss.place",
 		"bubbles.help", "bubbles.filepicker",
 		"community.flexbox", "community.boxer", "community.datepicker", "community.overlay", "community.statusbar", "community.filetree",
-		"huh.input",
+		"huh.input", "huh.text", "huh.select", "huh.multiselect", "huh.confirm", "huh.note", "huh.filepicker", "huh.form",
+		"glamour.markdown",
+		"ntcharts.sparkline", "ntcharts.barchart", "ntcharts.linechart", "ntcharts.streamline", "ntcharts.timeseries", "ntcharts.heatmap", "ntcharts.canvas",
+		"community.bubbletable",
 	} {
 		def, _ := cat.Get(id)
 		doc.Add(design.Node{Component: id, Name: def.Name, Rect: design.Rect{X: (at % 4) * 28, Y: (at / 4) * 8, W: def.DefaultSize.W, H: def.DefaultSize.H}})
@@ -52,6 +55,8 @@ func richDesign() (design.Document, Catalog) {
 		}})
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Fade", Rect: design.Rect{X: 50, Y: 30, W: 24, H: 5},
 		Props: map[string]string{"title": "Fade", "color": "#ff5fd7", "gradient": "#5f87ff"}})
+	// A component the generator does not know: drawn as an empty frame and said so.
+	doc.Add(design.Node{Component: "mystery.widget", Name: "Mystery", Rect: design.Rect{X: 100, Y: 30, W: 10, H: 4}})
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Hidden", Rect: design.Rect{W: 5, H: 3}, Hidden: true})
 	return doc, cat
 }
@@ -82,7 +87,7 @@ func TestTheProjectHasTheFilesAndTheLayoutOfTheDesign(t *testing.T) {
 	if strings.Contains(layout, `Name: "Hidden"`) {
 		t.Error("hidden components are not generated")
 	}
-	if len(p.Notes) != 1 || !strings.Contains(p.Notes[0], "huh.input") || !strings.Contains(p.Files["README.md"], "huh.input") {
+	if len(p.Notes) != 1 || !strings.Contains(p.Notes[0], "mystery.widget") || !strings.Contains(p.Files["README.md"], "mystery.widget") {
 		t.Fatalf("what is not generated is said: %v", p.Notes)
 	}
 }
