@@ -22,7 +22,11 @@
     "cuppa-tui:qa": "nx run cuppa-tui:lint && nx run cuppa-tui:test",
     "cuppa-tui:build": "nx run cuppa-tui:build",
     "cuppa-tui:start": "nx run cuppa-tui:start",
-    "archcheck:qa": "nx run archcheck:lint && nx run archcheck:test"
+    "archcheck:qa": "nx run archcheck:lint && nx run archcheck:test",
+    "cuppa-desktop:qa": "nx run cuppa-desktop:lint && nx run cuppa-desktop:test",
+    "cuppa-desktop:build": "nx run cuppa-desktop:build",
+    "cuppa-desktop:start": "nx run cuppa-desktop:start",
+    "cuppa-desktop:bundle": "nx run cuppa-desktop:bundle"
   },
   "private": true,
   "devDependencies": {

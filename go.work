@@ -1,6 +1,7 @@
 go 1.27
 
 use (
+	./apps/cuppa-desktop
 	./apps/cuppa-tui
 	./libs/archcheck
 	./libs/canvas

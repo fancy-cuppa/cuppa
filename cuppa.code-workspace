@@ -137,6 +137,27 @@
         "script": "archcheck:qa",
         "problemMatcher": [],
         "group": "qa"
+      },
+      {
+        "label": "cuppa-desktop: qa",
+        "type": "npm",
+        "script": "cuppa-desktop:qa",
+        "problemMatcher": [],
+        "group": "qa"
+      },
+      {
+        "label": "cuppa-desktop: build",
+        "type": "npm",
+        "script": "cuppa-desktop:build",
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "cuppa-desktop: start",
+        "type": "npm",
+        "script": "cuppa-desktop:start",
+        "problemMatcher": [],
+        "isBackground": true
       }
     ]
   },
