@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
@@ -48,7 +49,13 @@ func Decode(data []byte) (design.Document, error) {
 // normalise repairs what a hand-edited or damaged file can get wrong, so the
 // editor never sees an impossible document.
 func normalise(doc design.Document) design.Document {
-	doc.Width, doc.Height = max(doc.Width, 1), max(doc.Height, 1)
+	doc.Width = min(max(doc.Width, 1), design.MaxWidth)
+	doc.Height = min(max(doc.Height, 1), design.MaxHeight)
+	if bg, err := space.Normalise(doc.Background); err == nil {
+		doc.Background = bg
+	} else {
+		doc.Background = ""
+	}
 	seen := map[design.NodeID]bool{}
 	nodes := make([]design.Node, 0, len(doc.Nodes))
 	for _, n := range doc.Nodes {

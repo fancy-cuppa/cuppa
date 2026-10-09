@@ -134,6 +134,14 @@ func (m *Model) cancelEdit() { m.editing, m.buf = "", "" }
 func (m *Model) commit() {
 	field, value := m.editing, m.buf
 	m.cancelEdit()
+	switch {
+	case field == "background":
+		m.report(m.ed.SetBackground(value))
+		return
+	case strings.HasPrefix(field, "canvas-"):
+		m.commitCanvas(field, value)
+		return
+	}
 	n, ok := m.ed.Primary()
 	if !ok {
 		return

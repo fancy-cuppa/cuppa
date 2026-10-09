@@ -13,8 +13,10 @@ func (m *Model) render() *grid.Grid {
 	doc := m.ed.Document()
 	rendered := scene.Render(doc, m.cat)
 	view := grid.New(m.w, m.h)
-	canvasBg := grid.Style{Bg: theme.Canvas}
-	dot := grid.Style{Fg: theme.Faint, Bg: theme.Canvas}
+	canvasBg := doc.Background
+	if canvasBg == "" {
+		canvasBg = theme.Canvas
+	}
 	for vy := 0; vy < m.h; vy++ {
 		for vx := 0; vx < m.w; vx++ {
 			cx, cy := m.Canvas(vx, vy)
@@ -25,10 +27,10 @@ func (m *Model) render() *grid.Grid {
 			switch {
 			case c.Ch != 0:
 				view.Set(vx, vy, c)
-			case cx%4 == 0 && cy%2 == 0:
-				view.Set(vx, vy, grid.Cell{Ch: '·', Style: dot})
+			case !doc.HideGrid && cx%4 == 0 && cy%2 == 0:
+				view.Set(vx, vy, grid.Cell{Ch: '·', Style: grid.Style{Fg: theme.Faint, Bg: canvasBg, Dim: c.Dim}})
 			default:
-				view.Set(vx, vy, grid.Cell{Ch: ' ', Style: canvasBg})
+				view.Set(vx, vy, grid.Cell{Ch: ' ', Style: grid.Style{Bg: canvasBg, Dim: c.Dim}})
 			}
 		}
 	}

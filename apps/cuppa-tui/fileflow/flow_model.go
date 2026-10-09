@@ -14,6 +14,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/filedialog"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/cuppafile/disk"
 	"github.com/meta-tui/cuppa/libs/cuppafile/format"
 	"github.com/meta-tui/cuppa/libs/document/design"
@@ -263,8 +264,13 @@ func (f *Flow) ExportImage(kind image.Format) {
 		return
 	}
 	f.askExport("Export "+strings.ToUpper(string(kind)), "."+string(kind), func(path string) {
-		ansi := text.ANSI(f.ed.Document(), f.cat)
-		f.job = &Job{Run: func() error { return image.Write(path, ansi, image.Options{Window: true}) }}
+		doc := f.ed.Document()
+		ansi := text.ANSI(doc, f.cat)
+		opts := image.Options{Window: true}
+		if c, ok := space.Resolve(doc.Background); ok {
+			opts.Background = c.Hex() // the picture's backdrop matches the canvas
+		}
+		f.job = &Job{Run: func() error { return image.Write(path, ansi, opts) }}
 		f.jobLabel = "Exported " + filepath.Base(path)
 		f.status = "Exporting " + filepath.Base(path) + "…"
 	})

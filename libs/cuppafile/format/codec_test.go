@@ -134,3 +134,32 @@ func TestLayerFlagsSurviveSaveAndLoad(t *testing.T) {
 		t.Fatalf("flags lost: %+v %+v", got.Nodes[0], got.Nodes[1])
 	}
 }
+
+func TestDocumentOptionsRoundTripAndBadOnesAreRepaired(t *testing.T) {
+	doc := design.NewDocument("opts", 60, 20)
+	doc.Background = "#102030"
+	doc.HideGrid = true
+	doc.Effects = design.Effects{Shadow: true, Scanlines: true, Vignette: true}
+	data, err := Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Background != "#102030" || !got.HideGrid || got.Effects != doc.Effects {
+		t.Fatalf("options lost: %+v", got)
+	}
+
+	bad := design.NewDocument("bad", 100000, 100000)
+	bad.Background = "chartreuse"
+	data, _ = Encode(bad)
+	got, err = Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Background != "" || got.Width != design.MaxWidth || got.Height != design.MaxHeight {
+		t.Fatalf("a damaged file is repaired: %+v", got)
+	}
+}

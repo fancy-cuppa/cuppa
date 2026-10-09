@@ -68,16 +68,29 @@ var painters = map[string]painter{
 }
 
 // Render paints every visible node of doc, back to front, onto a new grid the
-// size of the canvas. Hidden nodes are skipped, so they are missing from every
-// export too. Cells no node covers stay unpainted.
+// size of the canvas, then applies the document's background and effects.
+// Hidden nodes are skipped, so they are missing from every export too. Cells no
+// node covers stay unpainted (a zero character) but carry the background.
 func Render(doc design.Document, cat Catalog) *grid.Grid {
 	out := grid.New(doc.Width, doc.Height)
+	if doc.Background != "" {
+		for y := 0; y < out.H; y++ {
+			for x := 0; x < out.W; x++ {
+				out.Set(x, y, grid.Cell{Style: grid.Style{Bg: doc.Background}})
+			}
+		}
+	}
 	for _, n := range doc.Nodes {
 		if n.Hidden {
 			continue
 		}
+		if doc.Effects.Shadow {
+			castShadow(out, n.Rect, doc.Background)
+		}
 		out.Blit(RenderNode(n, cat), n.Rect.X, n.Rect.Y)
 	}
+	paintBackground(out, doc.Background)
+	applyEffects(out, doc.Effects)
 	return out
 }
 
