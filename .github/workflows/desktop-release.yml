@@ -1,0 +1,161 @@
+name: Desktop release
+
+# Builds the Cuppa desktop app (Wails v2) on Windows, macOS and Linux and attaches
+# the zips to the GitHub Release that `nx release` just made for cuppa-tui.
+#
+# Wails needs cgo and a webview, so mnci's static cross-compile cannot build it:
+# each platform builds on its own runner. A release made with GITHUB_TOKEN does
+# not trigger other workflows, so this one starts when the CI workflow finishes
+# and looks for a cuppa-tui tag on the commit CI ran for.
+#
+# To try it without releasing: Actions > Desktop release > Run workflow, leave
+# "upload" off, and download the zips from the run's artifacts.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to build
+        default: main
+      tag:
+        description: Release tag to attach the zips to (for example cuppa-tui@0.0.6); only used with "upload"
+        default: ''
+      upload:
+        description: Attach the builds to the release; otherwise keep them as workflow artifacts
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  WAILS_VERSION: v2.16.0
+
+jobs:
+  plan:
+    name: Decide what to build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      build: ${{ steps.plan.outputs.build }}
+      ref: ${{ steps.plan.outputs.ref }}
+      tag: ${{ steps.plan.outputs.tag }}
+      version: ${{ steps.plan.outputs.version }}
+      upload: ${{ steps.plan.outputs.upload }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: git fetch --all --prune --tags
+        name: Fetch release tags
+      - id: plan
+        name: Find the release this run belongs to
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_REF: ${{ inputs.ref }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_UPLOAD: ${{ inputs.upload }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+            ref="${INPUT_REF:-main}"
+            upload="$INPUT_UPLOAD"
+            if [ "$upload" = "true" ] && [ -z "$tag" ]; then
+              echo "::error::upload needs a release tag"
+              exit 1
+            fi
+          else
+            ref="$HEAD_SHA"
+            upload=true
+            tag="$(git tag --points-at "$HEAD_SHA" | grep '^cuppa-tui@' | head -n 1 || true)"
+          fi
+          if [ -z "$tag" ] && [ "$EVENT" != "workflow_dispatch" ]; then
+            echo "No cuppa-tui release on this commit: nothing to build."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          version="${tag#cuppa-tui@}"
+          echo "build=true" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${version:-dev}" >> "$GITHUB_OUTPUT"
+          echo "upload=$upload" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: windows-amd64, platform: windows/amd64, tags: '' }
+          - { os: macos-latest, name: macos-universal, platform: darwin/universal, tags: '' }
+          - { os: ubuntu-latest, name: linux-amd64, platform: linux/amd64, tags: webkit2_41 }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.ref }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.work
+          cache: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install the Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+      - name: Build
+        working-directory: apps/cuppa-desktop
+        shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+          TAGS: ${{ matrix.tags }}
+        run: |
+          args=(-clean -platform "$PLATFORM" -ldflags "-X main.version=$VERSION")
+          if [ -n "$TAGS" ]; then args+=(-tags "$TAGS"); fi
+          wails build "${args[@]}"
+          ls -la build/bin
+      - name: Pack (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path apps/cuppa-desktop/build/bin/cuppa-desktop.exe -DestinationPath "cuppa-desktop-${{ matrix.name }}.zip"
+      - name: Pack (macOS)
+        if: runner.os == 'macOS'
+        run: ditto -c -k --keepParent apps/cuppa-desktop/build/bin/cuppa-desktop.app "cuppa-desktop-${{ matrix.name }}.zip"
+      - name: Pack (Linux)
+        if: runner.os == 'Linux'
+        run: cd apps/cuppa-desktop/build/bin && zip -9 "$GITHUB_WORKSPACE/cuppa-desktop-${{ matrix.name }}.zip" cuppa-desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cuppa-desktop-${{ matrix.name }}
+          path: cuppa-desktop-${{ matrix.name }}.zip
+          if-no-files-found: error
+
+  publish:
+    name: Attach to the release
+    needs: [plan, build]
+    if: needs.plan.outputs.upload == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: zips
+          merge-multiple: true
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          ls -la zips
+          gh release upload "$TAG" zips/*.zip --clobber --repo "$GITHUB_REPOSITORY"

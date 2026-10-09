@@ -25,6 +25,17 @@ npx nx run cuppa-desktop:test       # Go tests
 On Linux install GTK and WebKit first (`libgtk-3-dev`, and `libwebkit2gtk-4.1-dev`
 with `-tags webkit2_41` on Ubuntu 24.04). CI does this for you.
 
+## Releases
+
+The `Desktop release` workflow builds the app on Windows, macOS (universal) and Linux (amd64) after a
+cuppa-tui release and attaches `cuppa-desktop-<os>-<arch>.zip` to that GitHub Release. It starts when the CI
+workflow finishes, because a release made with `GITHUB_TOKEN` does not trigger other workflows. The desktop app
+releases together with cuppa-tui: they share the engine, and a change to either rebuilds both.
+You can try it without releasing from Actions > Desktop release > Run workflow (leave "upload" off).
+
+The builds are not signed: Windows may show SmartScreen, and macOS needs right-click > Open the first time.
+Installers and signing are tracked in #68.
+
 ## Layout
 
 | | |
