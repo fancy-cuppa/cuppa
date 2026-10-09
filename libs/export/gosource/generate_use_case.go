@@ -16,12 +16,50 @@ var runtimeSource string
 //go:embed app_go.txt
 var appSource string
 
-// generated lists the components that have real code behind them.
+//go:embed bigtext_go.txt
+var bigTextSource string
+
+//go:embed qrcode_go.txt
+var qrCodeSource string
+
+//go:embed image_go.txt
+var imageSource string
+
+// generated lists the components that have real code behind them. The
+// community widgets are drawn with Lip Gloss to look like the library they
+// stand for, so the generated project needs no extra module for them.
 var generated = map[string]bool{
-	"lipgloss.box": true, "lipgloss.label": true,
+	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true,
 	"bubbles.textinput": true, "bubbles.textarea": true, "bubbles.list": true, "bubbles.table": true,
 	"bubbles.viewport": true, "bubbles.paginator": true, "bubbles.spinner": true, "bubbles.progress": true,
-	"bubbles.stopwatch": true, "bubbles.timer": true,
+	"bubbles.stopwatch": true, "bubbles.timer": true, "bubbles.tree": true,
+	"huh.spinner":     true,
+	"community.frame": true, "community.dialog": true, "community.statusmessage": true, "community.toast": true,
+	"community.bigtext": true, "community.qrcode": true, "community.image": true,
+}
+
+// extension is a component that needs a file of its own and, for some, a
+// module the rest of the project does not use.
+type extension struct {
+	file, source string
+	// require is a go.mod requirement line, or empty for the standard library.
+	require string
+}
+
+var extensions = map[string]extension{
+	"community.bigtext": {"bigtext.go", "bigTextSource", "github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be"},
+	"community.qrcode":  {"qrcode.go", "qrCodeSource", "github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e"},
+	"community.image":   {"image.go", "imageSource", ""},
+}
+
+func (e extension) text() string {
+	switch e.source {
+	case "bigTextSource":
+		return bigTextSource
+	case "qrCodeSource":
+		return qrCodeSource
+	}
+	return imageSource
 }
 
 // Generate turns doc into a Go project. The same document always gives the
@@ -30,7 +68,21 @@ func Generate(doc design.Document, cat Catalog) Project {
 	module := Slug(doc.Name)
 	p := Project{Module: module, Files: map[string]string{}}
 	placed := leaves(doc, cat)
-	p.Files["go.mod"] = goMod(module)
+	var requires []string
+	seen := map[string]bool{}
+	for _, l := range placed {
+		e, ok := extensions[l.Kind]
+		if !ok || seen[l.Kind] {
+			continue
+		}
+		seen[l.Kind] = true
+		p.Files[e.file] = e.text()
+		if e.require != "" {
+			requires = append(requires, e.require)
+		}
+	}
+	sort.Strings(requires)
+	p.Files["go.mod"] = goMod(module, requires)
 	p.Files["main.go"] = appSource
 	p.Files["runtime.go"] = runtimeSource
 	p.Files["layout.go"] = layoutSource(doc, placed)
@@ -65,9 +117,13 @@ func Slug(name string) string {
 	return b.String()
 }
 
-func goMod(module string) string {
-	return fmt.Sprintf("module %s\n\ngo 1.24\n\nrequire (\n\tcharm.land/bubbles/v2 %s\n\tcharm.land/bubbletea/v2 %s\n\tcharm.land/lipgloss/v2 %s\n)\n",
-		module, bubblesVersion, bubbleteaVersion, lipglossVersion)
+func goMod(module string, requires []string) string {
+	var extra strings.Builder
+	for _, r := range requires {
+		extra.WriteString("\t" + r + "\n")
+	}
+	return fmt.Sprintf("module %s\n\ngo 1.24\n\nrequire (\n\tcharm.land/bubbles/v2 %s\n\tcharm.land/bubbletea/v2 %s\n\tcharm.land/lipgloss/v2 %s\n%s)\n",
+		module, bubblesVersion, bubbleteaVersion, lipglossVersion, extra.String())
 }
 
 // layoutSource is the part that comes from the design: the canvas and where
@@ -104,7 +160,8 @@ func readme(doc design.Document, notes []string) string {
 	b.WriteString("```sh\ngo mod tidy\ngo run .\n```\n\n")
 	b.WriteString("Tab and Shift+Tab move between components that take input, clicks focus them, Esc quits.\n\n")
 	b.WriteString("- `layout.go` is the design: where each component sits and its properties.\n")
-	b.WriteString("- `runtime.go` wraps the real Bubbles models and draws boxes and labels. Change it freely.\n")
+	b.WriteString("- `runtime.go` wraps the real Bubbles models and draws boxes, labels, lists and the look of the community widgets with Lip Gloss. Change it freely.\n")
+	b.WriteString("- `bigtext.go`, `qrcode.go` and `image.go`, when present, hold the components that need a library of their own.\n")
 	b.WriteString("- `main.go` is the Bubble Tea model that runs them.\n")
 	if len(notes) > 0 {
 		b.WriteString("\n## Not generated yet\n\n")

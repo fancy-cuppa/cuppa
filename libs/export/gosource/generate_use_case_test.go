@@ -31,6 +31,9 @@ func richDesign() (design.Document, Catalog) {
 	for _, id := range []string{
 		"lipgloss.box", "lipgloss.label", "bubbles.textinput", "bubbles.textarea", "bubbles.list", "bubbles.table",
 		"bubbles.viewport", "bubbles.paginator", "bubbles.spinner", "bubbles.progress", "bubbles.stopwatch", "bubbles.timer",
+		"lipgloss.list", "bubbles.tree", "huh.spinner",
+		"community.frame", "community.dialog", "community.statusmessage", "community.toast",
+		"community.bigtext", "community.qrcode", "community.image",
 		"huh.input",
 	} {
 		def, _ := cat.Get(id)
@@ -44,6 +47,8 @@ func richDesign() (design.Document, Catalog) {
 			{ID: "g1", Component: "lipgloss.box", Name: "Frame", Rect: design.Rect{W: 20, H: 4}},
 			{ID: "g2", Component: "lipgloss.label", Name: "Text", Rect: design.Rect{X: 1, Y: 1, W: 10, H: 1}},
 		}})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Fade", Rect: design.Rect{X: 50, Y: 30, W: 24, H: 5},
+		Props: map[string]string{"title": "Fade", "color": "#ff5fd7", "gradient": "#5f87ff"}})
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Hidden", Rect: design.Rect{W: 5, H: 3}, Hidden: true})
 	return doc, cat
 }
@@ -98,6 +103,32 @@ func TestTheSameDesignGivesTheSameFiles(t *testing.T) {
 	}
 }
 
+func TestComponentsThatNeedALibraryGetTheirOwnFileAndModule(t *testing.T) {
+	cat := standard.Default()
+	doc := design.NewDocument("media", 80, 24)
+	plain := Generate(doc, cat)
+	if plain.Files["bigtext.go"] != "" || strings.Contains(plain.Files["go.mod"], "go-figure") {
+		t.Fatal("a design without big text must not ask for go-figure")
+	}
+	doc.Add(design.Node{Component: "community.bigtext", Name: "Title", Rect: design.Rect{W: 40, H: 6}})
+	doc.Add(design.Node{Component: "community.qrcode", Name: "Code", Rect: design.Rect{W: 29, H: 15}})
+	doc.Add(design.Node{Component: "community.image", Name: "Photo", Rect: design.Rect{W: 20, H: 8}})
+	p := Generate(doc, cat)
+	for _, name := range []string{"bigtext.go", "qrcode.go", "image.go"} {
+		if p.Files[name] == "" {
+			t.Errorf("missing %s", name)
+		}
+	}
+	for _, want := range []string{"github.com/common-nighthawk/go-figure", "github.com/skip2/go-qrcode"} {
+		if !strings.Contains(p.Files["go.mod"], want) {
+			t.Errorf("go.mod does not require %s:\n%s", want, p.Files["go.mod"])
+		}
+	}
+	if len(p.Notes) != 0 {
+		t.Errorf("every placed component is generated, notes = %v", p.Notes)
+	}
+}
+
 func TestWriteRefusesAFolderThatAlreadyHoldsAProject(t *testing.T) {
 	doc, cat := richDesign()
 	p := Generate(doc, cat)
@@ -134,7 +165,17 @@ func TestTheGeneratedProjectCompiles(t *testing.T) {
 	if err := Write(dir, Generate(doc, cat)); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"mod", "tidy"}, {"vet", "./..."}, {"build", "./..."}} {
+	// The generated program must also fit every component in its rectangle.
+	fit := "package main\n\nimport (\n\t\"testing\"\n\n\t\"charm.land/lipgloss/v2\"\n)\n\n" +
+		"func TestEveryPartFitsItsRectangle(t *testing.T) {\n\tfor _, c := range layout {\n" +
+		"\t\tv := build(c).view()\n" +
+		"\t\tif lipgloss.Width(v) > c.W || lipgloss.Height(v) > c.H {\n" +
+		"\t\t\tt.Errorf(\"%s (%s) draws %dx%d in a %dx%d rectangle\", c.Name, c.Kind, lipgloss.Width(v), lipgloss.Height(v), c.W, c.H)\n" +
+		"\t\t}\n\t}\n}\n"
+	if err := os.WriteFile(filepath.Join(dir, "fit_test.go"), []byte(fit), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"mod", "tidy"}, {"vet", "./..."}, {"build", "./..."}, {"test", "./..."}} {
 		cmd := exec.Command(goBin, args...)
 		cmd.Dir = dir
 		cmd.Env = append(os.Environ(), "GOFLAGS=-mod=mod", "GOWORK=off")
