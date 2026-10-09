@@ -109,6 +109,11 @@ func renderNode(n design.Node, cat Catalog, depth int) *grid.Grid {
 	for k, v := range n.Props {
 		props[k] = v
 	}
+	if n.IsGroup() {
+		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
+		paintComposite(g, design.Composite{ID: "group", Name: n.Name, W: n.BaseW, H: n.BaseH, Nodes: n.Children}, props, cat, depth)
+		return g
+	}
 	if known && def.Inner != nil {
 		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
 		paintComposite(g, *def.Inner, props, cat, depth)

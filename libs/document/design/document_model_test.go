@@ -98,3 +98,23 @@ func TestMoveToIndexPlacesANodeExactly(t *testing.T) {
 		t.Fatal("no-ops must report false")
 	}
 }
+
+func TestGroupCloneIsDeepAndScalingKeepsCellsWhole(t *testing.T) {
+	g := Node{ID: "g", Component: GroupComponent, Rect: Rect{W: 20, H: 6}, BaseW: 20, BaseH: 6,
+		Children: []Node{{ID: "c", Component: "lipgloss.box", Rect: Rect{X: 5, Y: 1, W: 10, H: 2}, Props: map[string]string{"a": "b"}}}}
+	cp := g.Clone()
+	cp.Children[0].Props["a"] = "changed"
+	cp.Children[0].Name = "changed"
+	if g.Children[0].Props["a"] != "b" || g.Children[0].Name == "changed" {
+		t.Fatal("a cloned group shares its children")
+	}
+	if !g.IsGroup() || (Node{Component: GroupComponent}).IsGroup() {
+		t.Fatal("a group needs children")
+	}
+	if got := (Rect{X: 5, Y: 1, W: 10, H: 2}).Scale(20, 6, 40, 12); got != (Rect{X: 10, Y: 2, W: 20, H: 4}) {
+		t.Fatalf("doubling: %+v", got)
+	}
+	if got := (Rect{X: 0, Y: 0, W: 1, H: 1}).Scale(20, 6, 3, 2); got.W < 1 || got.H < 1 {
+		t.Fatalf("never below one cell: %+v", got)
+	}
+}

@@ -54,12 +54,17 @@ func (d Document) Clone() Document {
 	return d
 }
 
+// NewID returns an id no node has had in this document.
+func (d *Document) NewID() NodeID {
+	d.Seq++
+	return NodeID(fmt.Sprintf("n%d", d.Seq))
+}
+
 // Add appends the node on top. A node without an id gets a fresh one.
 // The stored node is returned.
 func (d *Document) Add(n Node) Node {
 	if n.ID == "" {
-		d.Seq++
-		n.ID = NodeID(fmt.Sprintf("n%d", d.Seq))
+		n.ID = d.NewID()
 	}
 	d.Nodes = append(d.Nodes, n)
 	return n

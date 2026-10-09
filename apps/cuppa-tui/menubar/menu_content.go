@@ -14,6 +14,8 @@ const (
 	EditRedo       Action = "edit.redo"
 	EditDuplicate  Action = "edit.duplicate"
 	EditDelete     Action = "edit.delete"
+	EditGroup      Action = "edit.group"
+	EditUngroup    Action = "edit.ungroup"
 	EditPacks      Action = "edit.packs"
 	ExportPNG      Action = "export.png"
 	ExportSVG      Action = "export.svg"
@@ -54,6 +56,9 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Duplicate", "", EditDuplicate},
 		{"Delete", "Del", EditDelete},
+		{separatorLabel, "", nothing},
+		{"Group", "Ctrl+G", EditGroup},
+		{"Ungroup", "Ctrl+U", EditUngroup},
 		{separatorLabel, "", nothing},
 		{"Component packs…", "", EditPacks},
 	}},

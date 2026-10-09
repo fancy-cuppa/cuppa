@@ -49,6 +49,7 @@ offset  size  field
 | `node.rect` | Position and size in cells. `w` and `h` are at least 1. |
 | `node.props` | String values the designer changed. Anything not listed uses the component's default. |
 | `node.hidden` | Optional, `true` for a hidden layer: not drawn, exported or hit by the pointer. Absent means visible. |
+| `node.children`, `node.baseW`, `node.baseH` | Optional, on a group (`component` is `cuppa.group`): the grouped nodes, in the same shape, with rectangles relative to the group's top-left, laid out for a box of `baseW` × `baseH`. A placed group scales them with its own size. A group with no valid children or no base size is dropped on load; groups nest up to 16 deep. Ignored on any other node. |
 | `node.locked` | Optional, `true` for a locked layer: drawn, but it cannot be moved, resized, deleted or edited. Absent means unlocked. |
 
 ## Reading rules

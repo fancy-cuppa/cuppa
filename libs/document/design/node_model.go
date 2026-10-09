@@ -17,7 +17,19 @@ type Node struct {
 	// Locked nodes are drawn but cannot be moved, resized, deleted or have their
 	// properties changed.
 	Locked bool `json:"locked,omitempty"`
+	// Children are set on a group: the components it holds, with rectangles
+	// relative to the group's top-left, laid out for a box of BaseW x BaseH. A
+	// placed group scales them with its own size.
+	Children []Node `json:"children,omitempty"`
+	BaseW    int    `json:"baseW,omitempty"`
+	BaseH    int    `json:"baseH,omitempty"`
 }
+
+// GroupComponent is the component id of a group.
+const GroupComponent = "cuppa.group"
+
+// IsGroup reports whether the node is a group of other nodes.
+func (n Node) IsGroup() bool { return n.Component == GroupComponent && len(n.Children) > 0 }
 
 // Clone returns a deep copy of the node.
 func (n Node) Clone() Node {
@@ -27,6 +39,13 @@ func (n Node) Clone() Node {
 			props[k] = v
 		}
 		n.Props = props
+	}
+	if n.Children != nil {
+		children := make([]Node, len(n.Children))
+		for i, c := range n.Children {
+			children[i] = c.Clone()
+		}
+		n.Children = children
 	}
 	return n
 }
