@@ -17,6 +17,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/palette"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/preview"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
@@ -54,6 +55,10 @@ type Model struct {
 	// packProblems what could not be loaded from it.
 	userPacks    string
 	embedded     []design.Embedded
+	// run is the design being previewed, or nil while editing; pending holds
+	// commands it asked for until Update returns them.
+	run     *preview.Session
+	pending []tea.Cmd
 	packProblems []error
 	ed    *editor.Editor
 	bar   *menubar.Model
@@ -142,6 +147,11 @@ type exportDoneMsg struct{ err error }
 
 // Update implements tea.Model.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.run != nil {
+		if handled, cmd := m.run.Update(msg); handled {
+			return m, tea.Batch(cmd, m.settle())
+		}
+	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.resize(msg.Width, msg.Height)
@@ -158,7 +168,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case exportDoneMsg:
 		m.flow.Finish(msg.err)
 	}
-	return m, m.settle()
+	return m, tea.Batch(m.settle(), m.takePending())
 }
 
 // settle runs what the last input set in motion: a finished dialog, a
@@ -208,7 +218,12 @@ func (m *Model) route(e pointer.Event) {
 
 // perform carries out a menu choice.
 func (m *Model) perform(a menubar.Action) {
+	if !keepsPreview(a) {
+		m.stopPreview()
+	}
 	switch a {
+	case menubar.ViewPreview:
+		m.togglePreview()
 	case menubar.FileNew:
 		m.flow.NewDesign()
 	case menubar.FileOpen:
@@ -302,6 +317,10 @@ func toEvent(mouse tea.Mouse, phase pointer.Phase) pointer.Event {
 
 // mouse routes one pointer event to the pane that should handle it.
 func (m *Model) mouse(e pointer.Event) {
+	if m.run != nil {
+		m.previewMouse(e)
+		return
+	}
 	m.mouseX, m.mouseY = e.X, e.Y
 	target := m.layout.paneAt(e.X, e.Y)
 	if m.owner != nowhere && (e.Phase == pointer.Move && e.Held || e.Phase == pointer.Up) {
@@ -384,10 +403,15 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	case "ctrl+c", "ctrl+q":
 		m.flow.Quit()
 		return
+	case "ctrl+p":
+		m.togglePreview()
+		return
 	case "ctrl+n":
+		m.stopPreview()
 		m.flow.NewDesign()
 		return
 	case "ctrl+o":
+		m.stopPreview()
 		m.flow.Open()
 		return
 	case "ctrl+s":
@@ -399,6 +423,8 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		if esc {
 			m.bar.Close()
 		}
+	case m.run != nil:
+		m.previewKey(msg)
 	case m.ins.Dragging():
 		if esc {
 			m.ins.CancelDrag()

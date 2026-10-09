@@ -71,7 +71,13 @@ var painters = map[string]painter{
 // size of the canvas, then applies the document's background and effects.
 // Hidden nodes are skipped, so they are missing from every export too. Cells no
 // node covers stay unpainted (a zero character) but carry the background.
-func Render(doc design.Document, cat Catalog) *grid.Grid {
+func Render(doc design.Document, cat Catalog) *grid.Grid { return RenderWith(doc, cat, nil) }
+
+// RenderWith is Render, except that a node for which override returns a grid
+// is drawn from that grid instead of by its painter. The preview uses it to
+// show components that are running as real models. A nil override changes
+// nothing.
+func RenderWith(doc design.Document, cat Catalog, override func(design.Node) *grid.Grid) *grid.Grid {
 	out := grid.New(doc.Width, doc.Height)
 	if doc.Background != "" {
 		for y := 0; y < out.H; y++ {
@@ -87,7 +93,14 @@ func Render(doc design.Document, cat Catalog) *grid.Grid {
 		if doc.Effects.Shadow {
 			castShadow(out, n.Rect, doc.Background)
 		}
-		out.Blit(RenderNode(n, cat), n.Rect.X, n.Rect.Y)
+		var drawn *grid.Grid
+		if override != nil {
+			drawn = override(n)
+		}
+		if drawn == nil {
+			drawn = RenderNode(n, cat)
+		}
+		out.Blit(drawn, n.Rect.X, n.Rect.Y)
 	}
 	paintBackground(out, doc.Background)
 	applyEffects(out, doc.Effects)
