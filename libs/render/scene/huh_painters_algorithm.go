@@ -3,7 +3,7 @@ package scene
 import (
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/render/grid"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 // huhFrame draws the focus bar, the title and the description shared by every

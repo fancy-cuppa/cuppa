@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 func plain(lines []string) []string {

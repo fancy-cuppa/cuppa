@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/cuppafile/format"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/cuppafile/format"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 func TestSaveThenLoad(t *testing.T) {

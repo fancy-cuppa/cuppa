@@ -1,8 +1,8 @@
 package standard
 
 import (
-	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/registry"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/catalog/registry"
 )
 
 // All returns every component definition Cuppa ships with.

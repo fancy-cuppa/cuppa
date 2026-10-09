@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/catalog/standard"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/catalog/standard"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 func text(lines []string) string {

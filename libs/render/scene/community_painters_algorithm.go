@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/render/grid"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 func paintBubbleTableCommunity(g *grid.Grid, p Props) {

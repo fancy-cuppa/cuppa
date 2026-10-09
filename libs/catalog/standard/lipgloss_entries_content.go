@@ -1,6 +1,6 @@
 package standard
 
-import "github.com/fancy-cuppa/cuppa/libs/catalog/definition"
+import "github.com/meta-tui/cuppa/libs/catalog/definition"
 
 const lipglossImport = "charm.land/lipgloss/v2"
 

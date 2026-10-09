@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // Decode reads a .cuppa file, migrating older versions to the current one.

@@ -4,7 +4,7 @@ package standard
 import (
 	"strconv"
 
-	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
 )
 
 func textProp(key, label, def string) definition.PropSpec {

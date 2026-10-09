@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 func sample() design.Document {

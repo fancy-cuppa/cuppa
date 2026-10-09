@@ -4,8 +4,8 @@ package text
 import (
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/render/scene"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/scene"
 )
 
 // ANSI renders the design with colour escape codes, one line per canvas row.

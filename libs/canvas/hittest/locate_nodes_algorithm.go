@@ -1,7 +1,7 @@
 // Package hittest answers "what is under this cell" for the canvas.
 package hittest
 
-import "github.com/fancy-cuppa/cuppa/libs/document/design"
+import "github.com/meta-tui/cuppa/libs/document/design"
 
 // Node returns the topmost node covering the cell (x, y).
 func Node(doc design.Document, x, y int) (design.NodeID, bool) {

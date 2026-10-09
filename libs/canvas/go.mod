@@ -1,3 +1,3 @@
-module github.com/fancy-cuppa/cuppa/libs/canvas
+module github.com/meta-tui/cuppa/libs/canvas
 
 go 1.27

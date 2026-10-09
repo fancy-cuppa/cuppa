@@ -1,3 +1,3 @@
-module github.com/fancy-cuppa/cuppa/libs/document
+module github.com/meta-tui/cuppa/libs/document
 
 go 1.27

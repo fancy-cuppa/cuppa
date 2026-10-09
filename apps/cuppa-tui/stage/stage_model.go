@@ -3,13 +3,13 @@
 package stage
 
 import (
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/hittest"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/snap"
-	"github.com/fancy-cuppa/cuppa/libs/catalog/definition"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/canvas/hittest"
+	"github.com/meta-tui/cuppa/libs/canvas/snap"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // Catalog is what the stage needs to know about components.

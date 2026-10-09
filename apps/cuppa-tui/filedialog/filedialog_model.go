@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/modal"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // Spec says what the dialog is for.

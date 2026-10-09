@@ -10,16 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/confirm"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/filedialog"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/modal"
-	"github.com/fancy-cuppa/cuppa/libs/canvas/editor"
-	"github.com/fancy-cuppa/cuppa/libs/cuppafile/disk"
-	"github.com/fancy-cuppa/cuppa/libs/cuppafile/format"
-	"github.com/fancy-cuppa/cuppa/libs/document/design"
-	"github.com/fancy-cuppa/cuppa/libs/export/image"
-	"github.com/fancy-cuppa/cuppa/libs/export/text"
-	"github.com/fancy-cuppa/cuppa/libs/render/scene"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/confirm"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/filedialog"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/modal"
+	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/cuppafile/disk"
+	"github.com/meta-tui/cuppa/libs/cuppafile/format"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/export/image"
+	"github.com/meta-tui/cuppa/libs/export/text"
+	"github.com/meta-tui/cuppa/libs/render/scene"
 )
 
 // Default canvas of a new design, in cells.

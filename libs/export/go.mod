@@ -1,3 +1,3 @@
-module github.com/fancy-cuppa/cuppa/libs/export
+module github.com/meta-tui/cuppa/libs/export
 
 go 1.27

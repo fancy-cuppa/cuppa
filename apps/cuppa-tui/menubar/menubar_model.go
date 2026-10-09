@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/pointer"
-	"github.com/fancy-cuppa/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/pointer"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 )
 
 const (

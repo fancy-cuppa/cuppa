@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fancy-cuppa/cuppa/libs/render/grid"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 func paintTextArea(g *grid.Grid, p Props) {
