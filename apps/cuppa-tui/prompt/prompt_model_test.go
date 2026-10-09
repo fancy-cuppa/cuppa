@@ -61,3 +61,11 @@ func TestTheOKButtonConfirms(t *testing.T) {
 		t.Fatalf("OK button: %+v %v", o, done)
 	}
 }
+
+func TestALongTextShowsItsEndWhereTheCursorIs(t *testing.T) {
+	m := open("/a/very/long/folder/that/does/not/fit/in/the/field/untitled-app")
+	shown := ansi.Strip(strings.Join(m.Lines(), "\n"))
+	if !strings.Contains(shown, "untitled-app") || !strings.Contains(shown, "…") {
+		t.Fatalf("the end of the text stays visible:\n%s", shown)
+	}
+}

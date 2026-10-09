@@ -342,3 +342,38 @@ func TestOpenPathLoadsOrExplains(t *testing.T) {
 		t.Fatalf("bad: %v", err)
 	}
 }
+
+func TestExportGoSourceWritesAProjectAndSaysWhatIsMissing(t *testing.T) {
+	f, ed, dir := setup(t)
+	if _, err := ed.Add("bubbles.textinput", 2, 2); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ed.Add("huh.input", 2, 6); err != nil {
+		t.Fatal(err)
+	}
+	f.ExportGoSource()
+	if f.Modal() == nil {
+		t.Fatal("a folder prompt should open")
+	}
+	want := filepath.Join(dir, "untitled-app")
+	if !strings.Contains(stripped(strings.Join(f.Modal().Lines(), "\n")), "untitled-app") {
+		t.Fatal("the folder is suggested next to the design")
+	}
+	press(f, true, false) // accept the suggestion
+	for _, name := range []string{"go.mod", "main.go", "layout.go", "runtime.go"} {
+		if _, err := os.Stat(filepath.Join(want, name)); err != nil {
+			t.Fatalf("%s not written: %v", name, err)
+		}
+	}
+	if f.Modal() == nil || !strings.Contains(stripped(strings.Join(f.Modal().Lines(), "\n")), "huh.input") {
+		t.Fatal("the notice lists what was not generated")
+	}
+	press(f, true, false)
+
+	// A second export into the same folder is refused and nothing is overwritten.
+	f.ExportGoSource()
+	press(f, true, false)
+	if f.Modal() == nil || !strings.Contains(stripped(strings.Join(f.Modal().Lines(), "\n")), "empty folder") {
+		t.Fatal("exporting over an existing project is refused")
+	}
+}

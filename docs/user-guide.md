@@ -89,6 +89,17 @@ If there are unsaved changes, New, Open and Quit ask whether to save, discard or
 | Image (PNG / SVG / WebP) | A picture of the canvas in a window frame, made by Freeze |
 | Colour text (ANSI) | A `.ans` file you can `cat` in a terminal |
 | Plain text | A `.txt` file, no colours |
+| Go source (Bubble Tea) | A folder with a Go program that runs the design (see below) |
+
+**Go source.** *Export → Go source (Bubble Tea)…* asks for a folder (it suggests `<design name>-app` next to the design; it must not already hold a project) and writes a Bubble Tea v2 program there: `main.go` (the model), `layout.go` (your design: where each component sits and its properties), `runtime.go` (the code that runs them) and `go.mod`. Then:
+
+```sh
+cd <folder>
+go mod tidy
+go run .
+```
+
+The program places the **real Bubbles models** (text input, text area, list, table, viewport, paginator, spinner, progress, stopwatch, timer) and draws Lip Gloss boxes and labels. Tab and Shift+Tab move between components that take input, a click focuses one, Esc quits. Groups and pack components are expanded into their parts, hidden components are left out, and the canvas background colour fills behind the components. Components that cannot be generated yet (Huh, Glamour, charts, community components and the other Lip Gloss ones) appear as an empty frame; the export notice and the project's README list them. Effects, colour profiles and the light-terminal preview are not part of the generated program.
 
 If Freeze is not installed, the image items are greyed out; clicking one explains how to install it. After installing, restart Cuppa, or just click the item again.
 

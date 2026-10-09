@@ -1,0 +1,415 @@
+package main
+
+// This file is the small runtime that runs the design in layout.go. It wraps
+// the real Bubbles models and draws Lip Gloss boxes and labels. It is yours to
+// change; layout.go is the part that comes from the design.
+
+import (
+	"strconv"
+	"strings"
+	"time"
+
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/paginator"
+	"charm.land/bubbles/v2/progress"
+	"charm.land/bubbles/v2/spinner"
+	"charm.land/bubbles/v2/stopwatch"
+	"charm.land/bubbles/v2/table"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/timer"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+)
+
+// placed is one component of the design: where it sits and how it is made.
+type placed struct {
+	Kind  string
+	Name  string
+	X, Y  int
+	W, H  int
+	Props map[string]string
+}
+
+// part is a running component.
+type part struct {
+	update func(tea.Msg) tea.Cmd
+	view   func() string
+	// focus gives or takes the keyboard; nil when there is nothing to do.
+	focus func(on bool) tea.Cmd
+	start tea.Cmd
+	// keys is true when the component reads the keyboard.
+	keys bool
+}
+
+type props map[string]string
+
+func (p props) flag(key string) bool { return p[key] == "true" }
+
+func (p props) integer(key string, fallback int) int {
+	n, err := strconv.Atoi(strings.TrimSpace(p[key]))
+	if err != nil {
+		return fallback
+	}
+	return n
+}
+
+func orDefault(v, fallback string) string {
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
+func fg(c string) lipgloss.Style {
+	if c == "" {
+		return lipgloss.NewStyle()
+	}
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(c))
+}
+
+func split(s, sep string) []string {
+	var out []string
+	for _, piece := range strings.Split(s, sep) {
+		if piece = strings.TrimSpace(piece); piece != "" {
+			out = append(out, piece)
+		}
+	}
+	return out
+}
+
+// build makes the running component for one placed component.
+func build(c placed) *part {
+	p := props(c.Props)
+	switch c.Kind {
+	case "lipgloss.box":
+		return staticPart(box(c.W, c.H, p.str("border"), p.str("color"), p.str("title")))
+	case "lipgloss.label":
+		return staticPart(label(c.W, p))
+	case "bubbles.textinput":
+		return textInputPart(p, c.W)
+	case "bubbles.textarea":
+		return textAreaPart(p, c.W, c.H)
+	case "bubbles.list":
+		return listPart(p, c.W, c.H)
+	case "bubbles.table":
+		return tablePart(p, c.W, c.H)
+	case "bubbles.viewport":
+		return viewportPart(p, c.W, c.H)
+	case "bubbles.paginator":
+		return paginatorPart(p)
+	case "bubbles.spinner":
+		return spinnerPart(p)
+	case "bubbles.progress":
+		return progressPart(p, c.W)
+	case "bubbles.stopwatch":
+		return stopwatchPart(p)
+	case "bubbles.timer":
+		return timerPart(p)
+	}
+	return staticPart(box(c.W, c.H, "normal", "240", "") + "")
+}
+
+func (p props) str(key string) string { return p[key] }
+
+func staticPart(content string) *part {
+	return &part{update: func(tea.Msg) tea.Cmd { return nil }, view: func() string { return content }}
+}
+
+func borderOf(name string) lipgloss.Border {
+	switch name {
+	case "normal":
+		return lipgloss.NormalBorder()
+	case "thick":
+		return lipgloss.ThickBorder()
+	case "double":
+		return lipgloss.DoubleBorder()
+	case "ascii":
+		return lipgloss.ASCIIBorder()
+	case "hidden":
+		return lipgloss.HiddenBorder()
+	}
+	return lipgloss.RoundedBorder()
+}
+
+// box draws a w by h frame with an optional title in the top edge.
+func box(w, h int, border, color, title string) string {
+	if w < 2 || h < 2 {
+		return strings.Repeat(" ", max(w, 0))
+	}
+	b := borderOf(border)
+	style := fg(color)
+	top := b.TopLeft + strings.Repeat(b.Top, w-2) + b.TopRight
+	if title != "" && w > 4 {
+		t := " " + title + " "
+		if r := []rune(t); len(r) > w-4 {
+			t = string(r[:w-4])
+		}
+		fill := w - 2 - 1 - len([]rune(t))
+		top = style.Render(b.TopLeft+b.Top) + style.Bold(true).Render(t) + style.Render(strings.Repeat(b.Top, max(fill, 0))+b.TopRight)
+	} else {
+		top = style.Render(top)
+	}
+	lines := []string{top}
+	for i := 1; i < h-1; i++ {
+		lines = append(lines, style.Render(b.Left)+strings.Repeat(" ", w-2)+style.Render(b.Right))
+	}
+	lines = append(lines, style.Render(b.BottomLeft+strings.Repeat(b.Bottom, w-2)+b.BottomRight))
+	return strings.Join(lines, "\n")
+}
+
+func label(w int, p props) string {
+	s := lipgloss.NewStyle().Bold(p.flag("bold")).Width(w).MaxWidth(w)
+	if c := p.str("color"); c != "" {
+		s = s.Foreground(lipgloss.Color(c))
+	}
+	if c := p.str("background"); c != "" {
+		s = s.Background(lipgloss.Color(c))
+	}
+	switch p.str("align") {
+	case "center":
+		s = s.Align(lipgloss.Center)
+	case "right":
+		s = s.Align(lipgloss.Right)
+	}
+	return s.Render(p.str("text"))
+}
+
+func textInputPart(p props, w int) *part {
+	m := textinput.New()
+	m.Prompt = p.str("prompt")
+	m.Placeholder = p.str("placeholder")
+	m.SetValue(p.str("value"))
+	m.SetWidth(max(w-lipgloss.Width(m.Prompt)-1, 1))
+	st := m.Styles()
+	st.Focused.Prompt = fg(p.str("color"))
+	st.Blurred.Prompt = fg(p.str("color"))
+	m.SetStyles(st)
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() },
+		focus: func(on bool) tea.Cmd {
+			if on {
+				return m.Focus()
+			}
+			m.Blur()
+			return nil
+		},
+	}
+}
+
+func textAreaPart(p props, w, h int) *part {
+	m := textarea.New()
+	m.Placeholder = p.str("placeholder")
+	m.ShowLineNumbers = p.flag("line_numbers")
+	m.SetWidth(w)
+	m.SetHeight(h)
+	m.SetValue(strings.ReplaceAll(p.str("value"), "|", "\n"))
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() },
+		focus: func(on bool) tea.Cmd {
+			if on {
+				return m.Focus()
+			}
+			m.Blur()
+			return nil
+		},
+	}
+}
+
+// word is a list item.
+type word string
+
+func (w word) FilterValue() string { return string(w) }
+func (w word) Title() string       { return string(w) }
+func (w word) Description() string { return "" }
+
+func listPart(p props, w, h int) *part {
+	var items []list.Item
+	for _, s := range split(p.str("items"), ",") {
+		items = append(items, word(s))
+	}
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
+	delegate.SetSpacing(0)
+	m := list.New(items, delegate, w, h)
+	m.Title = p.str("title")
+	m.SetShowFilter(p.flag("show_filter"))
+	m.SetFilteringEnabled(p.flag("show_filter"))
+	m.SetShowStatusBar(p.flag("show_status"))
+	m.Select(p.integer("selected", 0))
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() },
+	}
+}
+
+func tablePart(p props, w, h int) *part {
+	var cols []table.Column
+	names := split(p.str("columns"), ",")
+	each := max((w-2*len(names))/max(len(names), 1), 3)
+	for _, n := range names {
+		cols = append(cols, table.Column{Title: n, Width: each})
+	}
+	var rows []table.Row
+	for _, line := range split(p.str("rows"), ";") {
+		rows = append(rows, table.Row(split(line, ",")))
+	}
+	st := table.DefaultStyles()
+	st.Selected = st.Selected.Foreground(lipgloss.Color("0")).Background(lipgloss.Color(orDefault(p.str("color"), "212")))
+	m := table.New(table.WithColumns(cols), table.WithRows(rows), table.WithHeight(h), table.WithWidth(w), table.WithStyles(st))
+	m.SetCursor(p.integer("selected", 0))
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() },
+		focus: func(on bool) tea.Cmd {
+			if on {
+				m.Focus()
+			} else {
+				m.Blur()
+			}
+			return nil
+		},
+	}
+}
+
+func viewportPart(p props, w, h int) *part {
+	m := viewport.New(viewport.WithWidth(w), viewport.WithHeight(h))
+	m.SetContent(strings.ReplaceAll(p.str("content"), "|", "\n"))
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() },
+	}
+}
+
+func paginatorPart(p props) *part {
+	m := paginator.New(paginator.WithTotalPages(max(p.integer("total", 5), 1)))
+	if p.str("style") == "arabic" {
+		m.Type = paginator.Arabic
+	} else {
+		m.Type = paginator.Dots
+	}
+	m.Page = max(p.integer("page", 1)-1, 0)
+	return &part{
+		keys:   true,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return fg(p.str("color")).Render(m.View()) },
+	}
+}
+
+var spinners = map[string]spinner.Spinner{
+	"line": spinner.Line, "dot": spinner.Dot, "minidot": spinner.MiniDot, "jump": spinner.Jump,
+	"pulse": spinner.Pulse, "points": spinner.Points, "globe": spinner.Globe, "moon": spinner.Moon,
+	"monkey": spinner.Monkey,
+}
+
+func spinnerPart(p props) *part {
+	kind, ok := spinners[p.str("style")]
+	if !ok {
+		kind = spinner.Dot
+	}
+	m := spinner.New(spinner.WithSpinner(kind), spinner.WithStyle(fg(p.str("color"))))
+	return &part{
+		start:  m.Tick,
+		update: func(msg tea.Msg) tea.Cmd { var c tea.Cmd; m, c = m.Update(msg); return c },
+		view:   func() string { return m.View() + " " + p.str("label") },
+	}
+}
+
+func progressPart(p props, w int) *part {
+	opts := []progress.Option{progress.WithWidth(max(w, 4)), progress.WithColors(lipgloss.Color(orDefault(p.str("color"), "212")))}
+	if !p.flag("show_percentage") {
+		opts = append(opts, progress.WithoutPercentage())
+	}
+	m := progress.New(opts...)
+	percent := float64(p.integer("percent", 0)) / 100
+	return &part{
+		keys:  true,
+		start: m.SetPercent(percent),
+		update: func(msg tea.Msg) tea.Cmd {
+			if k, ok := msg.(tea.KeyPressMsg); ok {
+				switch k.String() {
+				case "right", "up", "+":
+					percent = min(percent+0.1, 1)
+				case "left", "down", "-":
+					percent = max(percent-0.1, 0)
+				default:
+					return nil
+				}
+				return m.SetPercent(percent)
+			}
+			var c tea.Cmd
+			m, c = m.Update(msg)
+			return c
+		},
+		view: func() string { return m.View() },
+	}
+}
+
+func isToggle(k tea.KeyPressMsg) bool {
+	s := k.String()
+	return s == "space" || s == "enter" || s == " "
+}
+
+func stopwatchPart(p props) *part {
+	m := stopwatch.New(stopwatch.WithInterval(100 * time.Millisecond))
+	l := &part{keys: true, view: func() string { return fg(p.str("color")).Render(m.View()) }}
+	if p.flag("running") {
+		l.start = m.Start()
+	}
+	l.update = func(msg tea.Msg) tea.Cmd {
+		if k, ok := msg.(tea.KeyPressMsg); ok {
+			if isToggle(k) {
+				return m.Toggle()
+			}
+			return nil
+		}
+		var c tea.Cmd
+		m, c = m.Update(msg)
+		return c
+	}
+	return l
+}
+
+func timerPart(p props) *part {
+	m := timer.New(parseClock(p.str("value")), timer.WithInterval(100*time.Millisecond))
+	l := &part{keys: true, view: func() string { return fg(p.str("color")).Render(p.str("label") + " " + m.View()) }}
+	if p.flag("running") {
+		l.start = m.Start()
+	}
+	l.update = func(msg tea.Msg) tea.Cmd {
+		if k, ok := msg.(tea.KeyPressMsg); ok {
+			if isToggle(k) {
+				return m.Toggle()
+			}
+			return nil
+		}
+		var c tea.Cmd
+		m, c = m.Update(msg)
+		return c
+	}
+	return l
+}
+
+// parseClock reads "04:32" (minutes:seconds) or "1:02:03"; anything else is a minute.
+func parseClock(s string) time.Duration {
+	total := 0
+	for _, piece := range strings.Split(strings.TrimSpace(s), ":") {
+		n, err := strconv.Atoi(piece)
+		if err != nil {
+			return time.Minute
+		}
+		total = total*60 + n
+	}
+	if total == 0 {
+		return time.Minute
+	}
+	return time.Duration(total) * time.Second
+}

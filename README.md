@@ -16,6 +16,7 @@ Think Lucidchart or Figma, but for [Bubble Tea](https://github.com/charmbracelet
 - **Undo and redo** everything.
 - **Save and open** `.cuppa` files ([format](docs/spec/cuppa-format.md)).
 - **Export** to PNG, SVG or WebP through [Freeze](https://github.com/charmbracelet/freeze), or to colour or plain text.
+- **Generate Go source**: a Bubble Tea program that places the real Bubbles models where your design has them.
 
 **Desktop window.** `apps/cuppa-desktop` runs the same app in a [Wails](https://wails.io) window, through
 [TReactUI](https://github.com/meta-tui/treactui). Release zips for Windows, macOS and Linux are attached to each release; or build it with
