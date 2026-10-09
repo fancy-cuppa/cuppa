@@ -23,6 +23,10 @@ type Editor struct {
 	undo  []snapshot
 	redo  []snapshot
 	saved design.Document
+	// clip holds what Copy remembered, and pastes counts the pastes since, so
+	// each lands a step further on.
+	clip   []design.Node
+	pastes int
 }
 
 // New returns an editor for doc.

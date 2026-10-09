@@ -13,6 +13,8 @@ const (
 	EditUndo       Action = "edit.undo"
 	EditRedo       Action = "edit.redo"
 	EditDuplicate  Action = "edit.duplicate"
+	EditCopy       Action = "edit.copy"
+	EditPaste      Action = "edit.paste"
 	EditDelete     Action = "edit.delete"
 	EditGroup      Action = "edit.group"
 	EditUngroup    Action = "edit.ungroup"
@@ -54,8 +56,10 @@ var menus = []menu{
 	}},
 	{"Edit", []item{
 		{"Undo", "Ctrl+Z", EditUndo},
-		{"Redo", "Ctrl+Y", EditRedo},
+		{"Redo", "Ctrl+Y / Ctrl+Shift+Z", EditRedo},
 		{separatorLabel, "", nothing},
+		{"Copy", "Ctrl+C", EditCopy},
+		{"Paste", "Ctrl+V", EditPaste},
 		{"Duplicate", "", EditDuplicate},
 		{"Delete", "Del", EditDelete},
 		{separatorLabel, "", nothing},
