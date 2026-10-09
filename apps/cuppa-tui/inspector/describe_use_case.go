@@ -59,6 +59,15 @@ func (m *Model) describeCanvas() []a11y.Node {
 		b.Value = state(m.ed.Effect(e.name))
 		nodes = append(nodes, b)
 	}
+	terminal := a11y.Button("Preview on a light terminal")
+	terminal.Value = state(doc.Light)
+	profile := "true colour"
+	for _, p := range profiles {
+		if p.value == doc.Profile {
+			profile = p.name
+		}
+	}
+	nodes = append(nodes, terminal, a11y.Field("Colours", profile))
 	if m.snapGet != nil {
 		b := a11y.Button("Snap to guides")
 		b.Value = state(m.snapGet())

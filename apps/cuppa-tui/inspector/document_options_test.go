@@ -93,3 +93,31 @@ func TestBackgroundOpensThePickerAndAppliesTheChoice(t *testing.T) {
 		t.Fatal("the value is shown")
 	}
 }
+
+func TestTerminalPreviewAndColourProfileCanBeSwitched(t *testing.T) {
+	m, ed := emptyFixture(t)
+	x, y := find(t, m, "[Light]")
+	click(m, x, y)
+	if !ed.Document().Light {
+		t.Fatal("clicking Light previews a light terminal")
+	}
+	x, y = find(t, m, "[Dark]")
+	click(m, x, y)
+	if ed.Document().Light {
+		t.Fatal("clicking Dark goes back")
+	}
+	if !strings.Contains(stripANSI(strings.Join(m.Lines(), "\n")), "true colour") {
+		t.Fatal("the profile is shown")
+	}
+	x, y = find(t, m, "▸")
+	click(m, x, y)
+	if ed.Document().Profile != design.Profile256 {
+		t.Fatalf("the arrow steps to 256 colours: %q", ed.Document().Profile)
+	}
+	x, y = find(t, m, "◂")
+	click(m, x, y)
+	click(m, x, y)
+	if ed.Document().Profile != design.ProfileNone {
+		t.Fatalf("back past true colour wraps to no colour: %q", ed.Document().Profile)
+	}
+}

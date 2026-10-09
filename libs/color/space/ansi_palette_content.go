@@ -42,3 +42,16 @@ func Nearest(c RGB) int {
 	}
 	return best
 }
+
+// Nearest16 is the index among the 16 system colours closest to c, for a
+// terminal that only has those.
+func Nearest16(c RGB) int {
+	best, bestDist := 0, int(^uint(0)>>1)
+	for i, p := range system16 {
+		dr, dg, db := int(p.R)-int(c.R), int(p.G)-int(c.G), int(p.B)-int(c.B)
+		if d := dr*dr + dg*dg + db*db; d < bestDist {
+			best, bestDist = i, d
+		}
+	}
+	return best
+}

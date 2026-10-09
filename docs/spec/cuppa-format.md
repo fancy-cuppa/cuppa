@@ -40,6 +40,8 @@ offset  size  field
 | `document.name` | Display name of the design. |
 | `document.width`, `height` | Canvas size in terminal cells. At least 1 and at most 400 × 200; larger values are clamped on load. |
 | `document.background` | Optional canvas colour: `0`–`255` or `#rrggbb`. Absent means the terminal's own. An invalid value is dropped on load. |
+| `document.profile` | Optional colour profile the design targets: `256`, `16` or `none`. Absent means true colour. Colours are reduced to it in the editor and in every export. An unknown value is dropped on load. |
+| `document.light` | Optional, `true` to preview on a light terminal in the editor. Never part of an export. |
 | `document.hideGrid` | Optional, `true` hides the editor's dotted grid. The grid is never exported. |
 | `document.effects` | Optional `{ "shadow", "scanlines", "vignette" }`, each `true` when on. Applied in the editor and in every export. |
 | `document.seq` | Counter behind generated node ids; only ever grows, so ids are never reused. |

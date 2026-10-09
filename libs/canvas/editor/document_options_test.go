@@ -73,3 +73,28 @@ func TestEffectsToggleAndUndo(t *testing.T) {
 		t.Fatal("unknown effect")
 	}
 }
+
+func TestProfileAndLightPreviewAreChosenAndUndoable(t *testing.T) {
+	ed := blank()
+	if err := ed.SetProfile("sepia"); err == nil {
+		t.Fatal("an unknown profile is refused")
+	}
+	for _, p := range []string{design.Profile256, design.Profile16, design.ProfileNone, ""} {
+		if err := ed.SetProfile(p); err != nil || ed.Document().Profile != p {
+			t.Fatalf("profile %q: %v", p, err)
+		}
+	}
+	ed.SetLight(true)
+	if !ed.Document().Light {
+		t.Fatal("light terminal")
+	}
+	ed.Undo()
+	if ed.Document().Light {
+		t.Fatal("undo")
+	}
+	n := len(ed.undo)
+	ed.SetLight(false)
+	if err := ed.SetProfile(""); err != nil || len(ed.undo) != n {
+		t.Fatal("setting what is already set is not a step")
+	}
+}

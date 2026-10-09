@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
+	"github.com/meta-tui/cuppa/libs/document/design"
 )
 
 // documentOptions is what the pane shows when nothing is selected: the canvas
@@ -29,6 +30,11 @@ func (m *Model) documentOptions(b *builder) {
 	m.optionRow(b, "Shadows", editor.EffectShadow)
 	m.optionRow(b, "Scanlines", editor.EffectScanlines)
 	m.optionRow(b, "Vignette", editor.EffectVignette)
+	b.blank()
+
+	b.text(theme.Bold(" Terminal")).end()
+	m.terminalRow(b, doc.Light)
+	m.profileRow(b, doc.Profile)
 	if m.message != "" {
 		b.blank()
 		b.text(" " + lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Warn)).Render(m.message)).end()
@@ -96,6 +102,43 @@ func (m *Model) backgroundRow(b *builder, value string) {
 		}
 	}
 	b.text(" " + swatch + " ").add(shown+theme.Faded(" ✎"), open).end()
+}
+
+// profiles are the colour profiles in the order the arrows step through them.
+var profiles = []struct{ value, name string }{
+	{"", "true colour"}, {design.Profile256, "256 colours"}, {design.Profile16, "16 colours"}, {design.ProfileNone, "no colour"},
+}
+
+// terminalRow chooses whether the canvas previews a dark or a light terminal.
+func (m *Model) terminalRow(b *builder, light bool) {
+	pick := func(label string, active bool, set bool) {
+		text := "[" + label + "]"
+		if active {
+			b.add(theme.Selected(text), func() { m.ed.SetLight(set) })
+		} else {
+			b.add(theme.Button(text, true), func() { m.ed.SetLight(set) })
+		}
+	}
+	b.text(" " + theme.Dim("Preview on  "))
+	pick("Dark", !light, false)
+	b.text(" ")
+	pick("Light", light, true)
+	b.end()
+}
+
+// profileRow steps through the colour profiles with arrows.
+func (m *Model) profileRow(b *builder, current string) {
+	at := 0
+	for i, p := range profiles {
+		if p.value == current {
+			at = i
+		}
+	}
+	step := func(d int) func() {
+		return func() { m.report(m.ed.SetProfile(profiles[(at+d+len(profiles))%len(profiles)].value)) }
+	}
+	b.text(" " + theme.Dim("Colours  "))
+	b.add(theme.Button("◂", true), step(-1)).text(" " + theme.Bold(profiles[at].name) + " ").add(theme.Button("▸", true), step(1)).end()
 }
 
 // optionRow is a checkbox for one canvas option.

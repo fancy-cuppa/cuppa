@@ -212,3 +212,26 @@ func TestSingleSelectionKeepsItsResizeHandles(t *testing.T) {
 		t.Fatalf("single selection should show four solid handles only:\n%s", screen)
 	}
 }
+
+func TestALightTerminalPreviewPaintsPaleCanvasAndDarkDefaultText(t *testing.T) {
+	cat := standard.Default()
+	ed := editor.New(cat, design.NewDocument("t", 60, 12))
+	id, _ := ed.Add("lipgloss.label", 2, 2)
+	ed.Clear()
+	_ = id
+	m := New(ed, cat)
+	m.SetSize(60, 12)
+	dark := m.render()
+	ed.SetLight(true)
+	light := m.render()
+	if dark.At(30, 8).Bg == light.At(30, 8).Bg {
+		t.Fatal("the empty canvas changes colour")
+	}
+	if light.At(30, 8).Bg != lightCanvas {
+		t.Fatalf("empty canvas = %q", light.At(30, 8).Bg)
+	}
+	c := light.At(2, 2)
+	if c.Fg == "" || c.Bg == "" {
+		t.Fatalf("text drawn in the terminal's own colours needs real ones on a light canvas: %+v", c)
+	}
+}

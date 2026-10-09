@@ -56,6 +56,9 @@ func normalise(doc design.Document) design.Document {
 	} else {
 		doc.Background = ""
 	}
+	if !design.ValidProfile(doc.Profile) {
+		doc.Profile = ""
+	}
 	nodes := cleanNodes(doc.Nodes, 0)
 	doc.Embedded = cleanEmbedded(doc.Embedded)
 	doc.Nodes = nodes

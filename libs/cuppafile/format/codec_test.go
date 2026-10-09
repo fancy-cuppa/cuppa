@@ -215,3 +215,18 @@ func TestEmbeddedComponentsRoundTripAndBadCopiesAreDropped(t *testing.T) {
 		t.Fatalf("embedded = %+v", got.Embedded)
 	}
 }
+
+func TestProfileAndLightRoundTripAndABadProfileIsDropped(t *testing.T) {
+	doc := design.NewDocument("p", 40, 10)
+	doc.Profile, doc.Light = design.Profile16, true
+	data, _ := Encode(doc)
+	got, err := Decode(data)
+	if err != nil || got.Profile != design.Profile16 || !got.Light {
+		t.Fatalf("round trip: %v %+v", err, got)
+	}
+	doc.Profile = "sepia"
+	data, _ = Encode(doc)
+	if got, _ = Decode(data); got.Profile != "" {
+		t.Fatalf("an unknown profile is dropped: %q", got.Profile)
+	}
+}

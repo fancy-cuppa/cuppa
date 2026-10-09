@@ -14,7 +14,14 @@ type Document struct {
 	Background string `json:"background,omitempty"`
 	// HideGrid turns off the dotted grid shown on an empty canvas in the editor.
 	// The grid is never part of an export.
-	HideGrid bool    `json:"hideGrid,omitempty"`
+	HideGrid bool `json:"hideGrid,omitempty"`
+	// Profile is how many colours the target terminal has: "" for true colour,
+	// or "256", "16" or "none". Colours are reduced to it in the editor and in
+	// every export, so the design shows how it will look there.
+	Profile string `json:"profile,omitempty"`
+	// Light previews the design on a light terminal in the editor. It is not
+	// part of an export: an export keeps the terminal's own colours.
+	Light bool `json:"light,omitempty"`
 	Effects  Effects `json:"effects,omitempty"`
 	// Embedded are copies of the user-made components the design uses, so it
 	// still draws on a computer without their packs.
@@ -28,6 +35,18 @@ type Document struct {
 type Embedded struct {
 	ID        string    `json:"id"`
 	Composite Composite `json:"component"`
+}
+
+// Colour profiles a document can target; the empty string is true colour.
+const (
+	Profile256  = "256"
+	Profile16   = "16"
+	ProfileNone = "none"
+)
+
+// ValidProfile reports whether p names a colour profile ("" included).
+func ValidProfile(p string) bool {
+	return p == "" || p == Profile256 || p == Profile16 || p == ProfileNone
 }
 
 // Effects are looks applied over the whole canvas, in the editor and in exports.

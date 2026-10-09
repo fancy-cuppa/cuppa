@@ -17,8 +17,12 @@ func (m *Model) render() *grid.Grid {
 	}
 	view := grid.New(m.w, m.h)
 	canvasBg := doc.Background
+	dotFg := theme.Faint
 	if canvasBg == "" {
 		canvasBg = theme.Canvas
+		if doc.Light {
+			canvasBg, dotFg = lightCanvas, lightDots
+		}
 	}
 	for vy := 0; vy < m.h; vy++ {
 		for vx := 0; vx < m.w; vx++ {
@@ -29,9 +33,12 @@ func (m *Model) render() *grid.Grid {
 			c := rendered.At(cx, cy)
 			switch {
 			case c.Ch != 0:
+				if doc.Light && doc.Background == "" {
+					c.Style = onLight(c.Style)
+				}
 				view.Set(vx, vy, c)
 			case !doc.HideGrid && cx%4 == 0 && cy%2 == 0:
-				view.Set(vx, vy, grid.Cell{Ch: '·', Style: grid.Style{Fg: theme.Faint, Bg: canvasBg, Dim: c.Dim}})
+				view.Set(vx, vy, grid.Cell{Ch: '·', Style: grid.Style{Fg: dotFg, Bg: canvasBg, Dim: c.Dim}})
 			default:
 				view.Set(vx, vy, grid.Cell{Ch: ' ', Style: grid.Style{Bg: canvasBg, Dim: c.Dim}})
 			}

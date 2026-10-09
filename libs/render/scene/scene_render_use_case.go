@@ -104,6 +104,7 @@ func RenderWith(doc design.Document, cat Catalog, override func(design.Node) *gr
 	}
 	paintBackground(out, doc.Background)
 	applyEffects(out, doc.Effects)
+	applyProfile(out, doc.Profile)
 	return out
 }
 
