@@ -40,10 +40,12 @@ func TestBackgroundIsValidatedLikeAColour(t *testing.T) {
 	if got := ed.Document().Background; got != "#a0b0c0" {
 		t.Fatalf("background = %q", got)
 	}
-	if ed.SetBackground("#a0b0c0"); ed.CanUndo() && len(ed.undo) != 1 {
-		t.Error("setting the same colour is not a step")
+	if err := ed.SetBackground("#a0b0c0"); err != nil || len(ed.undo) != 1 {
+		t.Errorf("setting the same colour is not a step: %v, %d steps", err, len(ed.undo))
 	}
-	ed.SetBackground("")
+	if err := ed.SetBackground(""); err != nil {
+		t.Fatal(err)
+	}
 	if ed.Document().Background != "" {
 		t.Fatal("empty clears it")
 	}
