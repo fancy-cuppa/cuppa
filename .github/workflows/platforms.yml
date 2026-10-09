@@ -54,7 +54,8 @@ jobs:
           cd apps/cuppa-tui
           go build -trimpath -ldflags "-s -w -X main.version=ci" -o "$RUNNER_TEMP/cuppa" .
           "$RUNNER_TEMP/cuppa" --version
-          "$RUNNER_TEMP/cuppa" pack catalog | head -5
+          "$RUNNER_TEMP/cuppa" pack catalog > "$RUNNER_TEMP/catalog.txt"
+          head -5 "$RUNNER_TEMP/catalog.txt"
 
   # The zips from the latest release, run as a user would run them.
   release-smoke:
@@ -90,4 +91,5 @@ jobs:
           [ -f cuppa-tui.exe ] && bin=./cuppa-tui.exe
           chmod +x "$bin" 2>/dev/null || true
           "$bin" --version
-          "$bin" pack catalog | head -5
+          "$bin" pack catalog > catalog.txt
+          head -5 catalog.txt
