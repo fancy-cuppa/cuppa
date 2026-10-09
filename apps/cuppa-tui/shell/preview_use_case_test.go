@@ -42,7 +42,7 @@ func screen(m *Model) string { return ansi.Strip(m.render()) }
 
 func TestCtrlPRunsTheDesignAndEscGoesBackToEditing(t *testing.T) {
 	m := newShell(t)
-	m.ed.Add("bubbles.textinput", 4, 3)
+	_, _ = m.ed.Add("bubbles.textinput", 4, 3)
 	m.ed.Clear()
 	_, cmd := m.Update(ctrl('p'))
 	feed(m, cmd)
@@ -127,7 +127,7 @@ func TestASpinnerAnimatesInThePreview(t *testing.T) {
 
 func TestEditingActionsAndOpeningEndThePreview(t *testing.T) {
 	m := newShell(t)
-	m.ed.Add("bubbles.spinner", 4, 3)
+	_, _ = m.ed.Add("bubbles.spinner", 4, 3)
 	m.ed.MarkSaved() // nothing unsaved, so New does not ask
 	m.Update(ctrl('p'))
 	m.Update(ctrl('n'))
