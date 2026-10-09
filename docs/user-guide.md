@@ -75,7 +75,7 @@ A `~` after a component in the palette means its preview is an approximation of 
 | File ▸ New | Ctrl+N | Start an empty design |
 | File ▸ Open… | Ctrl+O | Pick a `.cuppa` file |
 | File ▸ Save | Ctrl+S | Save; asks for a name the first time |
-| File ▸ Save As… | | Save under a new name |
+| File ▸ Save As… | Ctrl+Shift+S | Save under a new name |
 | File ▸ Quit | Ctrl+Q | Leave |
 
 If there are unsaved changes, New, Open and Quit ask whether to save, discard or cancel. Saving over an existing file asks first.
@@ -108,11 +108,23 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 | Key | Action |
 |---|---|
 | Ctrl+N / Ctrl+O / Ctrl+S | New / Open / Save |
+| Ctrl+Shift+S | Save As |
 | Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) | Undo / Redo |
 | Ctrl+C / Ctrl+V | Copy / Paste the selection (each paste lands a little further on; works between designs) |
+| Ctrl+D | Duplicate the selection |
 | Del | Delete the selection |
+| Ctrl+G / Ctrl+U | Group / Ungroup |
+| Ctrl+Shift+] / Ctrl+] | Move the selection to the front / one layer forward |
+| Ctrl+[ / Ctrl+Shift+[ | Move the selection one layer back / to the back |
+| Arrow keys | Move the selection 1 cell (with Shift, 10 cells); each press is one undo step |
+| Up / Down in a number field | Add or subtract 1 (with Shift, 10); Enter ends the edit |
+| Ctrl+F | Go to the component search |
 | Esc | Deselect, cancel a drag, close a menu or dialog |
 | Ctrl+Q | Quit (Ctrl+C is Copy) |
+
+**On a Mac**, the desktop app and the web page show **Cmd** where this page says Ctrl (and accept it); the Cmd key does what Ctrl does. In a terminal on a Mac, the terminal program keeps Cmd for itself, so use Ctrl there, unless your terminal reports Cmd to programs (kitty, WezTerm and Ghostty can), in which case Cmd works too.
+
+**Keys a plain terminal cannot tell apart.** Ctrl+Shift+S looks like Ctrl+S, and Ctrl+[ looks like Esc, to a terminal that only sends the old key codes. Terminals that report full key presses (those that implement the Kitty keyboard protocol or CSI u, such as kitty, WezTerm and Ghostty) send them properly, and so do the desktop app and the web page. Check yours: if Ctrl+Shift+S saves without asking for a name, it does not. Elsewhere, use the menus: *File ▸ Save As…* and the *Edit* menu's layer items do the same.
 
 ## Troubleshooting
 

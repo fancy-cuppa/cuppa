@@ -203,3 +203,32 @@ func TestDirtyTracking(t *testing.T) {
 		t.Fatal("undo after save should be dirty")
 	}
 }
+
+func TestNudgeIsOneUndoStepAndLeavesNoneWhenNothingMoved(t *testing.T) {
+	e := newEditor()
+	id, _ := e.Add("lipgloss.box", 0, 0)
+	e.Select(id)
+	if e.Nudge(-1, 0) {
+		t.Fatal("already at the left edge: nothing should move")
+	}
+	if e.CanUndo() {
+		// Adding the node is the only step.
+		e.Undo()
+		if e.CanUndo() {
+			t.Fatal("a refused nudge must not leave an undo step")
+		}
+		e.Redo()
+	}
+	if !e.Nudge(3, 2) {
+		t.Fatal("nudging into the canvas should move")
+	}
+	n, _ := e.Document().Get(id)
+	if n.Rect.X != 3 || n.Rect.Y != 2 {
+		t.Fatalf("at (%d,%d), want (3,2)", n.Rect.X, n.Rect.Y)
+	}
+	e.Undo()
+	n, _ = e.Document().Get(id)
+	if n.Rect.X != 0 || n.Rect.Y != 0 {
+		t.Fatalf("undo: (%d,%d)", n.Rect.X, n.Rect.Y)
+	}
+}

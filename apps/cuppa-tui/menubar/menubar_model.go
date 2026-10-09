@@ -32,11 +32,24 @@ type Model struct {
 	// caller can explain why they do not work.
 	unavailable map[Action]bool
 	labelX   []int // left column of each label
+	// command shows Cmd where the shortcuts say Ctrl (on a Mac).
+	command bool
 }
 
 // New returns a closed bar.
 func New() *Model {
 	return &Model{open: -1, hover: -1, hoverBar: -1, disabled: map[Action]bool{}, unavailable: map[Action]bool{}}
+}
+
+// SetCommandKey makes the menus say Cmd where the shortcuts say Ctrl.
+func (m *Model) SetCommandKey(on bool) { m.command = on }
+
+// keys is a shortcut as shown: Ctrl+S, or Cmd+S on a Mac.
+func (m *Model) keys(shortcut string) string {
+	if m.command {
+		return strings.ReplaceAll(shortcut, "Ctrl", "Cmd")
+	}
+	return shortcut
 }
 
 // SetWidth sets the screen width.
@@ -94,7 +107,7 @@ func (m *Model) dropdownWidth() int {
 	for _, it := range menus[m.open].items {
 		n := ansi.StringWidth(it.label)
 		if it.shortcut != "" {
-			n += 3 + ansi.StringWidth(it.shortcut)
+			n += 3 + ansi.StringWidth(m.keys(it.shortcut))
 		}
 		w = max(w, n)
 	}
@@ -122,8 +135,9 @@ func (m *Model) itemLine(i int, it item, w int) string {
 	if it.label == separatorLabel {
 		return theme.Faded(strings.Repeat("─", w))
 	}
-	gapW := max(w-2*itemPadX-ansi.StringWidth(it.label)-ansi.StringWidth(it.shortcut), 1)
-	text := strings.Repeat(" ", itemPadX) + it.label + strings.Repeat(" ", gapW) + it.shortcut + strings.Repeat(" ", itemPadX)
+	shortcut := m.keys(it.shortcut)
+	gapW := max(w-2*itemPadX-ansi.StringWidth(it.label)-ansi.StringWidth(shortcut), 1)
+	text := strings.Repeat(" ", itemPadX) + it.label + strings.Repeat(" ", gapW) + shortcut + strings.Repeat(" ", itemPadX)
 	switch {
 	case m.disabled[it.action] || m.unavailable[it.action]:
 		return theme.Faded(text)
@@ -235,7 +249,7 @@ func (m *Model) Describe() []a11y.Node {
 		}
 		label := it.label
 		if it.shortcut != "" {
-			label += ", " + it.shortcut
+			label += ", " + m.keys(it.shortcut)
 		}
 		if m.disabled[it.action] || m.unavailable[it.action] {
 			label += ", not available"

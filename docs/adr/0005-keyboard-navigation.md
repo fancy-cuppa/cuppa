@@ -1,6 +1,6 @@
 # 5. Keyboard navigation
 
-Status: proposed (issue #43). Nothing here is built yet; this is the design to agree on first.
+Status: proposed (issue #43). Parts are built, from the review in [Decisions from the review](#decisions-from-the-review); the rest is still to agree on.
 
 ## Context
 
@@ -99,6 +99,29 @@ Existing mouse behaviour and the current shortcuts are not touched in any step.
 - Cuppa becomes fully operable without a pointer, which is also what makes the screen-reader description useful.
 - A focus model adds state to the shell; it is small (one enum plus a row index per pane) and replaces the ad-hoc "which pane owns the pointer" checks for keys.
 - The keys above become a documented contract; changing one later is a breaking change for muscle memory, so the table lives in one file and the Shortcuts dialog is generated from it.
+
+## Decisions from the review
+
+The owner reviewed the proposal with screenshots (2026-10-09) and asked for these, which are **built** (issue #118):
+
+| Key | What | Differs from the proposal |
+|---|---|---|
+| Ctrl+Shift+S | Save As (listed in the File menu) | New: the proposal avoided Ctrl+Shift+letter |
+| Ctrl+D | Duplicate (listed in the Edit menu) | As proposed |
+| Arrows | Move the selection 1 cell; **Shift: 10** | The proposal said Shift: 5 |
+| Up / Down in a number field | +1 / -1; **Shift: 10** | New |
+| Ctrl+F | Focus the component search | New |
+| Ctrl+Shift+] / Ctrl+] / Ctrl+[ / Ctrl+Shift+[ | To front / forward one / back one / to back (also in the Edit menu) | The proposal used PageUp/PageDown and Home/End and avoided Ctrl+[ |
+| Cmd on a Mac | Menus say Cmd in the desktop app and the web page; Cmd does what Ctrl does | New |
+
+How the keys a terminal cannot express reach the app:
+
+- Bubble Tea reads the enhanced form of a key (CSI u), so Ctrl+Shift+S and Ctrl+[ are distinct keys when the terminal reports them. Kitty-protocol terminals also report Cmd as Super, which the shell treats as Ctrl.
+- The desktop app and the web page catch these shortcuts in the page (`shortcuts.ts`) and send the enhanced form themselves, because xterm.js would send Ctrl+Shift+S as Ctrl+S and Ctrl+[ as Esc. On a Mac the page sends Cmd+key as Ctrl+key.
+- The menus show Cmd on a Mac in the desktop app (from the operating system) and in the browser (from the User Agent). The terminal program keeps showing Ctrl: the terminal emulator, not Cuppa, owns Cmd there.
+- Where a terminal sends only the old codes, the same actions stay in the menus.
+
+The focus model, F6, menu keys and the rest of the proposal are not built yet.
 
 ## Open questions
 

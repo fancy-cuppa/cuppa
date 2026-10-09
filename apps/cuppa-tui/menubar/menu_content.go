@@ -20,6 +20,10 @@ const (
 	EditUngroup    Action = "edit.ungroup"
 	EditComponent  Action = "edit.component"
 	EditPacks      Action = "edit.packs"
+	EditToFront    Action = "edit.tofront"
+	EditForward    Action = "edit.forward"
+	EditBackward   Action = "edit.backward"
+	EditToBack     Action = "edit.toback"
 	ViewPreview    Action = "view.preview"
 	ExportPNG      Action = "export.png"
 	ExportSVG      Action = "export.svg"
@@ -51,7 +55,7 @@ var menus = []menu{
 		{"Open…", "Ctrl+O", FileOpen},
 		{separatorLabel, "", nothing},
 		{"Save", "Ctrl+S", FileSave},
-		{"Save As…", "", FileSaveAs},
+		{"Save As…", "Ctrl+Shift+S", FileSaveAs},
 		{separatorLabel, "", nothing},
 		{"Quit", "Ctrl+Q", FileQuit},
 	}},
@@ -61,11 +65,17 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Copy", "Ctrl+C", EditCopy},
 		{"Paste", "Ctrl+V", EditPaste},
-		{"Duplicate", "", EditDuplicate},
+		{"Duplicate", "Ctrl+D", EditDuplicate},
 		{"Delete", "Del", EditDelete},
 		{separatorLabel, "", nothing},
 		{"Group", "Ctrl+G", EditGroup},
 		{"Ungroup", "Ctrl+U", EditUngroup},
+		{separatorLabel, "", nothing},
+		{"To front", "Ctrl+Shift+]", EditToFront},
+		{"Forward one", "Ctrl+]", EditForward},
+		{"Back one", "Ctrl+[", EditBackward},
+		{"To back", "Ctrl+Shift+[", EditToBack},
+		{separatorLabel, "", nothing},
 		{"Save as component…", "", EditComponent},
 		{separatorLabel, "", nothing},
 		{"Component packs…", "", EditPacks},

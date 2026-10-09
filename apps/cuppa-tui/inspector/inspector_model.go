@@ -134,6 +134,28 @@ func (m *Model) cancelEdit() { m.editing, m.buf = "", "" }
 func (m *Model) commit() {
 	field, value := m.editing, m.buf
 	m.cancelEdit()
+	m.apply(field, value)
+}
+
+// Step adds delta to the number being edited and applies it at once, so the
+// design follows the arrow keys; Enter then ends the edit. It reports whether
+// the field holds a number.
+func (m *Model) Step(delta int) bool {
+	if m.editing == "" || m.editing == "background" || m.editing == "name" {
+		return false
+	}
+	n, err := strconv.Atoi(strings.TrimSpace(m.buf))
+	if err != nil {
+		return false
+	}
+	m.buf = strconv.Itoa(n + delta)
+	m.apply(m.editing, m.buf)
+	return true
+}
+
+// apply sets the field to value. The field is "background", "canvas-…",
+// "name", "prop:key" or one of the geometry fields.
+func (m *Model) apply(field, value string) {
 	switch {
 	case field == "background":
 		m.report(m.ed.SetBackground(value))

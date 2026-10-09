@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	goruntime "runtime"
 	"sync/atomic"
 
 	tea "charm.land/bubbletea/v2"
@@ -40,6 +41,9 @@ func (a *App) startup(ctx context.Context) {
 // quits from inside it.
 func (a *App) newModel() tea.Model {
 	app := shell.New(standard.Default())
+	if goruntime.GOOS == "darwin" {
+		app.UseCommandKey() // the page turns Cmd into the Ctrl the app listens for
+	}
 	app.RestoreLayout()
 	app.LoadUserPacks()
 	if a.openPath != "" {

@@ -61,6 +61,9 @@ func (m *Model) SetSize(w, h int) {
 	m.clampScroll()
 }
 
+// FocusSearch gives the keyboard to the search box, as clicking it does.
+func (m *Model) FocusSearch() { m.searching = true }
+
 // Searching reports whether the search box is taking keyboard input.
 func (m *Model) Searching() bool { return m.searching }
 
