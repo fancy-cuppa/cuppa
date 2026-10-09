@@ -1,0 +1,38 @@
+package shell
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/charmbracelet/x/ansi"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/menubar"
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
+)
+
+func paletteText(m *Model) string {
+	var rows []string
+	for _, l := range m.pal.Lines() {
+		rows = append(rows, ansi.Strip(l))
+	}
+	return strings.Join(rows, "\n")
+}
+
+func TestSwitchingAPackOffRemovesItFromThePaletteOnly(t *testing.T) {
+	m := newShell(t)
+	m.pal.SetSize(m.layout.palette.W, 80)
+	if !strings.Contains(paletteText(m), "Bubbles") {
+		t.Fatal("Bubbles starts on")
+	}
+	m.perform(menubar.EditPacks)
+	if m.flow.Modal() == nil {
+		t.Fatal("the Packs dialog should open")
+	}
+	m.packs.SetEnabled(definition.FamilyBubbles, false)
+	m.refreshPalette()
+	if strings.Contains(paletteText(m), "Bubbles") {
+		t.Fatalf("a disabled pack must leave the palette:\n%s", paletteText(m))
+	}
+	if _, ok := m.cat.Get("bubbles.spinner"); !ok {
+		t.Fatal("designs that use the pack must still resolve its components")
+	}
+}

@@ -15,6 +15,7 @@ type Catalog interface {
 	Families() []definition.Family
 	ByFamily(definition.Family) []definition.Definition
 	Search(query string) []definition.Definition
+	Title(definition.Family) string
 }
 
 // headerRows is the number of fixed lines above the scrolling list.
@@ -43,6 +44,14 @@ func New(cat Catalog) *Model {
 	m := &Model{cat: cat, collapsed: map[definition.Family]bool{}, hover: -1}
 	m.rebuild()
 	return m
+}
+
+// SetCatalog swaps what is listed, e.g. after a pack is switched on or off.
+func (m *Model) SetCatalog(cat Catalog) {
+	m.cat = cat
+	m.hover = -1
+	m.rebuild()
+	m.clampScroll()
 }
 
 // SetSize sets the pane size in cells.
@@ -173,7 +182,7 @@ func (m *Model) renderRow(i int) string {
 		if m.collapsed[r.family] {
 			mark = "▸"
 		}
-		s = " " + theme.Bold(mark+" "+r.family.Title())
+		s = " " + theme.Bold(mark+" "+m.cat.Title(r.family))
 	default:
 		suffix := ""
 		if r.def.Status == definition.StatusPlaceholder {
@@ -185,7 +194,7 @@ func (m *Model) renderRow(i int) string {
 		}
 		s = indent + r.def.Name + suffix
 		if m.query != "" {
-			s += " " + theme.Faded(strings.ToLower(r.def.Family.Title()))
+			s += " " + theme.Faded(strings.ToLower(m.cat.Title(r.def.Family)))
 		}
 	}
 	if i == m.hover {
