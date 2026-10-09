@@ -41,6 +41,16 @@ func lipglossEntries() []definition.Definition {
 			},
 		},
 		{
+			ID: "lipgloss.tabs", Name: "Tabs", Family: definition.FamilyLipgloss,
+			Description: "Tabs whose active tab opens into the window below (the Lip Gloss layout example).",
+			DefaultSize: size(44, 9), MinSize: size(10, 4), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("tabs", "Tabs (comma separated)", "Lip Gloss,Blush,Eye Shadow,Mascara"),
+				intProp("active", "Active tab (1 is the first)", 1, 1, 12),
+				colorProp("color", "Border color", "99"),
+			},
+		},
+		{
 			ID: "lipgloss.table", Name: "Table", Family: definition.FamilyLipgloss,
 			Description: "A static table (lipgloss/table).",
 			DefaultSize: size(32, 7), MinSize: size(8, 3), Import: lipglossImport + "/table", Status: definition.StatusSupported,

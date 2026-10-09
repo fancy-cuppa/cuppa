@@ -19,6 +19,7 @@ var painters = map[string]painter{
 	"lipgloss.box":   paintBox,
 	"lipgloss.label": paintLabel,
 	"lipgloss.list":  paintList,
+	"lipgloss.tabs":  paintTabs,
 	"lipgloss.tree":  paintTree,
 	"lipgloss.table": paintTable,
 	"lipgloss.joinh": paintJoinH,
