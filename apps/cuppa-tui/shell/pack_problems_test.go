@@ -10,11 +10,12 @@ import (
 
 func TestPackProblemsAreListedInANotice(t *testing.T) {
 	m := newShell(t)
-	m.ReportPackProblems(nil)
+	m.ReportPackProblems()
 	if m.flow.Modal() != nil {
 		t.Fatal("no problems, no notice")
 	}
-	m.ReportPackProblems([]error{errors.New("tea.cupp: file is damaged")})
+	m.packProblems = []error{errors.New("tea.cupp: file is damaged")}
+	m.ReportPackProblems()
 	if m.flow.Modal() == nil {
 		t.Fatal("a notice should open")
 	}

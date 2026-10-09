@@ -70,6 +70,7 @@ func LoadFile(path string) (Pack, []error, error) {
 	if err != nil {
 		return Pack{}, nil, fmt.Errorf("%s: %w", filepath.Base(path), err)
 	}
+	p.Path = path
 	for i, e := range issues {
 		issues[i] = fmt.Errorf("%s: %w", filepath.Base(path), e)
 	}

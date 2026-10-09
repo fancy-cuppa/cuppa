@@ -98,3 +98,22 @@ func TestOnlyHidesDisabledPacksWithoutTouchingTheOriginal(t *testing.T) {
 		t.Fatal("the full registry must still resolve it")
 	}
 }
+
+func TestLiveFollowsTheRegistryItHolds(t *testing.T) {
+	a, _ := New(definition.Definition{ID: "lipgloss.box", Name: "Box", Family: definition.FamilyLipgloss})
+	b, _ := New(definition.Definition{ID: "bubbles.spinner", Name: "Spinner", Family: definition.FamilyBubbles})
+	live := NewLive(a)
+	if _, ok := live.Get("lipgloss.box"); !ok {
+		t.Fatal("answers like a")
+	}
+	live.Set(b)
+	if _, ok := live.Get("lipgloss.box"); ok {
+		t.Fatal("a is gone")
+	}
+	if len(live.Families()) != 1 || live.Title(definition.FamilyBubbles) != "Bubbles" || len(live.Packs()) != 1 || len(live.List()) != 1 || len(live.Search("spin")) != 1 || len(live.ByFamily(definition.FamilyBubbles)) != 1 {
+		t.Fatal("every query follows the held registry")
+	}
+	if live.Registry() != b {
+		t.Fatal("Registry returns the held one")
+	}
+}

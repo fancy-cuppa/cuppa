@@ -16,8 +16,18 @@ type Document struct {
 	// The grid is never part of an export.
 	HideGrid bool    `json:"hideGrid,omitempty"`
 	Effects  Effects `json:"effects,omitempty"`
+	// Embedded are copies of the user-made components the design uses, so it
+	// still draws on a computer without their packs.
+	Embedded []Embedded `json:"components,omitempty"`
 	// Seq is the counter behind generated node ids; it only ever grows.
 	Seq int `json:"seq"`
+}
+
+// Embedded is a copy of a pack component kept inside a design. ID is the
+// catalog id the nodes use, such as "tea-shop.card".
+type Embedded struct {
+	ID        string    `json:"id"`
+	Composite Composite `json:"component"`
 }
 
 // Effects are looks applied over the whole canvas, in the editor and in exports.
@@ -51,6 +61,13 @@ func (d Document) Clone() Document {
 		nodes[i] = n.Clone()
 	}
 	d.Nodes = nodes
+	if d.Embedded != nil {
+		emb := make([]Embedded, len(d.Embedded))
+		for i, e := range d.Embedded {
+			emb[i] = Embedded{ID: e.ID, Composite: e.Composite.Clone()}
+		}
+		d.Embedded = emb
+	}
 	return d
 }
 

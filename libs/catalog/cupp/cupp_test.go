@@ -179,3 +179,19 @@ func TestExtendAddsPacksAndRefusesIDClashes(t *testing.T) {
 		t.Fatal("the base registry is untouched")
 	}
 }
+
+func TestLoadedPacksRememberTheirFile(t *testing.T) {
+	dir := t.TempDir()
+	data, _ := Encode(samplePack())
+	path := filepath.Join(dir, "tea.cupp")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	packs, _ := LoadDir(dir)
+	reg, _ := Extend(standard.Default(), packs)
+	for _, p := range reg.Packs() {
+		if p.ID == "tea-shop" && (p.Source != path || p.Builtin) {
+			t.Fatalf("pack = %+v", p)
+		}
+	}
+}

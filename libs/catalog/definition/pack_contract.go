@@ -9,4 +9,6 @@ type Pack struct {
 	Description string
 	// Builtin packs ship with the app: they can be switched off, never removed.
 	Builtin bool
+	// Source is the .cupp file an installed pack was loaded from.
+	Source string
 }

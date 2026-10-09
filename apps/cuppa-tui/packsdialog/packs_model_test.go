@@ -12,7 +12,7 @@ func fixture() (*Model, map[definition.Family]bool) {
 	on := map[definition.Family]bool{"a": true, "b": true}
 	m := New([]Entry{
 		{Pack: definition.Pack{ID: "a", Name: "Alpha", Description: "first"}, Count: 3},
-		{Pack: definition.Pack{ID: "b", Name: "Beta", Description: "second"}, Count: 5},
+		{Pack: definition.Pack{ID: "b", Name: "Beta", Description: "second", Source: "/packs/beta.cupp"}, Count: 5},
 	}, func(f definition.Family) bool { return on[f] }, func(f definition.Family) { on[f] = !on[f] })
 	m.Place(100, 40)
 	m.Lines()
@@ -75,4 +75,32 @@ func stripANSI(s string) string {
 		}
 	}
 	return b.String()
+}
+
+func TestOnlyInstalledPacksCanBeRemoved(t *testing.T) {
+	m, on := fixture()
+	screen := stripANSI(strings.Join(m.Lines(), "\n"))
+	if strings.Count(screen, "[Remove]") != 1 {
+		t.Fatalf("one Remove, on the installed pack:\n%s", screen)
+	}
+	click(m, m.Rect().W-5, rowTop(0)) // the same spot on the built-in pack toggles it
+	if on["a"] {
+		t.Fatal("a built-in pack row only toggles")
+	}
+	click(m, m.Rect().W-5, rowTop(1))
+	o, done := m.Outcome()
+	if !done || o.Button != RemoveButton || o.Value != "b" {
+		t.Fatalf("outcome = %+v %v", o, done)
+	}
+	if !on["b"] {
+		t.Fatal("removing is not toggling")
+	}
+}
+
+func TestAddPackEndsTheDialogWithAnAddOutcome(t *testing.T) {
+	m, _ := fixture()
+	click(m, m.Rect().W-10-1-13+3, m.Rect().H-2)
+	if o, done := m.Outcome(); !done || o.Button != AddButton {
+		t.Fatalf("outcome = %+v %v", o, done)
+	}
 }
