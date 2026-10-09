@@ -6,3 +6,4 @@ Packs that ship inside Cuppa (`libs/catalog/bundled/packs/*.cupp`). To propose o
 | Pack id | Name | For | Components | By |
 |---|---|---|---|---|
 | `starter` | Starter | Small building blocks to start from | Card, Alert | Cuppa |
+| `widgets` | Widgets | Everyday interface pieces | Divider, Badge, Key hint, Stat card, Breadcrumb, Sidebar menu, Command palette | Cuppa |

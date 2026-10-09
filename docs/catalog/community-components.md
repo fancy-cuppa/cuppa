@@ -78,15 +78,15 @@ need no extra dependency, and the generator already expands packs into their par
 
 | Widget | Built from | Where |
 |---|---|---|
-| Divider / rule | Box of height 1 with a top border | pack |
-| Badge, tag, chip | Label with background and padding | pack |
-| Key hint (`kbd`) | Label with border or inverse colours | pack |
-| Stat card | Card + two labels | pack |
-| Breadcrumb | joinh of labels with separators | pack |
+| Divider / rule | Label of box-drawing dashes | pack (done, #108) |
+| Badge, tag, chip | Label with background | pack (done, #108) |
+| Key hint (`kbd`) | Box + label | pack (done, #108) |
+| Stat card | Box + two labels | pack (done, #108) |
+| Breadcrumb | One label with arrow separators | pack (done, #108) |
 | Stepper / wizard header | joinh of labels + progress | pack |
 | Checkbox, radio, toggle | Label with glyphs (`[x]`, `(•)`, `●━`) | pack |
-| Sidebar menu | joinv of labels with a selected style | pack |
-| Command palette | Box + textinput + list | pack |
+| Sidebar menu | Box + list | pack (done, #108) |
+| Command palette | Box + textinput + list | pack (done, #108) |
 | Chat bubble, chat input, thread | Box + label + viewport + textarea | pack |
 | Log viewer | Viewport with line numbers | `bubbles.viewport` properties |
 | Diff view | Viewport with coloured lines | pack |
