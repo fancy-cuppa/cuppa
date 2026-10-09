@@ -9,12 +9,12 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (54)
+## What the catalog has today (56)
 
 | Family | Components |
 |---|---|
-| Bubbles (12) | textinput, textarea, list, table, viewport, paginator, filepicker, spinner, progress, timer, stopwatch, help |
-| Huh (8) | input, text, select, multiselect, confirm, note, filepicker, form |
+| Bubbles (13) | textinput, textarea, list, table, tree, viewport, paginator, filepicker, spinner, progress, timer, stopwatch, help |
+| Huh (9) | input, text, select, multiselect, confirm, note, spinner, filepicker, form |
 | Lip Gloss (9) | box, label, list, tabs, table, tree, joinh, joinv, place |
 | Glamour (1) | markdown |
 | ntcharts (7) | bar, line, sparkline, streamline, time series, heatmap, canvas |
@@ -25,10 +25,10 @@ and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
 | Candidate | Source | Finding | Decision |
 |---|---|---|---|
-| **Tree** | `charm.land/bubbles/v2/tree` (new in Bubbles v2.2.0, by dlvhdr) | A navigable tree with expand and collapse; the catalog only has the static Lip Gloss tree | **Add** `bubbles.tree` |
-| **Spinner (Huh)** | `charm.land/huh/v2/spinner` | A spinner with a title, shown while something runs | **Add** `huh.spinner`, or fold into `bubbles.spinner` with a title property |
+| **Tree** | `charm.land/bubbles/v2/tree` (new in Bubbles v2.2.0, by dlvhdr) | A navigable tree with expand and collapse; the catalog only has the static Lip Gloss tree | **Added** (#105): `bubbles.tree` |
+| **Spinner (Huh)** | `charm.land/huh/v2/spinner` | A spinner with a title, shown while something runs | **Added** (#105): `huh.spinner` |
 | **Layers and canvas** | Lip Gloss v2 (`Layer`, `Canvas`, compositing with x, y, z) | How modals, toasts and popups are drawn in v2 | Not a component; it is how `overlay`, `modal` and `toast` should be generated |
-| **Gradients and blending** | Lip Gloss v2 (`Blend1D`, `Blend2D`) | Gradient fills and borders | **Add** as a property of `lipgloss.box` (fill and border gradient) rather than a component |
+| **Gradients and blending** | Lip Gloss v2 (`Blend1D`, `Blend2D`) | Gradient fills and borders | **Added** (#105): the `gradient` property of `lipgloss.box` blends the border; the generated program does not draw it yet |
 | Cursor | `bubbles/v2/cursor` | The blinking cursor inside text inputs | Skip: part of textinput and textarea |
 | Key | `bubbles/v2/key` | Key bindings, no visual | Skip: non-visual |
 | Textarea options | Bubbles v2.1 and v2.2 | Dynamic height, selection | Properties of `bubbles.textarea` |

@@ -46,6 +46,16 @@ func huhEntries() []definition.Definition {
 			Props: []definition.PropSpec{title("Heads up"), textProp("body", "Body", "The kettle is hot."), accent},
 		},
 		{
+			ID: "huh.spinner", Name: "Spinner", Family: definition.FamilyHuh,
+			Description: "A titled spinner shown while an action runs.",
+			DefaultSize: size(30, 1), MinSize: size(3, 1), Import: huhImport + "/spinner", Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("title", "Title", "Steeping the tea..."),
+				choiceProp("style", "Spinner", "dot", "line", "dot", "minidot", "jump", "pulse", "points", "globe", "moon", "monkey"),
+				accent,
+			},
+		},
+		{
 			ID: "huh.filepicker", Name: "File picker", Family: definition.FamilyHuh,
 			Description: "Choose a file inside a form.",
 			DefaultSize: size(36, 10), MinSize: size(16, 4), Import: huhImport, Status: definition.StatusPlaceholder,

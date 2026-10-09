@@ -99,7 +99,7 @@ go mod tidy
 go run .
 ```
 
-The program places the **real Bubbles models** (text input, text area, list, table, viewport, paginator, spinner, progress, stopwatch, timer) and draws Lip Gloss boxes and labels. Tab and Shift+Tab move between components that take input, a click focuses one, Esc quits. Groups and pack components are expanded into their parts, hidden components are left out, and the canvas background colour fills behind the components. Components that cannot be generated yet (Huh, Glamour, charts, community components and the other Lip Gloss ones) appear as an empty frame; the export notice and the project's README list them. Effects, colour profiles and the light-terminal preview are not part of the generated program.
+The program places the **real Bubbles models** (text input, text area, list, table, viewport, paginator, spinner, progress, stopwatch, timer) and draws Lip Gloss boxes and labels (a box border gradient is drawn in the designer but not in the generated program). Tab and Shift+Tab move between components that take input, a click focuses one, Esc quits. Groups and pack components are expanded into their parts, hidden components are left out, and the canvas background colour fills behind the components. Components that cannot be generated yet (Huh, Glamour, charts, community components and the other Lip Gloss ones) appear as an empty frame; the export notice and the project's README list them. Effects, colour profiles and the light-terminal preview are not part of the generated program.
 
 If Freeze is not installed, the image items are greyed out; clicking one explains how to install it. After installing, restart Cuppa, or just click the item again.
 

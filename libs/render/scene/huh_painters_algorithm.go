@@ -157,3 +157,13 @@ func paintHuhForm(g *grid.Grid, p Props) {
 		g.Text(2, g.H-2, f, dim, g.W-4)
 	}
 }
+
+// paintHuhSpinner draws Huh's spinner: one frame and its title on a single line.
+func paintHuhSpinner(g *grid.Grid, p Props) {
+	frame := spinnerFrames[p.Str("style")]
+	if frame == "" {
+		frame = "⣾"
+	}
+	g.Text(0, 0, frame, fg(p.Str("color")), 1)
+	g.Text(2, 0, p.Str("title"), grid.Style{}, g.W-2)
+}

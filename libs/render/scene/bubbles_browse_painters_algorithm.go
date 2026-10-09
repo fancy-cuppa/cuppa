@@ -193,3 +193,32 @@ func paintFilePicker(g *grid.Grid, p Props) {
 		g.Text(2, y, e, style, g.W-2)
 	}
 }
+
+// paintBubbleTree draws the Bubbles tree: branches (names ending in "/") show
+// whether they are open, children are indented two spaces per level, and the
+// selected row is highlighted.
+func paintBubbleTree(g *grid.Grid, p Props) {
+	lines := pipeLines(p.Str("items"))
+	sel := pick(p, "selected", len(lines))
+	for i, line := range lines {
+		if i >= g.H {
+			break
+		}
+		name := strings.TrimLeft(line, " ")
+		indent := len(line) - len(name)
+		branch := strings.HasSuffix(name, "/")
+		open := branch && i+1 < len(lines) && len(lines[i+1])-len(strings.TrimLeft(lines[i+1], " ")) > indent
+		marker, style := "  ", grid.Style{}
+		switch {
+		case open:
+			marker, style = "▾ ", grid.Style{Fg: "39"}
+		case branch:
+			marker, style = "▸ ", grid.Style{Fg: "39"}
+		}
+		if i == sel {
+			style = selected(p.Str("color"))
+			g.Fill(designRow(g, i), ' ', style)
+		}
+		g.Text(indent, i, marker+name, style, g.W-indent)
+	}
+}

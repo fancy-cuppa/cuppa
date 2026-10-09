@@ -17,6 +17,7 @@ var dim = grid.Style{Fg: "240"}
 func paintBox(g *grid.Grid, p Props) {
 	style := fg(p.Str("color"))
 	g.Box(full(g), grid.BorderNamed(p.Str("border")), style)
+	blendBorder(g, p.Str("color"), p.Str("gradient"))
 	if title := p.Str("title"); title != "" && g.W > 4 {
 		g.Text(2, 0, " "+title+" ", grid.Style{Fg: p.Str("color"), Bold: true}, g.W-4)
 	}
