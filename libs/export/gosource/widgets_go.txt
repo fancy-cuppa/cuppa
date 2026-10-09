@@ -60,6 +60,14 @@ type drawing struct {
 
 var dimStyle = sty{fg: "240"}
 
+// mutedStyle is the quiet text style of the design: its muted colour, or grey.
+func mutedStyle(p props) sty {
+	if c := p.str("theme.muted"); c != "" {
+		return sty{fg: c}
+	}
+	return dimStyle
+}
+
 func newDrawing(w, h int) *drawing {
 	return &drawing{w: max(w, 0), h: max(h, 0), cells: make([]cell, max(w, 0)*max(h, 0))}
 }
@@ -272,7 +280,7 @@ func tabsPart(c placed, p props) *part {
 			put(x+w+1, 0, '╮')
 			put(x, 1, '│')
 			put(x+w+1, 1, '│')
-			st := dimStyle
+			st := mutedStyle(p)
 			if i == active {
 				st = strong
 			}
@@ -303,34 +311,34 @@ func tabsPart(c placed, p props) *part {
 func joinHPart(c placed, p props) *part {
 	return sketch(c, p, func(cv *drawing, p props) {
 		n := max(p.integer("columns", 2), 1)
-		cv.box(0, 0, cv.w, cv.h, "normal", dimStyle)
+		cv.box(0, 0, cv.w, cv.h, "normal", mutedStyle(p))
 		for i := 1; i < n; i++ {
 			x := cv.w * i / n
 			for y := 1; y < cv.h-1; y++ {
-				cv.set(x, y, '┆', dimStyle)
+				cv.set(x, y, '┆', mutedStyle(p))
 			}
 		}
-		cv.text(2, 0, " JoinHorizontal ", dimStyle, cv.w-3)
+		cv.text(2, 0, " JoinHorizontal ", mutedStyle(p), cv.w-3)
 	})
 }
 
 func joinVPart(c placed, p props) *part {
 	return sketch(c, p, func(cv *drawing, p props) {
 		n := max(p.integer("rows", 2), 1)
-		cv.box(0, 0, cv.w, cv.h, "normal", dimStyle)
+		cv.box(0, 0, cv.w, cv.h, "normal", mutedStyle(p))
 		for i := 1; i < n; i++ {
 			y := cv.h * i / n
 			for x := 1; x < cv.w-1; x++ {
-				cv.set(x, y, '┄', dimStyle)
+				cv.set(x, y, '┄', mutedStyle(p))
 			}
 		}
-		cv.text(2, 0, " JoinVertical ", dimStyle, cv.w-3)
+		cv.text(2, 0, " JoinVertical ", mutedStyle(p), cv.w-3)
 	})
 }
 
 func placePart(c placed, p props) *part {
 	return sketch(c, p, func(cv *drawing, p props) {
-		cv.box(0, 0, cv.w, cv.h, "normal", dimStyle)
+		cv.box(0, 0, cv.w, cv.h, "normal", mutedStyle(p))
 		text := p.str("text")
 		w := len([]rune(text))
 		x := 1
@@ -348,7 +356,7 @@ func placePart(c placed, p props) *part {
 			y = cv.h - 2
 		}
 		cv.text(x, y, text, sty{}, cv.w-2)
-		cv.text(2, 0, " Place ", dimStyle, cv.w-3)
+		cv.text(2, 0, " Place ", mutedStyle(p), cv.w-3)
 	})
 }
 
@@ -421,7 +429,7 @@ func flexBoxPart(c placed, p props) *part {
 				x, w := slotOf(cv.w, cols, col)
 				cv.box(x, y, w, h, "rounded", st)
 				if h >= 3 && w >= 5 {
-					cv.text(x+2, y+h/2, fmt.Sprintf("%d,%d", r+1, col+1), dimStyle, w-3)
+					cv.text(x+2, y+h/2, fmt.Sprintf("%d,%d", r+1, col+1), mutedStyle(p), w-3)
 				}
 			}
 		}
@@ -442,7 +450,7 @@ func boxerPart(c placed, p props) *part {
 			}
 			cv.box(x, y, w, h, "normal", st)
 			if w >= 9 && h >= 3 {
-				cv.text(x+2, y+h/2, fmt.Sprintf("model %d", i+1), dimStyle, w-3)
+				cv.text(x+2, y+h/2, fmt.Sprintf("model %d", i+1), mutedStyle(p), w-3)
 			}
 		}
 	})
@@ -455,7 +463,7 @@ func datePickerPart(c placed, p props) *part {
 		cv.text(0, 0, "◂", accent, 1)
 		cv.text((cv.w-len([]rune(month)))/2, 0, month, sty{bold: true}, cv.w)
 		cv.text(cv.w-1, 0, "▸", accent, 1)
-		cv.text(0, 1, "Su Mo Tu We Th Fr Sa", dimStyle, cv.w)
+		cv.text(0, 1, "Su Mo Tu We Th Fr Sa", mutedStyle(p), cv.w)
 		const firstWeekday = 4 // 1 October 2026 is a Thursday
 		day := min(max(p.integer("day", 1), 1), 31)
 		for d := 1; d <= 31; d++ {
@@ -544,10 +552,10 @@ func huhFormPart(c placed, p props) *part {
 		for i := 0; i < rows; i++ {
 			y := 1 + i*2
 			cv.set(2, y, '┃', sty{fg: color})
-			cv.text(4, y, strings.Repeat("▁", max(cv.w-8, 0)), dimStyle, cv.w-6)
+			cv.text(4, y, strings.Repeat("▁", max(cv.w-8, 0)), mutedStyle(p), cv.w-6)
 		}
 		if f := p.str("footer"); f != "" && cv.h > 2 {
-			cv.text(2, cv.h-2, f, dimStyle, cv.w-4)
+			cv.text(2, cv.h-2, f, mutedStyle(p), cv.w-4)
 		}
 	})
 }

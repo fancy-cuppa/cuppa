@@ -40,7 +40,7 @@ func Start(doc design.Document, cat scene.Catalog) (*Session, tea.Cmd) {
 		if !ok || n.Hidden {
 			continue
 		}
-		l := build(propsOf(n, cat), n.Rect.W, n.Rect.H)
+		l := build(propsOf(n, cat, s.doc), n.Rect.W, n.Rect.H)
 		s.live[n.ID] = l
 		if l.start != nil {
 			starts = append(starts, tag(n.ID, l.start))
@@ -50,12 +50,13 @@ func Start(doc design.Document, cat scene.Catalog) (*Session, tea.Cmd) {
 }
 
 // propsOf is the node's properties over the catalog defaults.
-func propsOf(n design.Node, cat scene.Catalog) props {
+func propsOf(n design.Node, cat scene.Catalog, doc design.Document) props {
 	p := props{}
 	if def, ok := cat.Get(n.Component); ok {
-		for k, v := range def.Defaults() {
+		for k, v := range def.Effective(n.Props, doc.Theme, doc.Background) {
 			p[k] = v
 		}
+		return p
 	}
 	for k, v := range n.Props {
 		p[k] = v

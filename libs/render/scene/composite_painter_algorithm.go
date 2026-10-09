@@ -12,7 +12,7 @@ const maxCompositeDepth = 8
 // paintComposite paints the parts of a user-made component onto g. Parts are
 // scaled from the component's default size to the size it was placed at, and
 // the component's own property values are handed down to the parts they drive.
-func paintComposite(g *grid.Grid, c design.Composite, props Props, cat Catalog, depth int) {
+func paintComposite(g *grid.Grid, c design.Composite, props Props, cat Catalog, depth int, theme design.Theme, background string) {
 	if depth >= maxCompositeDepth {
 		paintGeneric(g, c.Name)
 		return
@@ -36,6 +36,6 @@ func paintComposite(g *grid.Grid, c design.Composite, props Props, cat Catalog, 
 			}
 		}
 		part.Rect = part.Rect.Scale(c.W, c.H, g.W, g.H)
-		g.Blit(renderNode(part, cat, depth+1), part.Rect.X, part.Rect.Y)
+		g.Blit(renderNode(part, cat, depth+1, theme, background), part.Rect.X, part.Rect.Y)
 	}
 }

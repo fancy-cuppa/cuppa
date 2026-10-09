@@ -1,6 +1,9 @@
 package inspector
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestUpAndDownStepANumberFieldThatIsBeingEdited(t *testing.T) {
 	m, ed, id := setup(t, "lipgloss.box")
@@ -55,5 +58,36 @@ func TestCanvasSizeSteps(t *testing.T) {
 	m.Step(10)
 	if w := ed.Document().Width; w != 110 {
 		t.Fatalf("canvas width %d, want 110", w)
+	}
+}
+
+func TestThemeSectionShowsTheFiveColoursAndAnOverrideCanGoBackToTheTheme(t *testing.T) {
+	m, ed, id := setup(t, "lipgloss.box")
+	m.SetSize(32, 70)
+	ed.Clear()
+	text := stripANSI(strings.Join(m.Lines(), "\n"))
+	for _, want := range []string{"Theme", "Background", "Text", "Muted", "Border", "Secondary"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("the theme section lacks %q:\n%s", want, text)
+		}
+	}
+	// A border colour in the theme reaches the component, which follows it.
+	if err := ed.SetThemeColor("border", "#336699"); err != nil {
+		t.Fatal(err)
+	}
+	ed.Select(id)
+	text = stripANSI(strings.Join(m.Lines(), "\n"))
+	if !strings.Contains(text, "#336699") || !strings.Contains(text, "theme") {
+		t.Fatalf("the colour should show the theme's value and say it follows it:\n%s", text)
+	}
+	// Its own colour is marked, and [theme] takes it back.
+	if err := ed.SetProp(id, "color", "212"); err != nil {
+		t.Fatal(err)
+	}
+	m.Lines()
+	clickText(t, m, "212", "[theme]")
+	n, _ := ed.Document().Get(id)
+	if _, set := n.Props["color"]; set {
+		t.Fatalf("[theme] should remove the override: %v", n.Props)
 	}
 }

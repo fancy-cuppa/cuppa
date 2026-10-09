@@ -12,6 +12,11 @@ type Document struct {
 	// Background is the canvas colour ("" for the terminal's own, "0" to "255"
 	// or "#rrggbb"). It fills every cell no component colours itself.
 	Background string `json:"background,omitempty"`
+	// Theme holds the design's colours for the roles components take their
+	// colours from: text, muted, border and secondary. Together with Background it is
+	// the whole theme. A component colour that is not set on the component
+	// follows the theme; one that is set stays, whatever the theme says.
+	Theme Theme `json:"theme,omitzero"`
 	// HideGrid turns off the dotted grid shown on an empty canvas in the editor.
 	// The grid is never part of an export.
 	HideGrid bool `json:"hideGrid,omitempty"`
@@ -28,6 +33,21 @@ type Document struct {
 	Embedded []Embedded `json:"components,omitempty"`
 	// Seq is the counter behind generated node ids; it only ever grows.
 	Seq int `json:"seq"`
+}
+
+// Theme is the colours of a design for the roles components can take colours
+// from ("" for none set: the component's own default shows). The canvas colour
+// is Document.Background.
+type Theme struct {
+	// Text is the colour of text.
+	Text string `json:"text,omitempty"`
+	// Muted is the colour of quieter text: placeholders, descriptions, labels
+	// and hints.
+	Muted string `json:"muted,omitempty"`
+	// Border is the colour of frames and borders.
+	Border string `json:"border,omitempty"`
+	// Secondary is the accent colour: highlights, prompts, bars.
+	Secondary string `json:"secondary,omitempty"`
 }
 
 // Embedded is a copy of a pack component kept inside a design. ID is the

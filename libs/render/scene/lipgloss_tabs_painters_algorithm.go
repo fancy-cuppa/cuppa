@@ -54,7 +54,7 @@ func paintTabs(g *grid.Grid, p Props) {
 		put(x+w+1, 0, '╮')
 		put(x, 1, '│')
 		put(x+w+1, 1, '│')
-		style := dim
+		style := p.Dim()
 		if i == active {
 			style = bold
 		}

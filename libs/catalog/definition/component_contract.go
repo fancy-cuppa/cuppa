@@ -74,7 +74,30 @@ type PropSpec struct {
 	Choices []string
 	// Min and Max bound a PropInt property when Max > Min.
 	Min, Max int
+	// Role ties a colour property to a part of the design's theme: until the
+	// component sets it, it follows that colour. A value stored on the
+	// component, even an empty one, overrides the theme.
+	Role Role
 }
+
+// MutedKey is the reserved property key under which Effective hands the
+// theme's muted colour to painters ("" when the theme sets none). It is not a
+// property of any component and is never stored.
+const MutedKey = "theme.muted"
+
+// Role is the part of a theme a colour property follows when the component
+// does not set it itself.
+type Role string
+
+// Theme roles. The canvas colour is a role too, for a colour that should be
+// the design's own background.
+const (
+	RoleNone       Role = ""
+	RoleText       Role = "text"
+	RoleBorder     Role = "border"
+	RoleSecondary  Role = "secondary"
+	RoleBackground Role = "background"
+)
 
 // Size is a width and height in cells.
 type Size struct {
@@ -104,6 +127,41 @@ func (d Definition) Defaults() map[string]string {
 	out := make(map[string]string, len(d.Props))
 	for _, p := range d.Props {
 		out[p.Key] = p.Default
+	}
+	return out
+}
+
+// Effective returns the value of every property of a component placed with
+// the values own: its own where it has one, else (for a colour tied to a theme
+// role) the theme's colour when the theme sets it, else the default.
+func (d Definition) Effective(own map[string]string, theme design.Theme, background string) map[string]string {
+	out := make(map[string]string, len(d.Props)+1)
+	out[MutedKey] = theme.Muted
+	for _, p := range d.Props {
+		if v, set := own[p.Key]; set {
+			out[p.Key] = v
+			continue
+		}
+		out[p.Key] = p.Default
+		var themed string
+		switch p.Role {
+		case RoleText:
+			themed = theme.Text
+		case RoleBorder:
+			themed = theme.Border
+		case RoleSecondary:
+			themed = theme.Secondary
+		case RoleBackground:
+			themed = background
+		}
+		if themed != "" {
+			out[p.Key] = themed
+		}
+	}
+	for k, v := range own { // values for properties the definition does not list
+		if _, listed := out[k]; !listed {
+			out[k] = v
+		}
 	}
 	return out
 }

@@ -160,6 +160,9 @@ func (m *Model) apply(field, value string) {
 	case field == "background":
 		m.report(m.ed.SetBackground(value))
 		return
+	case strings.HasPrefix(field, "theme-"):
+		m.report(m.ed.SetThemeColor(strings.TrimPrefix(field, "theme-"), value))
+		return
 	case strings.HasPrefix(field, "canvas-"):
 		m.commitCanvas(field, value)
 		return

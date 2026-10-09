@@ -40,6 +40,7 @@ offset  size  field
 | `document.name` | Display name of the design. |
 | `document.width`, `height` | Canvas size in terminal cells. At least 1 and at most 400 × 200; larger values are clamped on load. |
 | `document.background` | Optional canvas colour: `0`–`255` or `#rrggbb`. Absent means the terminal's own. An invalid value is dropped on load. |
+| `document.theme` | Optional `{ "text", "muted", "border", "secondary" }`, each a colour like `document.background`. With the background, these are the design's theme: a component colour that the node does not store follows the matching theme colour (text for labels, lists and trees; border for boxes, tabs, tables and frames; secondary for accents such as prompts, bars and highlights; muted for quiet text such as placeholders and hints). A colour a node does store is its own and stays whatever the theme says. An invalid colour is dropped on load. |
 | `document.profile` | Optional colour profile the design targets: `256`, `16` or `none`. Absent means true colour. Colours are reduced to it in the editor and in every export. An unknown value is dropped on load. |
 | `document.light` | Optional, `true` to preview on a light terminal in the editor. Never part of an export. |
 | `document.hideGrid` | Optional, `true` hides the editor's dotted grid. The grid is never exported. |

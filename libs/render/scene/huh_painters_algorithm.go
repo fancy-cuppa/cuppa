@@ -15,7 +15,7 @@ func huhHead(g *grid.Grid, p Props) int {
 		y++
 	}
 	if d := p.Str("description"); d != "" && y < g.H {
-		g.Text(2, y, d, dim, g.W-2)
+		g.Text(2, y, d, p.Dim(), g.W-2)
 		y++
 	}
 	return y
@@ -44,7 +44,7 @@ func paintHuhInput(g *grid.Grid, p Props) {
 		g.Text(2+n, y, v, grid.Style{}, g.W-2-n)
 		return
 	}
-	g.Text(2+n, y, p.Str("placeholder"), dim, g.W-2-n)
+	g.Text(2+n, y, p.Str("placeholder"), p.Dim(), g.W-2-n)
 }
 
 func paintHuhText(g *grid.Grid, p Props) {
@@ -52,7 +52,7 @@ func paintHuhText(g *grid.Grid, p Props) {
 	huhBars(g, p, y+max(g.H-3, 1))
 	lines := pipeLines(p.Str("value"))
 	if len(lines) == 0 {
-		g.Text(2, y, p.Str("placeholder"), dim, g.W-2)
+		g.Text(2, y, p.Str("placeholder"), p.Dim(), g.W-2)
 		return
 	}
 	for i, l := range lines {
@@ -167,10 +167,10 @@ func paintHuhForm(g *grid.Grid, p Props) {
 	for i := 0; i < rows; i++ {
 		y := 1 + i*2
 		g.Set(2, y, grid.Cell{Ch: '┃', Style: fg(color)})
-		g.Text(4, y, strings.Repeat("▁", max(g.W-8, 0)), dim, g.W-6)
+		g.Text(4, y, strings.Repeat("▁", max(g.W-8, 0)), p.Dim(), g.W-6)
 	}
 	if f := p.Str("footer"); f != "" && g.H > 2 {
-		g.Text(2, g.H-2, f, dim, g.W-4)
+		g.Text(2, g.H-2, f, p.Dim(), g.W-4)
 	}
 }
 

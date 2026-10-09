@@ -230,3 +230,30 @@ func TestProfileAndLightRoundTripAndABadProfileIsDropped(t *testing.T) {
 		t.Fatalf("an unknown profile is dropped: %q", got.Profile)
 	}
 }
+func TestTheThemeRoundTripsAndABadThemeColourIsDropped(t *testing.T) {
+	doc := design.NewDocument("themed", 40, 10)
+	doc.Theme = design.Theme{Text: "#112233", Muted: "245", Border: "not a colour", Secondary: "#aa5500"}
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Own", Rect: design.Rect{W: 5, H: 3}, Props: map[string]string{"color": "212"}})
+	data, err := Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Theme.Text != "#112233" || got.Theme.Muted != "245" || got.Theme.Secondary != "#aa5500" {
+		t.Errorf("theme = %+v", got.Theme)
+	}
+	if got.Theme.Border != "" {
+		t.Errorf("a bad colour should be dropped: %q", got.Theme.Border)
+	}
+	if got.Nodes[0].Props["color"] != "212" {
+		t.Errorf("the override is stored on the node: %v", got.Nodes[0].Props)
+	}
+	// A design with no theme stores no theme at all.
+	plain, _ := Encode(design.NewDocument("plain", 10, 5))
+	if raw, _ := Decode(plain); raw.Theme != (design.Theme{}) {
+		t.Error("no theme in, none out")
+	}
+}

@@ -26,12 +26,20 @@ type leaf struct {
 // parts, and components made from other components (pack components) by the
 // parts they are made of, scaled to the size they were placed at.
 func leaves(doc design.Document, cat Catalog) []leaf {
-	return expand(doc.Nodes, design.Rect{W: doc.Width, H: doc.Height}, doc.Width, doc.Height, 0, nil, cat)
+	t := themeOf{doc.Theme, doc.Background}
+	return expand(doc.Nodes, design.Rect{W: doc.Width, H: doc.Height}, doc.Width, doc.Height, 0, nil, cat, t)
+}
+
+// themeOf is the design's theme and background, which colours that components
+// do not set follow.
+type themeOf struct {
+	theme      design.Theme
+	background string
 }
 
 // expand places nodes whose rectangles are relative to a box of baseW by baseH
 // that sits at origin; override carries values a pack component hands down.
-func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, override func(design.Node) map[string]string, cat Catalog) []leaf {
+func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, override func(design.Node) map[string]string, cat Catalog, t themeOf) []leaf {
 	var out []leaf
 	for _, n := range nodes {
 		if n.Hidden {
@@ -42,7 +50,7 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			rect = rect.Scale(baseW, baseH, origin.W, origin.H)
 		}
 		rect = rect.Translate(origin.X, origin.Y)
-		props := withDefaults(n, cat)
+		props := withDefaults(n, cat, t)
 		if override != nil {
 			for k, v := range override(n) {
 				props[k] = v
@@ -50,7 +58,7 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 		}
 		switch {
 		case n.IsGroup() && depth < maxDepth:
-			out = append(out, expand(n.Children, rect, n.BaseW, n.BaseH, depth+1, nil, cat)...)
+			out = append(out, expand(n.Children, rect, n.BaseW, n.BaseH, depth+1, nil, cat, t)...)
 		case depth < maxDepth && isComposite(n, cat):
 			def, _ := cat.Get(n.Component)
 			inner := *def.Inner
@@ -68,7 +76,7 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 				}
 				return vals
 			}
-			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat)...)
+			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat, t)...)
 		default:
 			out = append(out, leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props})
 		}
@@ -82,13 +90,11 @@ func isComposite(n design.Node, cat Catalog) bool {
 }
 
 // withDefaults is the node's properties over the catalog defaults.
-func withDefaults(n design.Node, cat Catalog) map[string]string {
-	props := map[string]string{}
+func withDefaults(n design.Node, cat Catalog, t themeOf) map[string]string {
 	if def, ok := cat.Get(n.Component); ok {
-		for k, v := range def.Defaults() {
-			props[k] = v
-		}
+		return def.Effective(n.Props, t.theme, t.background)
 	}
+	props := map[string]string{}
 	for k, v := range n.Props {
 		props[k] = v
 	}

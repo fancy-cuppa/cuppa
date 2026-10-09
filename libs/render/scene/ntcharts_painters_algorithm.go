@@ -24,7 +24,7 @@ func paintBarChart(g *grid.Grid, p Props) {
 	plotH := g.H - 2
 	barW := max((g.W-(len(vs)-1))/len(vs), 1)
 	for x := 0; x < g.W; x++ {
-		g.Set(x, g.H-2, grid.Cell{Ch: '─', Style: dim})
+		g.Set(x, g.H-2, grid.Cell{Ch: '─', Style: p.Dim()})
 	}
 	for i, v := range vs {
 		x0 := i * (barW + 1)
@@ -36,7 +36,7 @@ func paintBarChart(g *grid.Grid, p Props) {
 			fillColumn(g, x0+dx, plotH-1, eighths, style)
 		}
 		if i < len(labels) {
-			g.Text(x0, g.H-1, labels[i], dim, barW)
+			g.Text(x0, g.H-1, labels[i], p.Dim(), barW)
 		}
 	}
 }
@@ -51,7 +51,7 @@ func paintLineChart(g *grid.Grid, p Props) {
 		paintGeneric(g, "Line chart")
 		return
 	}
-	plotBraille(g, vs, false, p.Bool("axes"), fg(p.Str("color")), func(left, plotW int) []axisLabel {
+	plotBraille(g, vs, false, p.Bool("axes"), fg(p.Str("color")), p.Dim(), func(left, plotW int) []axisLabel {
 		var out []axisLabel
 		for i := range vs {
 			// Labels sit on every second column, one in from the axis.
@@ -103,7 +103,7 @@ func paintTimeSeries(g *grid.Grid, p Props) {
 		return
 	}
 	span := float64(len(vs)-1) * 3600 // one value an hour
-	plotBraille(g, vs, true, p.Bool("axes"), fg(p.Str("color")), func(left, plotW int) []axisLabel {
+	plotBraille(g, vs, true, p.Bool("axes"), fg(p.Str("color")), p.Dim(), func(left, plotW int) []axisLabel {
 		var out []axisLabel
 		for x := left - 1; x+8 <= left-1+plotW; x += 12 {
 			t := int(span * float64(x-(left-1)) / float64(plotW))
@@ -152,7 +152,7 @@ type axisLabel struct {
 // plotBraille draws values as a line in braille dots (two by four to a cell).
 // With axes it reserves a label column on the left, the axis, and a row of
 // labels below. The value axis spans the data, and starts at zero when asked.
-func plotBraille(g *grid.Grid, vs []float64, fromZero, axes bool, style grid.Style, labelsAt func(left, plotW int) []axisLabel) {
+func plotBraille(g *grid.Grid, vs []float64, fromZero, axes bool, style, muted grid.Style, labelsAt func(left, plotW int) []axisLabel) {
 	lo, hi := extent(vs)
 	if fromZero {
 		lo = min(lo, 0)
@@ -165,25 +165,25 @@ func plotBraille(g *grid.Grid, vs []float64, fromZero, axes bool, style grid.Sty
 		}
 		left, plotW, plotH = width+1, g.W-width-1, g.H-2
 		for y := 0; y < plotH; y++ {
-			g.Set(left-1, y, grid.Cell{Ch: '│', Style: dim})
+			g.Set(left-1, y, grid.Cell{Ch: '│', Style: muted})
 			if y%2 == 0 {
 				v := hi - (hi-lo)*float64(y)/float64(plotH)
 				text := strconv.Itoa(int(math.RoundToEven(v)))
-				g.Text(left-1-len(text), y, text, dim, width)
+				g.Text(left-1-len(text), y, text, muted, width)
 			}
 		}
-		g.Set(left-1, plotH, grid.Cell{Ch: '└', Style: dim})
+		g.Set(left-1, plotH, grid.Cell{Ch: '└', Style: muted})
 		for x := left; x < g.W; x++ {
-			g.Set(x, plotH, grid.Cell{Ch: '─', Style: dim})
+			g.Set(x, plotH, grid.Cell{Ch: '─', Style: muted})
 		}
 		bottom := strconv.Itoa(int(math.RoundToEven(lo)))
-		g.Text(left-1-len(bottom), plotH, bottom, dim, width)
+		g.Text(left-1-len(bottom), plotH, bottom, muted, width)
 		last := -1
 		for _, l := range labelsAt(left, plotW) {
 			if l.x <= last || l.x+len(l.text) > g.W {
 				continue
 			}
-			g.Text(l.x, plotH+1, l.text, dim, g.W-l.x)
+			g.Text(l.x, plotH+1, l.text, muted, g.W-l.x)
 			last = l.x + len(l.text)
 		}
 	}

@@ -191,11 +191,11 @@ func (m *Model) properties(b *builder, n design.Node) {
 	}
 	b.blank()
 	b.text(theme.Bold(" Properties")).end()
+	doc := m.ed.Document()
+	effective := def.Effective(n.Props, doc.Theme, doc.Background)
 	for _, p := range def.Props {
-		value, set := n.Props[p.Key]
-		if !set {
-			value = p.Default
-		}
+		_, own := n.Props[p.Key]
+		value := effective[p.Key]
 		m.block(b, p.Label, 1, theme.Dim, nil)
 		if p.Kind == definition.PropText {
 			m.textProp(b, "prop:"+p.Key, value)
@@ -203,6 +203,9 @@ func (m *Model) properties(b *builder, n design.Node) {
 		}
 		b.text("  ")
 		m.propValue(b, n.ID, p, value)
+		if p.Role != definition.RoleNone {
+			m.themeMark(b, n.ID, p, own)
+		}
 		b.end()
 	}
 }
@@ -268,4 +271,14 @@ func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, v
 	default:
 		m.editable(b, field, value, value)
 	}
+}
+
+// themeMark says whether a colour follows the theme or is the component's own,
+// and for an own one offers to go back to the theme.
+func (m *Model) themeMark(b *builder, id design.NodeID, p definition.PropSpec, own bool) {
+	if !own {
+		b.text(" " + theme.Faded("theme"))
+		return
+	}
+	b.text(" ").add(theme.Button("[theme]", true), func() { m.ed.ClearProp(id, p.Key) })
 }

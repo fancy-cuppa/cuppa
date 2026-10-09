@@ -3,6 +3,9 @@ package scene
 import (
 	"strconv"
 	"strings"
+
+	"github.com/meta-tui/cuppa/libs/catalog/definition"
+	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
 // Props are a node's property values merged over the component defaults.
@@ -34,4 +37,13 @@ func splitList(s, sep string) []string {
 		}
 	}
 	return out
+}
+
+// Dim is the style of quiet text: the design's muted colour, or the default grey
+// when the theme sets none.
+func (p Props) Dim() grid.Style {
+	if c := p[definition.MutedKey]; c != "" {
+		return grid.Style{Fg: c}
+	}
+	return dim
 }

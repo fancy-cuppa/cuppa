@@ -107,7 +107,7 @@ func RenderWith(doc design.Document, cat Catalog, override func(design.Node) *gr
 			drawn = override(n)
 		}
 		if drawn == nil {
-			drawn = RenderNode(n, cat)
+			drawn = renderNode(n, cat, 0, doc.Theme, doc.Background)
 		}
 		out.Blit(drawn, n.Rect.X, n.Rect.Y)
 	}
@@ -117,29 +117,39 @@ func RenderWith(doc design.Document, cat Catalog, override func(design.Node) *gr
 	return out
 }
 
-// RenderNode paints one node onto its own grid, sized like the node.
-func RenderNode(n design.Node, cat Catalog) *grid.Grid { return renderNode(n, cat, 0) }
+// RenderNode paints one node onto its own grid, sized like the node, with no
+// theme: a colour the node does not set shows the component's default.
+func RenderNode(n design.Node, cat Catalog) *grid.Grid {
+	return renderNode(n, cat, 0, design.Theme{}, "")
+}
 
-func renderNode(n design.Node, cat Catalog, depth int) *grid.Grid {
+// RenderNodeThemed is RenderNode with the design's theme: a colour the node
+// does not set follows the theme.
+func RenderNodeThemed(n design.Node, cat Catalog, theme design.Theme, background string) *grid.Grid {
+	return renderNode(n, cat, 0, theme, background)
+}
+
+func renderNode(n design.Node, cat Catalog, depth int, theme design.Theme, background string) *grid.Grid {
 	g := grid.New(n.Rect.W, n.Rect.H)
 	def, known := cat.Get(n.Component)
 	props := Props{}
 	if known {
-		for k, v := range def.Defaults() {
+		for k, v := range def.Effective(n.Props, theme, background) {
+			props[k] = v
+		}
+	} else {
+		for k, v := range n.Props {
 			props[k] = v
 		}
 	}
-	for k, v := range n.Props {
-		props[k] = v
-	}
 	if n.IsGroup() {
 		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
-		paintComposite(g, design.Composite{ID: "group", Name: n.Name, W: n.BaseW, H: n.BaseH, Nodes: n.Children}, props, cat, depth)
+		paintComposite(g, design.Composite{ID: "group", Name: n.Name, W: n.BaseW, H: n.BaseH, Nodes: n.Children}, props, cat, depth, theme, background)
 		return g
 	}
 	if known && def.Inner != nil {
 		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
-		paintComposite(g, *def.Inner, props, cat, depth)
+		paintComposite(g, *def.Inner, props, cat, depth, theme, background)
 		return g
 	}
 	if p, ok := painters[n.Component]; ok {

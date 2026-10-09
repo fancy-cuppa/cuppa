@@ -15,7 +15,7 @@ func paintTextInput(g *grid.Grid, p Props) {
 		g.Text(n, 0, value, grid.Style{}, g.W-n)
 		return
 	}
-	g.Text(n, 0, p.Str("placeholder"), dim, g.W-n)
+	g.Text(n, 0, p.Str("placeholder"), p.Dim(), g.W-n)
 }
 
 var spinnerFrames = map[string]string{
@@ -43,7 +43,7 @@ func paintProgress(g *grid.Grid, p Props) {
 	filled := barW * pct / 100
 	accent := fg(p.Str("color"))
 	g.Text(0, 0, strings.Repeat("▌", filled), accent, barW)
-	g.Text(filled, 0, strings.Repeat("░", barW-filled), dim, barW-filled)
+	g.Text(filled, 0, strings.Repeat("░", barW-filled), p.Dim(), barW-filled)
 	g.Text(barW, 0, label, grid.Style{}, 0)
 }
 

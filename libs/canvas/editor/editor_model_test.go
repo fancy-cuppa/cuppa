@@ -232,3 +232,50 @@ func TestNudgeIsOneUndoStepAndLeavesNoneWhenNothingMoved(t *testing.T) {
 		t.Fatalf("undo: (%d,%d)", n.Rect.X, n.Rect.Y)
 	}
 }
+
+func TestThemeColoursUndoAndOverridesStayWhenTheThemeChanges(t *testing.T) {
+	e := newEditor()
+	id, _ := e.Add("lipgloss.box", 0, 0)
+	if err := e.SetThemeColor(ThemeBorder, "#336699"); err != nil {
+		t.Fatal(err)
+	}
+	if got := e.Document().Theme.Border; got != "#336699" {
+		t.Fatalf("border = %q", got)
+	}
+	n, _ := e.Document().Get(id)
+	if len(n.Props) != 0 {
+		t.Fatalf("a new component comes with no colours of its own: %v", n.Props)
+	}
+	// An override stays whatever the theme becomes, and can be removed.
+	if err := e.SetProp(id, "color", "212"); err != nil {
+		t.Fatal(err)
+	}
+	if err := e.SetThemeColor(ThemeBorder, "#aa0000"); err != nil {
+		t.Fatal(err)
+	}
+	n, _ = e.Document().Get(id)
+	if n.Props["color"] != "212" {
+		t.Fatalf("the override should stay: %v", n.Props)
+	}
+	if !e.ClearProp(id, "color") {
+		t.Fatal("there was an override to remove")
+	}
+	n, _ = e.Document().Get(id)
+	if _, set := n.Props["color"]; set {
+		t.Fatal("the override should be gone")
+	}
+	if e.ClearProp(id, "color") {
+		t.Fatal("nothing left to remove")
+	}
+	e.Undo()
+	n, _ = e.Document().Get(id)
+	if n.Props["color"] != "212" {
+		t.Fatal("removing an override is one undo step")
+	}
+	if err := e.SetThemeColor("nonsense", "1"); err == nil {
+		t.Fatal("unknown role")
+	}
+	if err := e.SetThemeColor(ThemeText, "not a colour"); err == nil {
+		t.Fatal("bad colour")
+	}
+}

@@ -21,8 +21,19 @@ func (m *Model) documentOptions(b *builder) {
 	b.text(" " + theme.Faded(fmt.Sprintf("%d components", len(doc.Nodes)))).end()
 	b.blank()
 
-	b.text(theme.Bold(" Background")).end()
-	m.backgroundRow(b, doc.Background)
+	b.text(theme.Bold(" Theme")).end()
+	b.text(" " + theme.Faded("Components follow these,")).end()
+	b.text(" " + theme.Faded("unless they set their own.")).end()
+	m.themeRow(b, "Background", "background", doc.Background, "terminal default", m.ed.SetBackground)
+	for _, c := range []struct{ label, role, value string }{
+		{"Text", editor.ThemeText, doc.Theme.Text},
+		{"Muted", editor.ThemeMuted, doc.Theme.Muted},
+		{"Border", editor.ThemeBorder, doc.Theme.Border},
+		{"Secondary", editor.ThemeSecondary, doc.Theme.Secondary},
+	} {
+		role := c.role
+		m.themeRow(b, c.label, "theme-"+role, c.value, "component default", func(v string) error { return m.ed.SetThemeColor(role, v) })
+	}
 	b.blank()
 
 	b.text(theme.Bold(" Effects")).end()
@@ -80,11 +91,13 @@ func (m *Model) commitCanvas(field, value string) {
 	m.setCanvas(field, v)
 }
 
-// backgroundRow shows the colour as a swatch; clicking opens the picker (or a
-// text box when no picker is bound).
-func (m *Model) backgroundRow(b *builder, value string) {
-	if m.editing == "background" {
-		b.text(" " + m.buf + "█").end()
+// themeRow is one colour of the theme on a single line: its name, a swatch and
+// the value. Clicking opens the colour dialog (or a text box when none is
+// bound); set stores the choice.
+func (m *Model) themeRow(b *builder, label, field, value, none string, set func(string) error) {
+	name := " " + theme.Dim(fmt.Sprintf("%-11s", label))
+	if m.editing == field {
+		b.text(name + m.buf + "█").end()
 		return
 	}
 	swatch := theme.Faded("--")
@@ -93,15 +106,15 @@ func (m *Model) backgroundRow(b *builder, value string) {
 	}
 	shown := value
 	if shown == "" {
-		shown = "terminal default"
+		shown = none
 	}
-	open := func() { m.startEdit("background", value) }
+	open := func() { m.startEdit(field, value) }
 	if m.pickColor != nil {
 		open = func() {
-			m.pickColor("Background", value, func(v string) { m.report(m.ed.SetBackground(v)) })
+			m.pickColor(label, value, func(v string) { m.report(set(v)) })
 		}
 	}
-	b.text(" " + swatch + " ").add(shown+theme.Faded(" ✎"), open).end()
+	b.text(name + swatch + " ").add(shown+theme.Faded(" ✎"), open).end()
 }
 
 // profiles are the colour profiles in the order the arrows step through them.
