@@ -72,7 +72,7 @@ func (m *Model) Lines() []string {
 		if m.enabled(e.Pack.ID) {
 			mark = "[x]"
 		}
-		tail := theme.Faded(fmt.Sprintf("%d components", e.Count))
+		tail := theme.Faded(countText(e.Count))
 		if e.Pack.Source != "" {
 			tail += " " + theme.Button("[Remove]", true)
 		}
@@ -95,6 +95,13 @@ func (m *Model) button(id, label string) string {
 		return theme.Selected(label)
 	}
 	return theme.Button(label, true)
+}
+
+func countText(n int) string {
+	if n == 1 {
+		return "1 component"
+	}
+	return fmt.Sprintf("%d components", n)
 }
 
 func spaces(n int) string {

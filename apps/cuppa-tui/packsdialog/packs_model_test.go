@@ -104,3 +104,9 @@ func TestAddPackEndsTheDialogWithAnAddOutcome(t *testing.T) {
 		t.Fatalf("outcome = %+v %v", o, done)
 	}
 }
+
+func TestOneComponentIsNotPlural(t *testing.T) {
+	if countText(1) != "1 component" || countText(0) != "0 components" || countText(7) != "7 components" {
+		t.Fatal("counts read naturally")
+	}
+}
