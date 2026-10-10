@@ -48,7 +48,7 @@ var bubbleTableSource string
 // community widgets are drawn with Lip Gloss to look like the library they
 // stand for, so the generated project needs no extra module for them.
 var generated = map[string]bool{
-	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true, "lipgloss.swatch": true,
+	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true, "lipgloss.swatch": true, "lipgloss.rows": true,
 	"bubbles.textinput": true, "bubbles.textarea": true, "bubbles.list": true, "bubbles.table": true,
 	"bubbles.viewport": true, "bubbles.paginator": true, "bubbles.spinner": true, "bubbles.progress": true,
 	"bubbles.stopwatch": true, "bubbles.timer": true, "bubbles.tree": true,
@@ -95,6 +95,7 @@ var extensions = map[string]extension{
 	"community.qrcode":  {"qrcode.go", qrCodeSource, qrRequire},
 	"community.image":   {"image.go", imageSource, ""},
 
+	"lipgloss.rows":          {"community_widgets.go", communityWidgetsSource, ""},
 	"community.dropdown":     {"community_widgets.go", communityWidgetsSource, ""},
 	"community.promptinput":  {"community_widgets.go", communityWidgetsSource, ""},
 	"community.promptselect": {"community_widgets.go", communityWidgetsSource, ""},

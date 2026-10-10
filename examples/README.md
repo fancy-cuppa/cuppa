@@ -10,3 +10,9 @@
   the list raises `Pick slot` when clicked, and `enter`, `d`, `s` and `esc` raise events. Export it with
   `cuppa screens examples/mvd-colours.cuppa -o screens` to get `MVDColours(props, w, h)`, `MVDColoursHandle` and the
   contract types.
+
+- `mvd-colours-rows.cuppa`: the same screen with one *Rows* component for the eight slots instead of a swatch and a
+  cursor marker each ([ADR 0008](../docs/adr/0008-row-templates.md)). The program fills `Slots []MVDColoursRowsSlotsRow`
+  and marks the cursor with `Style: RowSelected`; a click raises `Pick` with `Y` as the row.
+- `community-widgets.cuppa`: one of each component of the third catalog round (dropdown, prompt input and select,
+  data tree, PDF viewer, 3D chart), as a screenshot reference.

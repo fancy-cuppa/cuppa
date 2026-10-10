@@ -1,0 +1,89 @@
+package scene
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/meta-tui/cuppa/libs/catalog/standard"
+	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/render/grid"
+)
+
+func rowsGrid(w, h int, props map[string]string) *grid.Grid {
+	n := design.Node{Component: "lipgloss.rows", Rect: design.Rect{W: w, H: h}, Props: props}
+	return RenderNode(n, standard.Default())
+}
+
+func TestRowsLayTheCellsOutInTheNamedColumns(t *testing.T) {
+	g := rowsGrid(30, 3, map[string]string{
+		"columns": "Mark:2,Name:8,Value",
+		"rows":    "▸,Accent,#ff007f;,Focus,#00f0ff",
+		"styles":  "selected,normal",
+	})
+	lines := g.Lines()
+	plain := func(i int) string { return strings.TrimRight(text([]string{lines[i]}), " \n") }
+	if got := plain(0); got != "▸ Accent  #ff007f" {
+		t.Errorf("row 0 = %q", got)
+	}
+	if got := plain(1); got != "  Focus   #00f0ff" {
+		t.Errorf("row 1 = %q", got)
+	}
+	// The selected row is inverted across the whole width; the normal row is
+	// not drawn behind its cells.
+	if c := g.At(29, 0); c.Bg != "212" {
+		t.Errorf("selected row background at the end = %q", c.Bg)
+	}
+	if c := g.At(29, 1); c.Bg != "" {
+		t.Errorf("normal row has a background %q", c.Bg)
+	}
+}
+
+func TestRowsKeepWhitespaceAndEmptyCells(t *testing.T) {
+	g := rowsGrid(20, 2, map[string]string{
+		"columns": "A:6,B:6,C",
+		"rows":    "  x,,z; y\\,w,,",
+	})
+	lines := g.Lines()
+	first := strings.TrimRight(text([]string{lines[0]}), " \n")
+	if first != "  x         z" {
+		t.Errorf("leading spaces and the empty cell are kept: %q", first)
+	}
+	second := strings.TrimRight(text([]string{lines[1]}), " \n")
+	if second != " y,w" {
+		t.Errorf("an escaped comma stays in its cell: %q", second)
+	}
+}
+
+func TestRowsDrawColourCellsAsBlocks(t *testing.T) {
+	g := rowsGrid(20, 2, map[string]string{
+		"columns": "Name:6,Swatch:4:colour",
+		"rows":    "Tea,#ff0000;Milk,",
+		"styles":  "normal,dim",
+	})
+	if c := g.At(6, 0); c.Bg != "#ff0000" || c.Ch != ' ' {
+		t.Errorf("colour cell = %+v", c)
+	}
+	if c := g.At(9, 0); c.Bg != "#ff0000" {
+		t.Errorf("the block is as wide as the column: %+v", c)
+	}
+	if c := g.At(10, 0); c.Bg != "" {
+		t.Errorf("the block stops at its width: %+v", c)
+	}
+	if c := g.At(6, 1); c.Ch != '·' {
+		t.Errorf("an empty colour shows a dot: %+v", c)
+	}
+}
+
+func TestRowsSurviveAnySizeAndInput(t *testing.T) {
+	cat := standard.Default()
+	for _, props := range []map[string]string{
+		nil,
+		{"columns": "", "rows": "a,b", "styles": "selected"},
+		{"columns": ":::,::colour,Name:-3", "rows": ";;;,,,;\\", "styles": "nonsense,selected,dim,accent,,"},
+		{"columns": "A:999", "rows": strings.Repeat("x,", 500)},
+	} {
+		for _, size := range []design.Rect{{W: 0, H: 0}, {W: 1, H: 1}, {W: 5, H: 2}, {W: 80, H: 40}} {
+			_ = RenderNode(design.Node{Component: "lipgloss.rows", Rect: size, Props: props}, cat)
+		}
+	}
+}

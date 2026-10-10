@@ -45,6 +45,17 @@ func lipglossEntries() []definition.Definition {
 			},
 		},
 		{
+			ID: "lipgloss.rows", Name: "Rows", Family: definition.FamilyLipgloss,
+			Description: "A repeated row: the design names the columns, the program gives the rows and the style of each (normal, selected, dim, accent). Bind rows to make a typed list in the screen's contract.",
+			DefaultSize: size(44, 5), MinSize: size(8, 1), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("columns", "Columns (Name:width, add :colour for colours)", "Cursor:2,Name:14,Swatch:6:colour,Value"),
+				textProp("rows", "Sample rows (; between rows, , between cells)", "▸,Accent,#ff007f,#ff007f;,Focus,#00f0ff,#00f0ff;,Success,#3ddc84,#3ddc84;,Error,#ff4d4d,#ff4d4d"),
+				textProp("styles", "Row styles (normal, selected, dim, accent)", "selected,normal,normal,dim"),
+				colorProp("color", "Colour", "212"),
+			},
+		},
+		{
 			ID: "lipgloss.list", Name: "List", Family: definition.FamilyLipgloss,
 			Description: "An enumerated list (lipgloss/list).",
 			DefaultSize: size(20, 5), MinSize: size(6, 1), Import: lipglossImport + "/list", Status: definition.StatusSupported,

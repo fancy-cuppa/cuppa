@@ -78,12 +78,12 @@ The contract is the Go types. A removed or renamed input or event is a compile e
 ## Limits of this first version
 
 - A bound text input is a `string`; the exported component draws a static cursor. Stateful Bubbles models (a `textinput.Model` the program owns) are not passed in yet.
-- Lists are joined with commas and rows with semicolons, so an item cannot hold a comma.
-- There are no per-row events or row templates: a click event carries the cell, from which a program derives the row.
+- Lists are joined with commas and rows with semicolons; the contract escapes a comma, a semicolon or a backslash inside an item with a backslash, and the list is trimmed (#172).
+- A bound list is plain text in one colour, and items are trimmed. Rows with several parts, a style per row and untrimmed cells are the *Rows* component, [ADR 0008](0008-row-templates.md). A click event carries the cell, from which a program derives the row.
 - Bindings, show-if and events on a group or a pack component are not exported (a note says so); set them on the parts.
 - The runtime is copied into the package, so each screens package carries its own copy.
 
 ## Not in this decision
 
 - Reading Go source back into a design, and a live connection to a running program. Both were replaced by this direction.
-- Row templates and other data-driven components.
+- Row templates: decided in [ADR 0008](0008-row-templates.md). Other data-driven components are still open.
