@@ -553,6 +553,7 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		m.pal.Key(k.Text, back, enter, esc)
 	case m.focus == inPalette && m.paletteKey(text):
 	case m.focus == inStage && m.canvasKey(k, text):
+	case m.focus == inInspector && m.ins.NavKey(text):
 	case esc && m.focus != inStage:
 		m.setFocus(inStage)
 	case esc:

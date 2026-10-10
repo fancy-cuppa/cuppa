@@ -62,13 +62,14 @@ func (m *Model) documentOptions(b *builder) {
 // canvasNumeric is a size field with [-] [+] and click-to-type, like a node's.
 func (m *Model) canvasNumeric(b *builder, label, field string, v int) {
 	b.text(" " + theme.Dim(label+"  "))
-	b.add(theme.Button("[-]", true), func() { m.nudgeCanvas(field, -1) }).text(" ")
+	b.addMouse(theme.Button("[-]", true), func() { m.nudgeCanvas(field, -1) }).text(" ")
 	if m.editing == field {
 		b.text(m.buf + "█")
 	} else {
-		b.add(theme.Bold(fmt.Sprintf("%4d", v)), func() { m.startEdit(field, strconv.Itoa(v)) })
+		b.addStep(theme.Bold(fmt.Sprintf("%4d", v)), func() { m.startEdit(field, strconv.Itoa(v)) },
+			func(d int) { m.nudgeCanvas(field, d) })
 	}
-	b.text(" ").add(theme.Button("[+]", true), func() { m.nudgeCanvas(field, 1) }).end()
+	b.text(" ").addMouse(theme.Button("[+]", true), func() { m.nudgeCanvas(field, 1) }).end()
 }
 
 func (m *Model) nudgeCanvas(field string, delta int) {
@@ -156,7 +157,9 @@ func (m *Model) profileRow(b *builder, current string) {
 		return func() { m.report(m.ed.SetProfile(profiles[(at+d+len(profiles))%len(profiles)].value)) }
 	}
 	b.text(" " + theme.Dim("Colours  "))
-	b.add(theme.Button("◂", true), step(-1)).text(" " + theme.Bold(profiles[at].name) + " ").add(theme.Button("▸", true), step(1)).end()
+	b.addMouse(theme.Button("◂", true), step(-1)).text(" ").
+		addStep(theme.Bold(profiles[at].name), step(1), func(d int) { step(d)() }).text(" ").
+		addMouse(theme.Button("▸", true), step(1)).end()
 }
 
 // optionRow is a checkbox for one canvas option.

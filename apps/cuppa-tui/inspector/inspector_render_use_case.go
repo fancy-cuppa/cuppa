@@ -20,12 +20,37 @@ type builder struct {
 	regions []region
 	cur     string
 	x       int
+	// focus is the keyboard stop to draw as focused (-1 for none) and stops
+	// counts the stops added so far.
+	focus, stops int
 }
 
+// add is a clickable span that is also a stop for the keyboard.
 func (b *builder) add(styled string, act func()) *builder {
+	return b.span(styled, act, nil, false)
+}
+
+// addStep is a stop that Left and Right (or - and +) also change by step(±1).
+func (b *builder) addStep(styled string, act func(), step func(delta int)) *builder {
+	return b.span(styled, act, step, false)
+}
+
+// addMouse is a clickable span the keyboard does not stop on, because
+// another stop does what it does (the [-] and [+] of a number).
+func (b *builder) addMouse(styled string, act func()) *builder {
+	return b.span(styled, act, nil, true)
+}
+
+func (b *builder) span(styled string, act func(), step func(int), mouseOnly bool) *builder {
 	w := lipgloss.Width(styled)
 	if act != nil {
-		b.regions = append(b.regions, region{y: len(b.lines), x0: b.x, x1: b.x + w, act: act})
+		if !mouseOnly {
+			if b.stops == b.focus {
+				styled = theme.Selected(ansi.Strip(styled))
+			}
+			b.stops++
+		}
+		b.regions = append(b.regions, region{y: len(b.lines), x0: b.x, x1: b.x + w, act: act, step: step, mouseOnly: mouseOnly})
 	}
 	b.cur += styled
 	b.x += w
@@ -50,9 +75,14 @@ func wrap(text string, width int) []string {
 // block writes text wrapped to the pane, each line indented. When act is set,
 // every wrapped line is clickable.
 func (m *Model) block(b *builder, text string, indent int, style func(string) string, act func()) {
-	for _, line := range wrap(text, m.w-indent-1) {
+	for i, line := range wrap(text, m.w-indent-1) {
 		b.text(strings.Repeat(" ", indent))
-		b.add(style(line), act)
+		// One property is one stop for the keyboard, however many lines it wraps to.
+		if i == 0 {
+			b.add(style(line), act)
+		} else {
+			b.addMouse(style(line), act)
+		}
 		b.end()
 	}
 }
@@ -61,7 +91,7 @@ func plain(s string) string { return s }
 
 // Lines renders the pane as exactly h lines of w cells.
 func (m *Model) Lines() []string {
-	b := &builder{}
+	b := &builder{focus: m.focusStop()}
 	title := theme.Title(" DETAILS")
 	if m.focused {
 		title = theme.Selected(" DETAILS ")
@@ -77,7 +107,7 @@ func (m *Model) Lines() []string {
 		m.single(b, n)
 	}
 	m.layers(b)
-	m.total, m.regions = len(b.lines), b.regions
+	m.total, m.regions, m.stops = len(b.lines), b.regions, b.stops
 	m.scroll = min(max(m.scroll, 0), max(m.total-m.h, 0))
 	end := min(m.scroll+m.h, len(b.lines))
 	return theme.Block(b.lines[m.scroll:end], m.w, m.h)
@@ -160,13 +190,14 @@ func (m *Model) editable(b *builder, field, value, initial string) {
 
 func (m *Model) numeric(b *builder, label, field string, v int) {
 	b.text(" " + theme.Dim(label+"  "))
-	b.add(theme.Button("[-]", true), func() { m.nudge(field, -1) }).text(" ")
+	b.addMouse(theme.Button("[-]", true), func() { m.nudge(field, -1) }).text(" ")
 	if m.editing == field {
 		b.text(m.buf + "█")
 	} else {
-		b.add(theme.Bold(fmt.Sprintf("%4d", v)), func() { m.startEdit(field, strconv.Itoa(v)) })
+		b.addStep(theme.Bold(fmt.Sprintf("%4d", v)), func() { m.startEdit(field, strconv.Itoa(v)) },
+			func(d int) { m.nudge(field, d) })
 	}
-	b.text(" ").add(theme.Button("[+]", true), func() { m.nudge(field, 1) }).end()
+	b.text(" ").addMouse(theme.Button("[+]", true), func() { m.nudge(field, 1) }).end()
 }
 
 func (m *Model) order(b *builder) {
@@ -248,16 +279,20 @@ func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, v
 		i := slices.Index(p.Choices, value)
 		prev := p.Choices[(i+len(p.Choices)-1)%len(p.Choices)]
 		next := p.Choices[(i+1)%len(p.Choices)]
-		b.add(theme.Button("◂", true), set(prev)).text(" "+theme.Bold(value)+" ").add(theme.Button("▸", true), set(next))
+		b.addMouse(theme.Button("◂", true), set(prev)).text(" ").
+			addStep(theme.Bold(value), set(next), func(d int) {
+				set(p.Choices[((i+d)%len(p.Choices)+len(p.Choices))%len(p.Choices)])()
+			}).text(" ").addMouse(theme.Button("▸", true), set(next))
 	case definition.PropInt:
 		n, _ := strconv.Atoi(value)
-		b.add(theme.Button("[-]", true), set(strconv.Itoa(n-1))).text(" ")
+		b.addMouse(theme.Button("[-]", true), set(strconv.Itoa(n-1))).text(" ")
 		if m.editing == field {
 			b.text(m.buf + "█")
 		} else {
-			b.add(theme.Bold(value), func() { m.startEdit(field, value) })
+			b.addStep(theme.Bold(value), func() { m.startEdit(field, value) },
+				func(d int) { set(strconv.Itoa(n + d))() })
 		}
-		b.text(" ").add(theme.Button("[+]", true), set(strconv.Itoa(n+1)))
+		b.text(" ").addMouse(theme.Button("[+]", true), set(strconv.Itoa(n+1)))
 	case definition.PropColor:
 		if m.editing == field {
 			b.text(m.buf + "█")

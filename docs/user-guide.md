@@ -130,6 +130,10 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 | Tab / Shift+Tab | Select the next / previous layer, back to front; Space adds the next layer to the selection |
 | Ctrl+A | Select every visible layer |
 | Enter on a selection | Move the keyboard to the details bar |
+| Tab / Down, Shift+Tab / Up (details bar) | Next / previous control; the focused one is highlighted |
+| Enter or Space (details bar) | Press it: edit a field, press a button, tick a checkbox, open the colour dialog, select a layer |
+| Left / Right, or `-` / `+` (details bar) | Change a number or a choice by 1 (with Shift, 10) |
+| `h` / `l` / Alt+Up / Alt+Down / Delete (on a layer) | Hide, lock, move forward or back, delete |
 | Esc | Deselect, cancel a drag, close a menu or dialog; from the menu bar, palette or details bar it returns to the canvas first |
 | Ctrl+Q | Quit (Ctrl+C is Copy) |
 

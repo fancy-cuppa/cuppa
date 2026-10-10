@@ -65,7 +65,7 @@ func (m *Model) focusHints() string {
 	case inPalette:
 		return "Palette  ·  ↑/↓ choose  ·  Enter place  ·  ←/→ fold  ·  / search  ·  F6 next area"
 	case inInspector:
-		return "Details  ·  F6 next area  ·  Esc canvas"
+		return "Details  ·  Tab/↑↓ move  ·  Enter edit  ·  ←/→ change  ·  h hide  ·  l lock  ·  Esc canvas"
 	}
 	return "Canvas  ·  arrows move  ·  Alt+arrows resize  ·  Tab layer  ·  F6 area"
 }
