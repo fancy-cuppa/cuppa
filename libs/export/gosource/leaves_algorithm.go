@@ -3,6 +3,7 @@ package gosource
 import (
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/drawlayer"
 )
 
 // Catalog is what the generator needs to know about components.
@@ -57,6 +58,11 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			}
 		}
 		switch {
+		case n.Component == drawlayer.Component:
+			// The drawing is only as many cells as were painted: one small
+			// component per run of cells that share a style, so what is
+			// under the empty cells shows through.
+			out = append(out, drawRuns(n.Props[drawlayer.PropCells], rect)...)
 		case n.IsGroup() && depth < maxDepth:
 			out = append(out, expand(n.Children, rect, n.BaseW, n.BaseH, depth+1, nil, cat, t)...)
 		case depth < maxDepth && isComposite(n, cat):

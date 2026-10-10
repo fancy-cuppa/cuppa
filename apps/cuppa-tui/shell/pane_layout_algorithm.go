@@ -1,11 +1,17 @@
 package shell
 
-import "github.com/meta-tui/cuppa/libs/document/design"
+import (
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/tools"
+	"github.com/meta-tui/cuppa/libs/document/design"
+)
 
 // layout places the three panes below the title bar and above the status bar.
 // A one-cell separator column sits between neighbouring panes.
 type layout struct {
-	palette, stage, inspector design.Rect
+	// tools is the tool list at the top of the left bar, palette the component
+	// list under it, options the contextual bar above the canvas, and stage
+	// the canvas below that.
+	tools, palette, options, stage, inspector design.Rect
 }
 
 const (
@@ -39,9 +45,12 @@ func computeLayout(w, h, palW, insW int) layout {
 	}
 	stageW := max(w-pal-ins-2, 1)
 	body := max(h-chromeRows, 1)
+	toolRows := min(tools.Rows, max(body-1, 0))
 	return layout{
-		palette:   design.Rect{X: 0, Y: 1, W: pal, H: body},
-		stage:     design.Rect{X: pal + 1, Y: 1, W: stageW, H: body},
+		tools:     design.Rect{X: 0, Y: 1, W: pal, H: toolRows},
+		palette:   design.Rect{X: 0, Y: 1 + toolRows, W: pal, H: max(body-toolRows, 0)},
+		options:   design.Rect{X: pal + 1, Y: 1, W: stageW, H: 1},
+		stage:     design.Rect{X: pal + 1, Y: 2, W: stageW, H: max(body-1, 1)},
 		inspector: design.Rect{X: pal + 1 + stageW + 1, Y: 1, W: ins, H: body},
 	}
 }
@@ -57,7 +66,7 @@ const (
 
 // dividerAt returns the divider under a screen cell, if any.
 func (l layout) dividerAt(x, y int) divider {
-	if y < l.palette.Y || y >= l.palette.Y+l.palette.H {
+	if y < l.inspector.Y || y >= l.inspector.Y+l.inspector.H {
 		return noDivider
 	}
 	switch x {
@@ -84,6 +93,10 @@ func widthsFor(w, pal, ins int, d divider, x int) (int, int) {
 // paneAt returns the pane under a screen cell.
 func (l layout) paneAt(x, y int) pane {
 	switch {
+	case l.tools.Contains(x, y):
+		return inTools
+	case l.options.Contains(x, y):
+		return inOptions
 	case l.palette.Contains(x, y):
 		return inPalette
 	case l.stage.Contains(x, y):

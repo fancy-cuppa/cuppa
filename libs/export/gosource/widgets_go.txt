@@ -39,6 +39,19 @@ func init() {
 	extra["community.statusbar"] = statusBarPart
 	extra["community.filetree"] = fileTreePart
 	extra["huh.form"] = huhFormPart
+	extra["draw.run"] = drawRunPart
+}
+
+// drawRunPart is a run of the drawing: some text in one style.
+func drawRunPart(c placed, p props) *part {
+	st := lipgloss.NewStyle()
+	if fg := p.str("fg"); fg != "" {
+		st = st.Foreground(lipgloss.Color(fg))
+	}
+	if bg := p.str("bg"); bg != "" {
+		st = st.Background(lipgloss.Color(bg))
+	}
+	return staticPart(st.Render(p.str("text")))
 }
 
 // ---- a small grid of styled cells -----------------------------------------

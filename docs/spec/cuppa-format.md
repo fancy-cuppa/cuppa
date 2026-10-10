@@ -87,3 +87,13 @@ or removes a field:
 
 `FuzzDecode` checks that no input crashes the reader and that anything it does
 accept survives an encode/decode round trip unchanged.
+
+## The drawing layer
+
+What the drawing tools paint is one node whose component is `draw.layer`. Its
+only property, `cells`, lists the painted cells in reading order, joined by
+semicolons: `x,y,codepoint,fg,bg`, with the codepoint in hexadecimal and the
+colours as any colour of the format (a palette number, `#rrggbb`, or empty).
+A cell at no position is not painted, so nothing under it is covered. There is
+at most one such node; it covers the canvas and is locked, hidden or moved like
+any other.

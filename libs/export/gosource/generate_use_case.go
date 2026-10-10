@@ -62,6 +62,8 @@ var generated = map[string]bool{
 	"ntcharts.sparkline": true, "ntcharts.barchart": true, "ntcharts.linechart": true,
 	"ntcharts.streamline": true, "ntcharts.timeseries": true, "ntcharts.heatmap": true, "ntcharts.canvas": true,
 	"community.bubbletable": true,
+	// drawRun is what the drawing layer is expanded into.
+	drawRunKind: true,
 }
 
 // extension is a component that needs a file of its own and, for some, a

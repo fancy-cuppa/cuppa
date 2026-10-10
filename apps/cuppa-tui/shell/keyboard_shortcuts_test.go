@@ -14,7 +14,7 @@ import (
 // returns the new node, which is left selected.
 func place(t *testing.T, m *Model, x int) design.Node {
 	t.Helper()
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	sx := m.layout.stage.X
 	send(m, motion(sx+x, 8))
 	send(m, release(sx+x, 8))

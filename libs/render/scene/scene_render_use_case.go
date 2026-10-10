@@ -4,6 +4,7 @@ package scene
 import (
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/drawlayer"
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
@@ -16,6 +17,7 @@ type painter func(g *grid.Grid, p Props)
 
 // painters maps a component id to the function that paints it.
 var painters = map[string]painter{
+	"draw.layer":     paintDrawLayer,
 	"lipgloss.box":   paintBox,
 	"lipgloss.label": paintLabel,
 	"lipgloss.list":  paintList,
@@ -99,7 +101,7 @@ func RenderWith(doc design.Document, cat Catalog, override func(design.Node) *gr
 		if n.Hidden {
 			continue
 		}
-		if doc.Effects.Shadow {
+		if doc.Effects.Shadow && n.Component != drawlayer.Component {
 			castShadow(out, n.Rect, doc.Background)
 		}
 		var drawn *grid.Grid
@@ -150,6 +152,12 @@ func renderNode(n design.Node, cat Catalog, depth int, theme design.Theme, backg
 	if known && def.Inner != nil {
 		g.Fill(design.Rect{W: g.W, H: g.H}, ' ', grid.Style{})
 		paintComposite(g, *def.Inner, props, cat, depth, theme, background)
+		return g
+	}
+	if n.Component == drawlayer.Component {
+		// The drawing is transparent where nothing was painted, so it does
+		// not clear its rectangle first.
+		paintDrawLayer(g, props)
 		return g
 	}
 	if p, ok := painters[n.Component]; ok {

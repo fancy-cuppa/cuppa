@@ -40,7 +40,7 @@ func TestDragFromPaletteAndDropCreatesNode(t *testing.T) {
 	m := newShell(t)
 	// Palette: line 0 is the shell title bar, so pane row 2 is screen row 3
 	// (first family header); the first item sits on screen row 4.
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	if m.dragging == "" {
 		t.Fatal("pressing a palette item should start a drag")
 	}
@@ -54,8 +54,8 @@ func TestDragFromPaletteAndDropCreatesNode(t *testing.T) {
 	if len(doc.Nodes) != 1 {
 		t.Fatalf("nodes = %d", len(doc.Nodes))
 	}
-	if r := doc.Nodes[0].Rect; r.X != 10 || r.Y != 7 {
-		t.Fatalf("dropped at %+v, want cell (10,7)", r)
+	if r := doc.Nodes[0].Rect; r.X != 10 || r.Y != 8-m.layout.stage.Y {
+		t.Fatalf("dropped at %+v, want cell (10,%d)", r, 8-m.layout.stage.Y)
 	}
 	if m.dragging != "" {
 		t.Fatal("drag state not cleared")
@@ -64,7 +64,7 @@ func TestDragFromPaletteAndDropCreatesNode(t *testing.T) {
 
 func TestReleasingOutsideTheCanvasCancelsTheDrag(t *testing.T) {
 	m := newShell(t)
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	send(m, motion(m.layout.stage.X+5, 8))
 	send(m, release(2, 10)) // back over the palette
 	if n := len(m.Editor().Document().Nodes); n != 0 {
@@ -77,7 +77,7 @@ func TestReleasingOutsideTheCanvasCancelsTheDrag(t *testing.T) {
 
 func TestDroppedNodeCanBeSelectedMovedAndInspected(t *testing.T) {
 	m := newShell(t)
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	x0 := m.layout.stage.X
 	send(m, motion(x0+10, 8))
 	send(m, release(x0+10, 8))
@@ -96,7 +96,7 @@ func TestDroppedNodeCanBeSelectedMovedAndInspected(t *testing.T) {
 
 func TestKeyboardBasics(t *testing.T) {
 	m := newShell(t)
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	send(m, release(m.layout.stage.X+3, 5))
 	if len(m.Editor().Document().Nodes) != 1 {
 		t.Fatal("setup failed")
@@ -174,7 +174,7 @@ func TestFileMenuSaveAsOpensDialogAndSaves(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
 	m := newShell(t)
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	send(m, release(m.layout.stage.X+3, 5)) // drop a component so there is something to save
 	clickText(t, m, "File")
 	clickText(t, m, "Save As")
@@ -200,7 +200,7 @@ func TestDialogCapturesTheMouse(t *testing.T) {
 	m := newShell(t)
 	m.flow.Notice("Hello", "world")
 	before := len(m.Editor().Document().Nodes)
-	send(m, click(5, 4)) // would start a palette drag if the dialog let it through
+	send(m, click(5, firstComponentY)) // would start a palette drag if the dialog let it through
 	if m.dragging != "" || len(m.Editor().Document().Nodes) != before {
 		t.Fatal("clicks must not reach the panes behind a dialog")
 	}
