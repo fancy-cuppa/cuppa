@@ -11,6 +11,9 @@ import (
 // menus, the palette, the canvas and the details bar, in that order.
 func (m *Model) Describe() a11y.Snapshot {
 	snap := a11y.Snapshot{Title: "Cuppa, " + m.flow.Title(), Status: m.flow.Status()}
+	if m.announce != "" {
+		snap.Status = m.announce
+	}
 	if m.ed.Dirty() {
 		snap.Title += ", unsaved changes"
 	}

@@ -27,6 +27,8 @@ type Event struct {
 	Held bool
 	// Shift is true while the shift key is held.
 	Shift bool
+	// Alt is true while the alt (option) key is held.
+	Alt bool
 	// WheelX and WheelY are -1, 0 or 1: the scroll direction on a Wheel event.
 	WheelX, WheelY int
 }

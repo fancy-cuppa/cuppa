@@ -99,6 +99,26 @@ func (m *Model) Open() bool { return m.open >= 0 }
 // Close hides the dropdown.
 func (m *Model) Close() { m.open, m.hover = -1, -1 }
 
+// Current is what the keyboard is on, as it is read out: the highlighted item
+// of the open menu, or the menu's name.
+func (m *Model) Current() string {
+	if m.open >= 0 && m.hover >= 0 {
+		it := menus[m.open].items[m.hover]
+		label := it.label
+		if it.shortcut != "" {
+			label += ", " + m.keys(it.shortcut)
+		}
+		return label
+	}
+	if m.open >= 0 {
+		return menus[m.open].label + " menu"
+	}
+	if m.focused {
+		return menus[m.cursor].label + " menu"
+	}
+	return ""
+}
+
 // Focused reports whether the keyboard is on the bar.
 func (m *Model) Focused() bool { return m.focused }
 

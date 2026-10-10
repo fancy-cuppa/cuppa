@@ -30,6 +30,7 @@ func (m *Model) cycleFocus(dir int) {
 		}
 	}
 	m.setFocus(areas[((at+dir)%len(areas)+len(areas))%len(areas)])
+	m.sayFocus()
 }
 
 // focusKey handles the keys that move the keyboard between areas and open the
@@ -43,13 +44,16 @@ func (m *Model) focusKey(text string) bool {
 	case "f10":
 		m.setFocus(inMenu)
 		m.bar.OpenFirst()
+		m.say(m.bar.Current())
 	default:
 		if a, ok := altAreas[text]; ok {
 			m.setFocus(a)
+			m.sayFocus()
 			return true
 		}
 		if r, ok := strings.CutPrefix(text, "alt+"); ok && len(r) == 1 && m.bar.OpenMnemonic(rune(r[0])) {
 			m.setFocus(inMenu)
+			m.say(m.bar.Current())
 			return true
 		}
 		return false

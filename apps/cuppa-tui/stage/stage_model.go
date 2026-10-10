@@ -121,7 +121,7 @@ func (m *Model) Handle(e pointer.Event) {
 		}
 	case pointer.Move:
 		if e.Held {
-			m.drag(cx, cy)
+			m.drag(cx, cy, e.Shift, e.Alt)
 		}
 	case pointer.Up:
 		m.release()
@@ -154,6 +154,7 @@ func (m *Model) press(cx, cy int, additive bool) {
 		m.ed.Checkpoint()
 		m.mode = moving
 		m.grabDX, m.grabDY = cx-n.Rect.X, cy-n.Rect.Y
+		m.startX, m.startY, m.origin = cx, cy, n.Rect
 		return
 	}
 	if !additive {
@@ -164,7 +165,10 @@ func (m *Model) press(cx, cy int, additive bool) {
 	m.marqueeAdditive = additive
 }
 
-func (m *Model) drag(cx, cy int) {
+// drag follows the pointer. With shift a move keeps to one of the four
+// directions, 0°, 45°, 90° and 135° as they look on screen, and a resize keeps
+// the proportions; with alt a resize grows from the centre.
+func (m *Model) drag(cx, cy int, shift, alt bool) {
 	switch m.mode {
 	case moving:
 		n, ok := m.ed.Primary()
@@ -172,7 +176,14 @@ func (m *Model) drag(cx, cy int) {
 			return
 		}
 		dx, dy := cx-m.grabDX-n.Rect.X, cy-m.grabDY-n.Rect.Y
-		if m.snapOn {
+		switch {
+		case shift:
+			// Measured from where the drag began, so the direction is the
+			// one the whole drag points in, not the last step.
+			lx, ly := snap.LockAngle(cx-m.startX, cy-m.startY)
+			dx, dy = m.origin.X+lx-n.Rect.X, m.origin.Y+ly-n.Rect.Y
+			m.guides = nil
+		case m.snapOn:
 			dx, dy = m.snapDelta(dx, dy)
 		}
 		m.ed.MoveSelectionBy(dx, dy)
@@ -183,7 +194,8 @@ func (m *Model) drag(cx, cy int) {
 				minW, minH = max(def.MinSize.W, 1), max(def.MinSize.H, 1)
 			}
 		}
-		r := hittest.Resize(m.origin, m.handle, cx-m.startX, cy-m.startY, minW, minH)
+		r := hittest.ResizeWith(m.origin, m.handle, cx-m.startX, cy-m.startY, minW, minH,
+			hittest.ResizeModifiers{Proportional: shift, FromCenter: alt})
 		m.ed.SetRect(m.target, r, false)
 	case marquee:
 		m.marqueeTo = [2]int{cx, cy}

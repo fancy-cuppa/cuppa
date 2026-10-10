@@ -25,6 +25,21 @@ type builder struct {
 	focus, stops int
 }
 
+// spoken is how a span reads aloud: the text before it on its line (or, when
+// there is none, the line above, which names a property) and its own text,
+// without the stepper buttons.
+func (b *builder) spoken(styled string) string {
+	before := ansi.Strip(b.cur)
+	if strings.TrimSpace(before) == "" && len(b.lines) > 0 {
+		before = ansi.Strip(b.lines[len(b.lines)-1])
+	}
+	text := before + " " + ansi.Strip(styled)
+	for _, junk := range []string{"[-]", "[+]", "◂", "▸", "█"} {
+		text = strings.ReplaceAll(text, junk, "")
+	}
+	return strings.Join(strings.Fields(text), " ")
+}
+
 // add is a clickable span that is also a stop for the keyboard.
 func (b *builder) add(styled string, act func()) *builder {
 	return b.span(styled, act, nil, false)
@@ -43,6 +58,7 @@ func (b *builder) addMouse(styled string, act func()) *builder {
 
 func (b *builder) span(styled string, act func(), step func(int), mouseOnly bool) *builder {
 	w := lipgloss.Width(styled)
+	label := b.spoken(styled)
 	if act != nil {
 		if !mouseOnly {
 			if b.stops == b.focus {
@@ -50,7 +66,7 @@ func (b *builder) span(styled string, act func(), step func(int), mouseOnly bool
 			}
 			b.stops++
 		}
-		b.regions = append(b.regions, region{y: len(b.lines), x0: b.x, x1: b.x + w, act: act, step: step, mouseOnly: mouseOnly})
+		b.regions = append(b.regions, region{y: len(b.lines), x0: b.x, x1: b.x + w, act: act, step: step, mouseOnly: mouseOnly, label: label})
 	}
 	b.cur += styled
 	b.x += w

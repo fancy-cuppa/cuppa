@@ -81,6 +81,11 @@ type Model struct {
 	// keyboard lands. layerCur is the layer Tab last stopped on.
 	curX, curY int
 	layerCur   design.NodeID
+	// announce is what a screen reader hears next, announceN alternates it so
+	// a repeat is heard, and lastFlowStatus notices the file flow's feedback.
+	announce       string
+	announceN      int
+	lastFlowStatus string
 	// owner is the pane a held-button gesture started in; it keeps receiving
 	// events even when the pointer leaves it.
 	owner pane
@@ -210,7 +215,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case exportDoneMsg:
 		m.flow.Finish(msg.err)
 	}
-	return m, tea.Batch(m.settle(), m.takePending())
+	cmd := tea.Batch(m.settle(), m.takePending())
+	m.settleAnnouncement()
+	return m, cmd
 }
 
 // settle runs what the last input set in motion: a finished dialog, a
@@ -333,33 +340,6 @@ func (m *Model) perform(a menubar.Action) {
 	}
 }
 
-// shortcutsTemplate is the Shortcuts dialog; Ctrl becomes Cmd on a Mac.
-const shortcutsTemplate = "Ctrl+N  New            Ctrl+O  Open\n" +
-	"Ctrl+S  Save           Ctrl+Shift+S  Save As\n" +
-	"Ctrl+Q  Quit           Ctrl+F  Search components\n" +
-	"Ctrl+Z  Undo           Ctrl+Y  Redo (also Ctrl+Shift+Z)\n" +
-	"Ctrl+C  Copy           Ctrl+V  Paste\n" +
-	"Ctrl+D  Duplicate      Del     Delete\n" +
-	"Ctrl+G  Group          Ctrl+U  Ungroup\n" +
-	"Ctrl+]  Forward one    Ctrl+[  Back one\n" +
-	"Ctrl+Shift+]  To front Ctrl+Shift+[  To back\n" +
-	"Arrows  Move the selection 1 cell (Shift: 10)\n" +
-	"Up/Down in a number: +1 / -1 (Shift: 10)\n" +
-	"Palette Up/Down choose, Enter place, Left/Right fold, / search\n" +
-	"Canvas  arrows move the cursor, Alt+arrows resize, Tab layer\n" +
-	"F6      Next area (Shift+F6 previous, Alt+1..4 jump)\n" +
-	"F10     Open the menus (Alt+F/E/V/X/H one menu)\n" +
-	"Esc     Deselect / cancel / back to the canvas\n\n" +
-	"Everything else is the mouse: drag components from the left onto\n" +
-	"the canvas, drag the corners to resize."
-
-func shortcutsText(command bool) string {
-	if command {
-		return strings.ReplaceAll(shortcutsTemplate, "Ctrl", "Cmd")
-	}
-	return shortcutsTemplate
-}
-
 const aboutText = "A designer for Bubble Tea interfaces, made with Bubble Tea.\n" +
 	"Export images need Freeze: github.com/charmbracelet/freeze"
 
@@ -379,7 +359,7 @@ func (m *Model) relayout() {
 }
 
 func toEvent(mouse tea.Mouse, phase pointer.Phase) pointer.Event {
-	e := pointer.Event{X: mouse.X, Y: mouse.Y, Phase: phase, Shift: mouse.Mod.Contains(tea.ModShift)}
+	e := pointer.Event{X: mouse.X, Y: mouse.Y, Phase: phase, Shift: mouse.Mod.Contains(tea.ModShift), Alt: mouse.Mod.Contains(tea.ModAlt)}
 	switch phase {
 	case pointer.Down, pointer.Up:
 		e.Left = mouse.Button == tea.MouseLeft
@@ -524,8 +504,12 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	}
 	if m.bar.Open() || m.focus == inMenu {
 		act, used := m.bar.Key(text)
+		if used {
+			m.say(m.bar.Current())
+		}
 		if !m.bar.Focused() {
 			m.setFocus(inStage)
+			m.sayFocus()
 		}
 		if act != "" {
 			m.perform(act)
@@ -557,8 +541,10 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	case m.focus == inPalette && m.paletteKey(text):
 	case m.focus == inStage && m.canvasKey(k, text):
 	case m.focus == inInspector && m.ins.NavKey(text):
+		m.say(m.ins.Current())
 	case esc && m.focus != inStage:
 		m.setFocus(inStage)
+		m.sayFocus()
 	case esc:
 		m.endDrag()
 		m.ed.Clear()
@@ -619,7 +605,13 @@ func (m *Model) nudge(k tea.Key) {
 	case tea.KeyDown:
 		dy = step
 	}
-	m.ed.Nudge(dx, dy)
+	if !m.ed.Nudge(dx, dy) {
+		m.sayRefusal("move")
+		return
+	}
+	if n, ok := m.ed.Primary(); ok {
+		m.say(fmt.Sprintf("Moved to %d, %d", n.Rect.X, n.Rect.Y))
+	}
 }
 
 // View implements tea.Model.
