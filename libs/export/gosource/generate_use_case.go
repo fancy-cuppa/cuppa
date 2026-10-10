@@ -206,32 +206,45 @@ func layoutSource(doc design.Document, placed []leaf) string {
 			fmt.Fprintf(&b, "%s: %s", strconv.Quote(k), strconv.Quote(l.Props[k]))
 		}
 		b.WriteString("}")
-		if !l.Layout.IsZero() {
-			b.WriteString(", " + fitSource(l))
-		}
+		b.WriteString(behaviourSource(l))
 		b.WriteString("},\n")
 	}
 	b.WriteString("}\n")
 	return b.String()
 }
 
-// fitSource is the fields of a placed component that follow the window: its
-// smallest size and the function that gives its rectangle for a window size.
-func fitSource(l leaf) string {
-	axis := func(src string, fixed int, parent string) string {
-		if src == "" {
-			return strconv.Itoa(fixed)
-		}
-		e, err := expr.Parse(src)
-		if err != nil {
-			return strconv.Itoa(fixed)
-		}
-		return "cells(" + e.GoSource(parent) + ")"
+// behaviourSource is the fields of a placed component that come from how it
+// is used rather than from where it sits: the function that follows the
+// window, and the drag and resize the person using the program gets. It is
+// empty for a plain fixed component.
+func behaviourSource(l leaf) string {
+	if l.Layout.IsZero() && !l.Drag && !l.Resize {
+		return ""
 	}
-	return fmt.Sprintf("MinW: %d, MinH: %d, Fit: func(w, h int) (x, y, cw, ch int) {\n\t\treturn %s, %s, %s, %s\n\t}",
-		l.MinW, l.MinH,
-		axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
-		axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h"))
+	var parts []string
+	if l.Drag {
+		parts = append(parts, "Drag: true")
+	}
+	if l.Resize {
+		parts = append(parts, "Resize: true")
+	}
+	parts = append(parts, fmt.Sprintf("MinW: %d, MinH: %d", l.MinW, l.MinH))
+	if !l.Layout.IsZero() {
+		axis := func(src string, fixed int, parent string) string {
+			if src == "" {
+				return strconv.Itoa(fixed)
+			}
+			e, err := expr.Parse(src)
+			if err != nil {
+				return strconv.Itoa(fixed)
+			}
+			return "cells(" + e.GoSource(parent) + ")"
+		}
+		parts = append(parts, fmt.Sprintf("Fit: func(w, h int) (x, y, cw, ch int) {\n\t\treturn %s, %s, %s, %s\n\t}",
+			axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
+			axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h")))
+	}
+	return ", " + strings.Join(parts, ", ")
 }
 
 func readme(doc design.Document, notes []string) string {

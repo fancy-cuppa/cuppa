@@ -179,6 +179,7 @@ func (m *Model) single(b *builder, n design.Node) {
 	m.numeric(b, n.ID, "Y", "y", n.Rect.Y, l.Y)
 	m.numeric(b, n.ID, "W", "w", n.Rect.W, l.W)
 	m.numeric(b, n.ID, "H", "h", n.Rect.H, l.H)
+	m.behaviourRows(b, n)
 	b.blank()
 	doc := m.ed.Document()
 	b.text(fmt.Sprintf(" Layer %d of %d", doc.Index(n.ID)+1, len(doc.Nodes))).end()
@@ -350,4 +351,17 @@ func (m *Model) themeMark(b *builder, id design.NodeID, p definition.PropSpec, o
 		return
 	}
 	b.text(" ").add(theme.Button("[theme]", true), func() { m.ed.ClearProp(id, p.Key) })
+}
+
+// behaviourRows are the two things the person using the exported program may
+// do with the component.
+func (m *Model) behaviourRows(b *builder, n design.Node) {
+	mark := func(on bool, label string) string {
+		if on {
+			return "[x] " + label
+		}
+		return "[ ] " + label
+	}
+	b.text(" ").add(theme.Button(mark(n.Draggable, "Draggable"), !n.Locked), func() { m.ed.SetDraggable(n.ID, !n.Draggable) }).end()
+	b.text(" ").add(theme.Button(mark(n.Resizable, "Resizable"), !n.Locked), func() { m.ed.SetResizable(n.ID, !n.Resizable) }).end()
 }

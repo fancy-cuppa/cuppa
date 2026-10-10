@@ -21,6 +21,11 @@ type Node struct {
 	// Locked nodes are drawn but cannot be moved, resized, deleted or have their
 	// properties changed.
 	Locked bool `json:"locked,omitempty"`
+	// Draggable and Resizable are behaviours of the exported program, not of
+	// the design: the person using the app can move the component (drag it
+	// from anywhere) or resize it (drag its bottom-right corner).
+	Draggable bool `json:"draggable,omitempty"`
+	Resizable bool `json:"resizable,omitempty"`
 	// Children are set on a group: the components it holds, with rectangles
 	// relative to the group's top-left, laid out for a box of BaseW x BaseH. A
 	// placed group scales them with its own size.

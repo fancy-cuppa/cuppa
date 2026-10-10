@@ -39,6 +39,11 @@ type placed struct {
 	// gives its rectangle for a window of w by h cells.
 	Fit        func(w, h int) (x, y, cw, ch int)
 	MinW, MinH int
+	// Drag lets the person move the component, Resize lets them resize it by
+	// its bottom-right corner. Dx, Dy, Dw and Dh are how far they moved it from
+	// where Fit puts it, so a window resize keeps their change.
+	Drag, Resize   bool
+	Dx, Dy, Dw, Dh int
 }
 
 // cells rounds a calculated size down to whole cells.

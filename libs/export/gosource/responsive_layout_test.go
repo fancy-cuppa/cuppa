@@ -99,3 +99,84 @@ func TestRectanglesFollowTheWindow(t *testing.T) {
 		}
 	}
 }
+
+// TestTheGeneratedProgramLetsTheUserDragAndResize builds the program and
+// drives the mouse handling of a draggable, resizable component that also
+// follows the window.
+func TestTheGeneratedProgramLetsTheUserDragAndResize(t *testing.T) {
+	if testing.Short() {
+		t.Skip("builds a project with the go tool")
+	}
+	goBin, err := exec.LookPath("go")
+	if err != nil {
+		t.Skip("no go tool")
+	}
+	doc := design.NewDocument("movable", 80, 24)
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Panel", Rect: design.Rect{X: 10, Y: 5, W: 20, H: 6},
+		Draggable: true, Resizable: true, Layout: design.Layout{W: "50%"}})
+	doc.Add(design.Node{Component: "lipgloss.box", Name: "Still", Rect: design.Rect{X: 50, Y: 15, W: 20, H: 6}})
+	src := Generate(doc, standard.Default()).Files["layout.go"]
+	if !strings.Contains(src, "Drag: true, Resize: true, MinW: 3, MinH: 3, Fit:") {
+		t.Fatalf("flags missing:\n%s", src)
+	}
+	dir := filepath.Join(t.TempDir(), "app")
+	if err := Write(dir, Generate(doc, standard.Default())); err != nil {
+		t.Fatal(err)
+	}
+	check := `package main
+
+import "testing"
+
+func rectOf(i int) [4]int { return [4]int{layout[i].X, layout[i].Y, layout[i].W, layout[i].H} }
+
+func TestDragAndResize(t *testing.T) {
+	m := newModel()
+	// Press inside the panel, move 5 right and 2 down.
+	m.take(15, 7)
+	m.drag(20, 9)
+	m.grab = nil
+	if got := rectOf(0); got != [4]int{15, 7, 20, 6} {
+		t.Fatalf("moved = %v", got)
+	}
+	// Grab its bottom-right corner and make it 30 wide and 8 tall.
+	m.take(15+20-1, 7+6-1)
+	m.drag(15+30-1, 7+8-1)
+	m.grab = nil
+	if got := rectOf(0); got != [4]int{15, 7, 30, 8} {
+		t.Fatalf("resized = %v", got)
+	}
+	// A bigger window moves what Fit gives, and the person's change is kept.
+	m.resize(160, 50)
+	if got := rectOf(0); got != [4]int{15, 7, 90, 8} {
+		t.Fatalf("after the window grew = %v", got)
+	}
+	// It cannot be dragged off the window, nor made smaller than a box.
+	m.take(16, 8)
+	m.drag(500, 500)
+	m.grab = nil
+	if got := rectOf(0); got[0]+got[2] != 160 || got[1]+got[3] != 50 {
+		t.Fatalf("left the window: %v", got)
+	}
+	// A component that is not draggable ignores the mouse.
+	before := rectOf(1)
+	m.take(layout[1].X+1, layout[1].Y+1)
+	if m.grab != nil {
+		t.Fatal("grabbed a fixed component")
+	}
+	if rectOf(1) != before {
+		t.Fatal("moved")
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(dir, "drag_test.go"), []byte(check), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"mod", "tidy"}, {"vet", "./..."}, {"test", "./..."}} {
+		cmd := exec.Command(goBin, args...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GOFLAGS=-mod=mod", "GOWORK=off")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("go %s failed: %v\n%s", strings.Join(args, " "), err, out)
+		}
+	}
+}

@@ -56,6 +56,7 @@ offset  size  field
 | `document.components` | Optional list of `{ "id", "component" }`: a copy of every pack component the design uses (`id` is the catalog id such as `tea-shop.card`, `component` has the shape of a component in a [`.cupp` file](cupp-format.md)), written on save so the file draws without the pack. A reader ignores a copy that is invalid or repeated, keeps at most 256, and prefers an installed pack's component over the copy. |
 | `node.locked` | Optional, `true` for a locked layer: drawn, but it cannot be moved, resized, deleted or edited. Absent means unlocked. |
 | `node.layout` | Optional object of size expressions `x`, `y`, `w`, `h` (strings such as `"50%"`, `"100% - 10"`, `"min(50%, 40)"`; grammar in `libs/layout/expr`). An absent or empty axis is fixed at its `rect` value. `rect` is always the result at the canvas size stored in the file. Absent means every axis is fixed. |
+| `node.draggable`, `node.resizable` | Optional, `true` when the person using the exported program may move the component, or resize it by its bottom-right cell. Absent means no. |
 
 ## Reading rules
 

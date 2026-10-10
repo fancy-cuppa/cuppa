@@ -24,7 +24,10 @@ type leaf struct {
 	// Layout is set on a top-level component whose size or position follows
 	// the window; Rect is then its size at the canvas size.
 	Layout design.Layout
-	// MinW and MinH are the smallest size the component allows.
+	// Drag and Resize are the behaviours the person using the program gets.
+	Drag, Resize bool
+	// MinW and MinH are the smallest size the component allows (set when it
+	// follows the window or can be resized).
 	MinW, MinH int
 }
 
@@ -90,8 +93,9 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat, t)...)
 		default:
 			l := leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props}
-			if depth == 0 && !n.Layout.IsZero() {
+			if depth == 0 && (!n.Layout.IsZero() || n.Draggable || n.Resizable) {
 				l.Layout = n.Layout
+				l.Drag, l.Resize = n.Draggable, n.Resizable
 				l.MinW, l.MinH = 1, 1
 				if def, ok := cat.Get(n.Component); ok {
 					l.MinW, l.MinH = max(def.MinSize.W, 1), max(def.MinSize.H, 1)
