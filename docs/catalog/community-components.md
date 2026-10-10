@@ -9,13 +9,13 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (62, plus 14 in the bundled packs)
+## What the catalog has today (63, plus 14 in the bundled packs)
 
 | Family | Components |
 |---|---|
 | Bubbles (13) | textinput, textarea, list, table, tree, viewport, paginator, filepicker, spinner, progress, timer, stopwatch, help |
 | Huh (9) | input, text, select, multiselect, confirm, note, spinner, filepicker, form |
-| Lip Gloss (11) | box, label, list, tabs, table, tree, joinh, joinv, place, swatch, rows |
+| Lip Gloss (12) | box, label, list, tabs, table, tree, joinh, joinv, place, swatch, rows, colour picker |
 | Glamour (1) | markdown |
 | ntcharts (8) | bar, line, sparkline, streamline, time series, heatmap, canvas, 3D chart |
 | Community (19) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast, bigtext, qrcode, image, dropdown, promptinput, promptselect, datatree, pdfview |

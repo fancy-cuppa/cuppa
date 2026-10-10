@@ -217,6 +217,27 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 			if !ok {
 				continue
 			}
+			if l.Kind == colourPickerKind && key == "value" {
+				// The picker is state the program owns: the input is a
+				// ColourPicker, which draws itself through three properties.
+				var tabs []string
+				for _, t := range splitList(l.Props["tabs"], ",") {
+					tabs = append(tabs, strconv.Quote(t))
+				}
+				slide, _ := strconv.Atoi(l.Props["slide"])
+				lit := fmt.Sprintf("NewColourPicker(ColourPickerWithValue(%s), ColourPickerWithTabs(%s), ColourPickerWithTab(%s), ColourPickerWithAccent(%s)).SetSlide(%d)",
+					strconv.Quote(l.Props["value"]), strings.Join(tabs, ", "), strconv.Quote(l.Props["tab"]), strconv.Quote(l.Props["color"]), slide)
+				field, ok := register(l.Bind[key], "ColourPicker", lit, fmt.Sprintf("%s of %q", spec.Label, l.Name))
+				if !ok {
+					continue
+				}
+				usesStrconv = true
+				ps.assign = append(ps.assign,
+					fmt.Sprintf("v[\"value\"] = p.%s.Value()", field),
+					fmt.Sprintf("v[\"tab\"] = p.%s.Tab()", field),
+					fmt.Sprintf("v[\"slide\"] = strconv.Itoa(p.%s.Slide())", field))
+				continue
+			}
 			if l.Kind == rowsKind && key == "styles" && l.Bind[rowsKey] != "" {
 				note("the styles of %q follow the Style of each row of %q; the binding of its styles is not used", l.Name, l.Bind[rowsKey])
 				continue

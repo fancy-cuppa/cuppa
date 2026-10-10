@@ -49,11 +49,15 @@ func TestWidgetsDrawTheSameInTheDesignerAndTheProgram(t *testing.T) {
 		{"3d bar", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "bar"}},
 		{"3d line", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "line"}},
 		{"3d vector", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "vector", "legend": "false", "title": ""}},
+		{"picker rgb", "lipgloss.colourpicker", 46, 10, nil},
+		{"picker 16", "lipgloss.colourpicker", 46, 10, map[string]string{"tab": "16", "value": "9"}},
+		{"picker 256", "lipgloss.colourpicker", 46, 23, map[string]string{"tab": "256", "value": "#00ff00"}},
+		{"picker hsl", "lipgloss.colourpicker", 46, 10, map[string]string{"tab": "HSL", "value": "", "slide": "2"}},
 		{"rows", "lipgloss.rows", 44, 5, nil},
 		{"rows spaces", "lipgloss.rows", 30, 3, map[string]string{"columns": "A:6,B:6,C", "rows": "  x,,z; y\\,w,,; q,r,s", "styles": "accent,dim,selected"}},
 		{"rows colours", "lipgloss.rows", 30, 3, map[string]string{"columns": "Name:8,Swatch:5:colour,Rest", "rows": "Tea,#ff0000,hot;Milk,,cold", "styles": "selected"}},
 	}
-	doc := design.NewDocument("widgets", 200, 400)
+	doc := design.NewDocument("widgets", 200, 600)
 	var nodes []design.Node
 	for i, v := range variants {
 		n := design.Node{Component: v.id, Name: v.name, Rect: design.Rect{X: 0, Y: i * 15, W: v.w, H: v.h}, Props: v.props}
