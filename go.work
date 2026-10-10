@@ -11,5 +11,6 @@ use (
 	./libs/cuppafile
 	./libs/document
 	./libs/export
+	./libs/layout
 	./libs/render
 )
