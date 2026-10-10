@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/componentcmd"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/designcmd"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/packcmd"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/screenscmd"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/shell"
@@ -25,6 +26,9 @@ func main() {
 	}
 	if len(os.Args) > 1 && os.Args[1] == "screens" {
 		os.Exit(screenscmd.Run(os.Args[2:], os.Stdout, os.Stderr))
+	}
+	if len(os.Args) > 1 && os.Args[1] == "design" {
+		os.Exit(designcmd.Run(os.Args[2:], os.Stdout, os.Stderr))
 	}
 	if len(os.Args) > 1 && os.Args[1] == "component" {
 		os.Exit(componentcmd.Run(os.Args[2:], os.Stdout, os.Stderr))
