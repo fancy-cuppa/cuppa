@@ -31,7 +31,10 @@ type Editor struct {
 
 // New returns an editor for doc.
 func New(cat Catalog, doc design.Document) *Editor {
-	return &Editor{cat: cat, doc: doc.Clone(), saved: doc.Clone()}
+	e := &Editor{cat: cat, doc: doc.Clone()}
+	e.Resolve()
+	e.saved = e.doc.Clone()
+	return e
 }
 
 // Document returns a copy of the current document.
@@ -41,7 +44,8 @@ func (e *Editor) Document() design.Document { return e.doc.Clone() }
 // document counts as saved.
 func (e *Editor) Load(doc design.Document) {
 	e.doc = doc.Clone()
-	e.saved = doc.Clone()
+	e.Resolve()
+	e.saved = e.doc.Clone()
 	e.sel, e.undo, e.redo = nil, nil, nil
 }
 

@@ -10,6 +10,10 @@ type Node struct {
 	Component string            `json:"component"`
 	Name      string            `json:"name"`
 	Rect      Rect              `json:"rect"`
+	// Layout holds size expressions ("50%", "100% - 10") for the axes of Rect
+	// that follow the canvas; an empty one leaves that axis fixed. Rect is
+	// always the resolved result at the current canvas size.
+	Layout Layout `json:"layout,omitzero"`
 	Props     map[string]string `json:"props,omitempty"`
 	// Hidden nodes are not drawn, exported or hit by the pointer; they stay in
 	// the layer list.
@@ -49,3 +53,16 @@ func (n Node) Clone() Node {
 	}
 	return n
 }
+
+// Layout is the size expressions of a node, one per axis; see libs/layout/expr
+// for the grammar. X and W are relative to the parent's width, Y and H to its
+// height. An empty expression means that axis is fixed at its Rect value.
+type Layout struct {
+	X string `json:"x,omitempty"`
+	Y string `json:"y,omitempty"`
+	W string `json:"w,omitempty"`
+	H string `json:"h,omitempty"`
+}
+
+// IsZero reports whether every axis is fixed.
+func (l Layout) IsZero() bool { return l == Layout{} }

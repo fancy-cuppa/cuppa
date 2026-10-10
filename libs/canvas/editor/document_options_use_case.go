@@ -15,8 +15,9 @@ const (
 	EffectVignette  = "vignette"
 )
 
-// SetCanvasSize resizes the canvas, as one undo step. Components outside the
-// new size stay where they are; they are just not drawn until it grows again.
+// SetCanvasSize resizes the canvas, as one undo step. Components with layout
+// expressions follow the new size; the others stay where they are, and are just
+// not drawn if outside it until it grows again.
 func (e *Editor) SetCanvasSize(w, h int) error {
 	if w < 1 || h < 1 || w > design.MaxWidth || h > design.MaxHeight {
 		return fmt.Errorf("editor: the canvas is 1 to %d wide and 1 to %d high", design.MaxWidth, design.MaxHeight)
@@ -26,6 +27,7 @@ func (e *Editor) SetCanvasSize(w, h int) error {
 	}
 	e.apply(func() bool {
 		e.doc.Width, e.doc.Height = w, h
+		e.Resolve()
 		return true
 	})
 	return nil
