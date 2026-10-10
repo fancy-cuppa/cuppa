@@ -121,9 +121,9 @@ import (
 func TestColoursScreen(t *testing.T) {
 	p := DefaultColoursProps()
 	p.Title = "Palette"
-	p.Slots = []string{"Hot", "Cold", "Mild"}
+	p.Slots = []string{"Hot", "Cold, with a comma", "Mild"}
 	f := Colours(p, 60, 12)
-	for _, want := range []string{"Palette", "Hot", "Cold", "Mild", "saved"} {
+	for _, want := range []string{"Palette", "Hot", "Cold, with a comma", "Mild", "saved"} {
 		if !strings.Contains(f.View, want) {
 			t.Errorf("view lacks %q:\n%s", want, f.View)
 		}

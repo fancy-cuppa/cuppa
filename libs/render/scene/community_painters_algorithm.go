@@ -13,7 +13,7 @@ import (
 func paintBubbleTableCommunity(g *grid.Grid, p Props) {
 	cols := p.List("columns")
 	var rows [][]string
-	for _, r := range splitList(p.Str("rows"), ";") {
+	for _, r := range splitRaw(p.Str("rows"), ";") {
 		rows = append(rows, splitList(r, ","))
 	}
 	n := len(cols)

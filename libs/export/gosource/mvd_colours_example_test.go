@@ -45,6 +45,7 @@ func mvdColours(t *testing.T) design.Document {
 
 	slots := add("lipgloss.list", "Slots", 2, 2, 76, 10)
 	must(ed.SetProp(slots, "items", "Accent (title), Focus (active border), Highlight (keys, bars), Success, Error, Dim (borders, hints), Text, Selected row (background)"))
+	must(ed.SetProp(slots, "enumerator", "none"))
 	must(ed.SetLayout(slots, editor.AxisW, "100% - 4"))
 	must(ed.SetBinding(slots, "items", "Slots"))
 	must(ed.SetEvent(slots, "Pick slot"))

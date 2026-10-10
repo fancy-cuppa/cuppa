@@ -332,22 +332,12 @@ func inputType(spec definition.PropSpec, key, value string) (typ, lit string) {
 		return "[]string", stringsLiteral(splitList(value, ","))
 	case spec.Kind == definition.PropText && key == rowsKey:
 		var rows []string
-		for _, r := range splitList(value, ";") {
+		for _, r := range splitRaw(value, ";") {
 			rows = append(rows, stringsLiteral(splitList(r, ",")))
 		}
 		return "[][]string", "[][]string{" + strings.Join(rows, ", ") + "}"
 	}
 	return "string", strconv.Quote(value)
-}
-
-func splitList(s, sep string) []string {
-	var out []string
-	for _, piece := range strings.Split(s, sep) {
-		if piece = strings.TrimSpace(piece); piece != "" {
-			out = append(out, piece)
-		}
-	}
-	return out
 }
 
 func stringsLiteral(items []string) string {

@@ -99,13 +99,42 @@ func fg(c string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(c))
 }
 
-func split(s, sep string) []string {
+// split cuts s at sep and trims the pieces. A backslash before a comma, a
+// semicolon or another backslash is that character itself, so an item can hold
+// one.
+func split(s, sep string) []string { return splitEscaped(s, sep, true) }
+
+// splitRaw is split that keeps the backslashes, for the first cut of a table:
+// the rows are cut at semicolons, then each row at commas.
+func splitRaw(s, sep string) []string { return splitEscaped(s, sep, false) }
+
+func splitEscaped(s, sep string, unescape bool) []string {
 	var out []string
-	for _, piece := range strings.Split(s, sep) {
-		if piece = strings.TrimSpace(piece); piece != "" {
+	var cur strings.Builder
+	flush := func() {
+		if piece := strings.TrimSpace(cur.String()); piece != "" {
 			out = append(out, piece)
 		}
+		cur.Reset()
 	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\\' && i+1 < len(s) && (s[i+1] == ',' || s[i+1] == ';' || s[i+1] == '\\') {
+			if !unescape {
+				cur.WriteByte(c)
+			}
+			cur.WriteByte(s[i+1])
+			i++
+			continue
+		}
+		if strings.HasPrefix(s[i:], sep) {
+			flush()
+			i += len(sep) - 1
+			continue
+		}
+		cur.WriteByte(c)
+	}
+	flush()
 	return out
 }
 
@@ -323,7 +352,7 @@ func tablePart(p props, w, h int) *part {
 		cols = append(cols, table.Column{Title: n, Width: each})
 	}
 	var rows []table.Row
-	for _, line := range split(p.str("rows"), ";") {
+	for _, line := range splitRaw(p.str("rows"), ";") {
 		rows = append(rows, table.Row(split(line, ",")))
 	}
 	st := table.DefaultStyles()
@@ -561,6 +590,7 @@ func listBlock(w, h int, p props) string {
 	}
 	enumerators := map[string]llist.Enumerator{
 		"bullet": llist.Bullet, "arabic": llist.Arabic, "alphabet": llist.Alphabet, "dash": llist.Dash,
+		"none": func(llist.Items, int) string { return "" },
 	}
 	enumerator, ok := enumerators[p.str("enumerator")]
 	if !ok {

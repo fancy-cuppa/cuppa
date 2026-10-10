@@ -135,14 +135,24 @@ func backdrop(w, h int, background string) string {
 	return strings.Join(lines, "\n")
 }
 
+// escaper makes an item or a cell safe to put in a list: a backslash before a
+// comma, a semicolon or a backslash is that character itself.
+var escaper = strings.NewReplacer(`\`, `\\`, ",", `\,`, ";", `\;`)
+
 // joinList is a list of items as the components read it.
-func joinList(items []string) string { return strings.Join(items, ",") }
+func joinList(items []string) string {
+	escaped := make([]string, len(items))
+	for i, s := range items {
+		escaped[i] = escaper.Replace(s)
+	}
+	return strings.Join(escaped, ",")
+}
 
 // joinRows is the rows of a table as the components read them.
 func joinRows(rows [][]string) string {
 	lines := make([]string, len(rows))
 	for i, r := range rows {
-		lines[i] = strings.Join(r, ",")
+		lines[i] = joinList(r)
 	}
 	return strings.Join(lines, ";")
 }
