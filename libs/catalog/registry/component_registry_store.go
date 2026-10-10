@@ -41,7 +41,9 @@ func NewWithPacks(packs []definition.Pack, defs ...definition.Definition) (*Regi
 	}
 	used := map[definition.Family]bool{}
 	for _, d := range defs {
-		used[d.Family] = true
+		if !d.Hidden {
+			used[d.Family] = true
+		}
 	}
 	for _, f := range definition.FamilyOrder { // built-in families without a pack
 		if used[f] && !seen[f] {
@@ -50,7 +52,7 @@ func NewWithPacks(packs []definition.Pack, defs ...definition.Definition) (*Regi
 		}
 	}
 	for _, d := range defs {
-		if d.Family != "" && !seen[d.Family] {
+		if d.Family != "" && !d.Hidden && !seen[d.Family] {
 			seen[d.Family] = true
 			r.packs = append(r.packs, definition.Pack{ID: d.Family, Name: d.Family.Title(), Builtin: true})
 		}
@@ -126,7 +128,7 @@ func (r *Registry) Only(keep func(definition.Family) bool) *Registry {
 		}
 	}
 	for _, d := range r.list {
-		if keep(d.Family) {
+		if d.Hidden || keep(d.Family) {
 			out.byID[d.ID] = d
 			out.list = append(out.list, d)
 		}
@@ -138,7 +140,7 @@ func (r *Registry) Only(keep func(definition.Family) bool) *Registry {
 func (r *Registry) ByFamily(f definition.Family) []definition.Definition {
 	var out []definition.Definition
 	for _, d := range r.list {
-		if d.Family == f {
+		if d.Family == f && !d.Hidden {
 			out = append(out, d)
 		}
 	}
@@ -149,11 +151,19 @@ func (r *Registry) ByFamily(f definition.Family) []definition.Definition {
 // ignoring case. An empty query returns everything.
 func (r *Registry) Search(query string) []definition.Definition {
 	q := strings.ToLower(strings.TrimSpace(query))
-	if q == "" {
-		return r.List()
-	}
 	var out []definition.Definition
+	if q == "" {
+		for _, d := range r.list {
+			if !d.Hidden {
+				out = append(out, d)
+			}
+		}
+		return out
+	}
 	for _, d := range r.list {
+		if d.Hidden {
+			continue
+		}
 		hay := strings.ToLower(d.Name + " " + d.ID + " " + d.Description)
 		if strings.Contains(hay, q) {
 			out = append(out, d)

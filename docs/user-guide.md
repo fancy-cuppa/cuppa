@@ -28,6 +28,19 @@ The dot after the name means there are unsaved changes.
 | Drag on empty canvas | Draw a box; everything it touches is selected |
 | Click empty canvas, or Esc | Deselect |
 
+**Drawing tools.** Above the components, the left bar has a **Tools** list, as in an image editor. A tool is chosen, not dragged: it stays chosen, and dragging on the canvas draws with it. The bar above the canvas shows the options of the chosen tool.
+
+| Tool | Key | Options in the bar | Drag on the canvas |
+|---|---|---|---|
+| Select | V | Instructions | The normal selecting, moving and resizing |
+| Rectangle | U | Fill and border colours; corners ╭ round, ┌ square, ╱ angled | Draws a box between the two corners (Shift: a square as it looks on screen) |
+| Path | P | Line character (auto picks `─ │ ╲ ╱`), end (none, arrow, circle), thickness, colour | Draws a line (Shift: 0°, 45° or 90°) |
+| Brush | B | Character, thickness, colour | Paints along the drag |
+| Erase | E | Thickness. Erases **only the drawing**, never a component | Rubs out what was drawn |
+| Text | T | Colour | Click, then type the text; it is placed from the clicked cell |
+
+Everything you draw goes into **one layer**, "Drawing", which is created by the first stroke, sits in front and is the only one. It is transparent where nothing was drawn, so components under it show. Each stroke is one undo step; the layer can be hidden, locked (a locked drawing refuses strokes) or moved like any other from the Layers list. The drawing is saved with the design, drawn in images and text exports, and exported to Go source as the same cells, so it becomes part of the Bubble Tea program. Esc cancels a stroke in progress.
+
 **Move and resize.** Drag a selected component to move it (a whole selection moves together). Drag a corner handle to resize. Components never go below their smallest sensible size or off the canvas. Hold **Shift** while moving to keep the move to a straight line: sideways, up and down, or on a diagonal as it looks on screen (two columns for every row, because a cell is about twice as tall as wide). Hold **Shift** while resizing to keep the proportions (a corner follows whichever side you moved more; a side handle changes the other side to match), and **Alt** (Option on a Mac) to resize from the centre, so both sides move; the two together scale around the centre. Some terminals keep Shift and Alt clicks for themselves; the desktop app and the web page pass them through. While you drag, edges and centres snap to neighbours and a guide line appears; switch this off with *Snap to guides* in the details bar.
 
 **Group components.** Select two or more components (Shift-click or draw a box) and press Ctrl+G, choose *Edit → Group*, or click *Group* in the details bar. They become one component that moves, resizes (its parts scale) and layers as a single row in Layers, and takes the place of its front-most member. Groups can contain groups. Select a group and press Ctrl+U (*Ungroup*) to get the parts back at the group's current place and size. Locked components cannot be grouped, and a locked group cannot be ungrouped.

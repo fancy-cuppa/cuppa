@@ -9,6 +9,7 @@ import (
 func All() []definition.Definition {
 	var defs []definition.Definition
 	defs = append(defs, lipglossEntries()...)
+	defs = append(defs, drawEntries()...)
 	defs = append(defs, bubblesEntries()...)
 	defs = append(defs, huhEntries()...)
 	defs = append(defs, glamourEntries()...)

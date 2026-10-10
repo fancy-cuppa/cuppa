@@ -63,7 +63,7 @@ func TestEscLeavesAnAreaForTheCanvasAndKeepsTheSelection(t *testing.T) {
 
 func TestClickingAnAreaFocusesIt(t *testing.T) {
 	m := newShell(t)
-	send(m, click(5, 4))
+	send(m, click(5, firstComponentY))
 	send(m, release(5, 4))
 	if m.focus != inPalette {
 		t.Fatalf("after clicking the palette focus = %v", m.focus)

@@ -10,6 +10,7 @@ import (
 	"github.com/meta-tui/cuppa/libs/canvas/snap"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/drawlayer"
 	"github.com/meta-tui/cuppa/libs/render/grid"
 )
 
@@ -54,6 +55,10 @@ type Model struct {
 	// drawn only while showCursor is set.
 	cursor     [2]int
 	showCursor bool
+	// preview is what the drawing tool in use would draw (or erase), shown
+	// over the canvas until the drag ends.
+	preview      []drawlayer.Cell
+	previewErase bool
 	// snapOn turns alignment snapping on; guides are the lines of the last snap.
 	snapOn bool
 	guides []snap.Guide

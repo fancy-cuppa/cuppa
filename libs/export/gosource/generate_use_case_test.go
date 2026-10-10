@@ -10,6 +10,7 @@ import (
 	"github.com/meta-tui/cuppa/libs/catalog/cupp"
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/document/drawlayer"
 )
 
 // richDesign uses every component that has real code, one that does not, a
@@ -55,6 +56,11 @@ func richDesign() (design.Document, Catalog) {
 		}})
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Fade", Rect: design.Rect{X: 50, Y: 30, W: 24, H: 5},
 		Props: map[string]string{"title": "Fade", "color": "#ff5fd7", "gradient": "#5f87ff"}})
+	// The drawing: a few painted cells, generated as runs.
+	drawn := drawlayer.New()
+	drawn.Paint(drawlayer.Cell{X: 1, Y: 1, Ch: '╭', Fg: "212"}, drawlayer.Cell{X: 2, Y: 1, Ch: '─', Fg: "212"}, drawlayer.Cell{X: 3, Y: 1, Ch: '╮', Fg: "212"})
+	doc.Add(design.Node{Component: drawlayer.Component, Name: "Drawing", Rect: design.Rect{W: 120, H: 40},
+		Props: map[string]string{drawlayer.PropCells: drawn.Encode()}})
 	// A component the generator does not know: drawn as an empty frame and said so.
 	doc.Add(design.Node{Component: "mystery.widget", Name: "Mystery", Rect: design.Rect{X: 100, Y: 30, W: 10, H: 4}})
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Hidden", Rect: design.Rect{W: 5, H: 3}, Hidden: true})

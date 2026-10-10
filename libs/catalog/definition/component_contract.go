@@ -116,6 +116,9 @@ type Definition struct {
 	Props       []PropSpec
 	// Import is the Go import path the real component lives at.
 	Import string
+	// Hidden components are not listed in the palette or found by search; they
+	// are made by a tool (the drawing layer).
+	Hidden bool
 	Status Status
 	// Inner is set on a component made of other components (from a .cupp
 	// pack): it is drawn by painting these parts, not by a dedicated painter.

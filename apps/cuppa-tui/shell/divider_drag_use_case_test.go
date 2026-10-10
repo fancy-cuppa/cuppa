@@ -120,7 +120,7 @@ func TestDividerLightsUpOnHoverAndWhileDragging(t *testing.T) {
 func TestPressingAPaneNextToADividerStillWorks(t *testing.T) {
 	m := newShell(t)
 	x := m.layout.palette.W
-	send(m, click(x-2, 4)) // inside the palette: starts a component drag as before
+	send(m, click(x-2, firstComponentY)) // inside the palette: starts a component drag as before
 	if m.dragging == "" {
 		t.Fatal("a click one cell off the divider belongs to the pane")
 	}

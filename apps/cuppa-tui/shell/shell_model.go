@@ -21,6 +21,7 @@ import (
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/preview"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/stage"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/theme"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/tools"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/themepicker"
 	"github.com/meta-tui/cuppa/libs/canvas/editor"
 	"github.com/meta-tui/cuppa/libs/catalog/packstate"
@@ -38,6 +39,10 @@ const (
 	inStage
 	inInspector
 	inMenu
+	// inTools and inOptions are the tool list and the contextual bar: clicks
+	// there choose and set, the keyboard focus stays where it was.
+	inTools
+	inOptions
 )
 
 // Default canvas size of a new design, in cells.
@@ -67,8 +72,10 @@ type Model struct {
 	bar   *menubar.Model
 	flow  *fileflow.Flow
 
-	pal *palette.Model
-	stg *stage.Model
+	tb   *tools.Model
+	gest gesture
+	pal  *palette.Model
+	stg  *stage.Model
 	ins *inspector.Model
 
 	w, h   int
@@ -113,6 +120,7 @@ func New(cat *registry.Registry) *Model {
 		ed:    ed,
 		bar:   menubar.New(),
 		flow:  fileflow.New(ed, live),
+		tb:    tools.New(),
 		pal:   palette.New(live),
 		packs: packstate.Open(""),
 		stg:   stage.New(ed, live),
@@ -125,6 +133,7 @@ func New(cat *registry.Registry) *Model {
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	m.ins.BindColorPicker(m.pickColor)
 	m.ins.BindThemePicker(m.pickTheme)
+	m.tb.BindColorPicker(m.pickColor)
 	return m
 }
 
@@ -401,8 +410,19 @@ func (m *Model) mouse(e pointer.Event) {
 			m.dragging = id
 			m.owner = inPalette
 		}
+	case inTools:
+		if m.tb.HandleList(e.Translate(m.layout.tools.X, m.layout.tools.Y)) {
+			m.cancelGesture()
+			m.say(m.tb.Tool().Name() + " tool")
+		}
+	case inOptions:
+		m.tb.HandleBar(e.Translate(m.layout.options.X, m.layout.options.Y))
 	case inStage:
-		if m.dragging == "" {
+		switch {
+		case m.dragging != "":
+		case m.tb.Drawing() && e.Phase != pointer.Wheel:
+			m.drawMouse(e)
+		default:
 			m.stg.Handle(e.Translate(m.layout.stage.X, m.layout.stage.Y))
 		}
 	case inInspector:
@@ -411,7 +431,7 @@ func (m *Model) mouse(e pointer.Event) {
 	if m.dragging != "" {
 		m.dragFromPalette(e)
 	}
-	if e.Phase == pointer.Down && target != nowhere {
+	if e.Phase == pointer.Down && target != nowhere && target != inTools && target != inOptions {
 		m.setFocus(target)
 	}
 	if e.Phase == pointer.Down && m.dragging == "" {
@@ -538,6 +558,9 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		}
 	case m.pal.Searching():
 		m.pal.Key(k.Text, back, enter, esc)
+	case m.toolKey(k):
+	case esc && m.gest.active:
+		m.cancelGesture()
 	case m.focus == inPalette && m.paletteKey(text):
 	case m.focus == inStage && m.canvasKey(k, text):
 	case m.focus == inInspector && m.ins.NavKey(text):
@@ -629,11 +652,13 @@ func (m *Model) render() string {
 	}
 	l := m.layout
 	m.stg.SetCursor(m.curX, m.curY, len(m.ed.Selected()) == 0 && (m.focus == inStage || m.focus == inPalette))
-	pal, stg, ins := m.pal.Lines(), m.stg.Lines(), m.ins.Lines()
+	pal := append(m.tb.Lines(l.tools.W, false)[:l.tools.H], m.pal.Lines()...)
+	stg := append([]string{m.tb.BarLine(l.options.W)}, m.stg.Lines()...)
+	ins := m.ins.Lines()
 	left, right := m.separator(leftDivider), m.separator(rightDivider)
 	out := make([]string, 0, m.h)
 	out = append(out, m.bar.Line(m.titleText()))
-	for i := 0; i < l.stage.H; i++ {
+	for i := 0; i < l.inspector.H; i++ {
 		out = append(out, pal[i]+left+stg[i]+right+ins[i])
 	}
 	out = append(out, m.statusBar())

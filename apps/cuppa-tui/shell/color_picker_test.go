@@ -17,7 +17,7 @@ func typeKeys(m *Model, s string) {
 func boxWithBorderColourOnScreen(t *testing.T) *Model {
 	t.Helper()
 	m := newShell(t)
-	send(m, click(5, 4)) // first palette entry: Box
+	send(m, click(5, firstComponentY)) // first palette entry: Box
 	send(m, release(m.layout.stage.X+10, 8))
 	if _, ok := m.Editor().Primary(); !ok {
 		t.Fatal("the dropped box should be selected")
