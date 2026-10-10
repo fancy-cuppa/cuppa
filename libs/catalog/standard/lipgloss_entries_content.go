@@ -64,7 +64,27 @@ func lipglossEntries() []definition.Definition {
 				textProp("columns", "Columns (Name:width, add :colour for colours)", "Cursor:2,Name:14,Swatch:6:colour,Value"),
 				textProp("rows", "Sample rows (; between rows, , between cells)", "▸,Accent,#ff007f,#ff007f;,Focus,#00f0ff,#00f0ff;,Success,#3ddc84,#3ddc84;,Error,#ff4d4d,#ff4d4d"),
 				textProp("styles", "Row styles (normal, selected, dim, accent)", "selected,normal,normal,dim"),
+				textProp("cellstyles", "Cell styles (given by the program)", ""),
 				colorProp("color", "Colour", "212"),
+			},
+		},
+		{
+			ID: "lipgloss.keybar", Name: "Key bar", Family: definition.FamilyLipgloss,
+			Description: "A line of key hints: the key in bold, its label after it. Bind the hints and the program says which ones show; a click raises the component's event with the column.",
+			DefaultSize: size(60, 1), MinSize: size(4, 1), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("hints", "Hints (key:label, comma separated)", "↑↓:move,enter:edit,s:save,esc:back"),
+				colorProp("keyColor", "Key colour", "220"),
+				colorProp("labelColor", "Label colour", "240"),
+				intProp("gap", "Spaces between hints", 2, 0, 8),
+			},
+		},
+		{
+			ID: "lipgloss.slot", Name: "Model view", Family: definition.FamilyLipgloss,
+			Description: "The place of a view the program draws itself: bind the view and give it what a Bubbles model of the program rendered (a text area with its real cursor, a viewport). The design places and cuts it; its text is shown here only as a sample.",
+			DefaultSize: size(40, 6), MinSize: size(1, 1), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("view", "Sample view (| starts a line)", "The program's own view|is drawn here"),
 			},
 		},
 		{

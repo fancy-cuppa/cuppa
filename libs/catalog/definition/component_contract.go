@@ -1,7 +1,11 @@
 // Package definition holds the contracts that describe a designable component.
 package definition
 
-import "github.com/meta-tui/cuppa/libs/document/design"
+import (
+	"strings"
+
+	"github.com/meta-tui/cuppa/libs/document/design"
+)
 
 // Family groups components by where they come from.
 type Family string
@@ -112,6 +116,11 @@ const (
 // property of any component and is never stored.
 const MutedKey = "theme.muted"
 
+// PaletteKey is the reserved property key under which Effective hands the
+// design's named colours to painters, as "Name=#hex;Name=#hex". A text
+// property that names a colour (@Name) is read through it.
+const PaletteKey = "theme.palette"
+
 // Role is the part of a theme a colour property follows when the component
 // does not set it itself.
 type Role string
@@ -167,6 +176,13 @@ func (d Definition) Defaults() map[string]string {
 func (d Definition) Effective(own map[string]string, theme design.Theme, background string) map[string]string {
 	out := make(map[string]string, len(d.Props)+1)
 	out[MutedKey] = theme.Muted
+	if len(theme.Palette) > 0 {
+		entries := make([]string, len(theme.Palette))
+		for i, s := range theme.Palette {
+			entries[i] = s.Name + "=" + s.Color
+		}
+		out[PaletteKey] = strings.Join(entries, ";")
+	}
 	for _, p := range d.Props {
 		if v, set := own[p.Key]; set {
 			out[p.Key] = v
