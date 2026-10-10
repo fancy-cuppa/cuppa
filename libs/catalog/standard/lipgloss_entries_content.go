@@ -32,6 +32,19 @@ func lipglossEntries() []definition.Definition {
 			},
 		},
 		{
+			ID: "lipgloss.swatch", Name: "Colour swatch", Family: definition.FamilyLipgloss,
+			Description: "A colour shown as a block with its value and a label, like a row of a colour list. Bind the colour so a program can change it.",
+			DefaultSize: size(30, 1), MinSize: size(4, 1), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				textProp("label", "Label", "Accent"),
+				intProp("labelWidth", "Label width (0 fits the text)", 0, 0, 60),
+				colorProp("color", "Colour", "#ff007f"),
+				intProp("swatch", "Swatch width", 2, 1, 8),
+				boolProp("showValue", "Show the value", true),
+				colorProp("textColor", "Text colour", "255"),
+			},
+		},
+		{
 			ID: "lipgloss.list", Name: "List", Family: definition.FamilyLipgloss,
 			Description: "An enumerated list (lipgloss/list).",
 			DefaultSize: size(20, 5), MinSize: size(6, 1), Import: lipglossImport + "/list", Status: definition.StatusSupported,

@@ -42,6 +42,9 @@ func (m *Model) documentOptions(b *builder) {
 	}
 	b.blank()
 
+	m.paletteRows(b, doc)
+	b.blank()
+
 	b.text(theme.Bold(" Screen keys")).end()
 	keys := design.FormatKeys(doc.Keys)
 	b.text(" ")
@@ -198,4 +201,37 @@ func (m *Model) sizePresets(b *builder, doc design.Document) {
 		b.add(theme.Button(label, doc.Width != w || doc.Height != h), func() { m.report(m.ed.SetCanvasSize(w, h)) })
 	}
 	b.end()
+}
+
+// paletteRows lists the design's named colours. Properties choose one by name,
+// so the components that use a name follow it, and a Go screen exported from
+// the design exposes each one to the program.
+func (m *Model) paletteRows(b *builder, doc design.Document) {
+	b.text(theme.Bold(" Named colours")).end()
+	if len(doc.Theme.Palette) == 0 {
+		b.text(" " + theme.Faded("A colour you set on a")).end()
+		b.text(" " + theme.Faded("component is named after")).end()
+		b.text(" " + theme.Faded("its property.")).end()
+	}
+	for _, s := range doc.Theme.Palette {
+		name, color := s.Name, s.Color
+		swatch := lipgloss.NewStyle().Background(lipgloss.Color(color)).Render("  ")
+		open := func() { m.startEdit("swatch:"+name, color) }
+		if m.pickColor != nil {
+			open = func() { m.pickColor(name, color, func(v string) { m.report(m.ed.SetSwatch(name, v)) }) }
+		}
+		b.text(" ")
+		if m.editing == "swatch:"+name {
+			b.text(m.buf + "█")
+		} else {
+			b.text(swatch + " ").add(theme.Bold(name)+" "+theme.Faded(color), open)
+		}
+		b.text(" ").addMouse(theme.Button("[x]", true), func() { m.report(m.ed.RemoveSwatch(name)) }).end()
+	}
+	b.text(" ")
+	if m.editing == "swatch-new" {
+		b.text(m.buf + "█").end()
+		return
+	}
+	b.add(theme.Button("[+ colour]", true), func() { m.startEdit("swatch-new", "") }).end()
 }

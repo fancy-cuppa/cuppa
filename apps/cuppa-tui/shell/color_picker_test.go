@@ -43,8 +43,13 @@ func TestClickingAColourOpensThePickerAndATypedValueIsApplied(t *testing.T) {
 		t.Fatal("Enter on a valid value should close the dialog")
 	}
 	n, _ := m.Editor().Primary()
-	if n.Props["color"] != "#ff8800" {
+	// A colour set in the details bar is a named colour, named after the
+	// property, so it can be reused and a program can change it.
+	if n.Props["color"] != "@Border color" {
 		t.Fatalf("colour = %q", n.Props["color"])
+	}
+	if c, _ := m.Editor().Document().Theme.Colour("Border color"); c != "#ff8800" {
+		t.Fatalf("named colour = %q", c)
 	}
 	if !m.Editor().CanUndo() {
 		t.Fatal("changing a colour is an undo step")

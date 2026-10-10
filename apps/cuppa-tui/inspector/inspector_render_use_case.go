@@ -273,6 +273,9 @@ func (m *Model) properties(b *builder, n design.Node) {
 				m.themeMark(b, n.ID, p, own)
 			}
 			b.end()
+			if p.Kind == definition.PropColor {
+				m.swatchRow(b, n, p)
+			}
 		}
 		m.bindRow(b, n, p.Key)
 	}
@@ -324,6 +327,10 @@ func (m *Model) textProp(b *builder, field, value string) {
 func (m *Model) propValue(b *builder, id design.NodeID, p definition.PropSpec, value string) {
 	field := "prop:" + p.Key
 	set := func(v string) func() {
+		if p.Kind == definition.PropColor {
+			// A colour is named after its property, so it can be reused.
+			return func() { m.report(m.ed.SetColour(id, p.Key, v)) }
+		}
 		return func() { m.report(m.ed.SetProp(id, p.Key, v)) }
 	}
 	switch p.Kind {
@@ -395,4 +402,36 @@ func (m *Model) behaviourRows(b *builder, n design.Node) {
 	}
 	b.text(" ").add(theme.Button(mark(n.Draggable, "Draggable"), !n.Locked), func() { m.ed.SetDraggable(n.ID, !n.Draggable) }).end()
 	b.text(" ").add(theme.Button(mark(n.Resizable, "Resizable"), !n.Locked), func() { m.ed.SetResizable(n.ID, !n.Resizable) }).end()
+}
+
+// swatchRow shows which named colour a colour property uses and steps through
+// the palette: the properties that use the same name change together, and a
+// program that shows the screen can change the colour by that name.
+func (m *Model) swatchRow(b *builder, n design.Node, p definition.PropSpec) {
+	palette := m.ed.Swatches()
+	current, used := strings.CutPrefix(n.Props[p.Key], design.TokenPrefix)
+	if len(palette) == 0 {
+		return
+	}
+	b.text("  " + theme.Faded("name "))
+	at := -1
+	for i, s := range palette {
+		if used && s.Name == current {
+			at = i
+		}
+	}
+	step := func(d int) {
+		next := ((at+d)%len(palette) + len(palette)) % len(palette)
+		if at < 0 && d < 0 {
+			next = len(palette) - 1
+		}
+		m.report(m.ed.UseSwatch(n.ID, p.Key, palette[next].Name))
+	}
+	shown := theme.Faded("(none)")
+	if at >= 0 {
+		shown = theme.Bold(palette[at].Name)
+	}
+	b.addMouse(theme.Button("◂", !n.Locked), func() { step(-1) }).text(" ").
+		addStep(shown, func() { step(1) }, step).text(" ").
+		addMouse(theme.Button("▸", !n.Locked), func() { step(1) }).end()
 }

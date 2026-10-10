@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/document/design"
@@ -111,7 +112,8 @@ func (e *Editor) SetTheme(background string, t design.Theme) error {
 			return fmt.Errorf("editor: %w", err)
 		}
 	}
-	if background == e.doc.Background && t == e.doc.Theme {
+	t.Palette = e.doc.Theme.Palette // a colour scheme does not touch the named colours
+	if background == e.doc.Background && reflect.DeepEqual(t, e.doc.Theme) {
 		return nil
 	}
 	e.apply(func() bool {

@@ -253,7 +253,7 @@ func TestTheThemeRoundTripsAndABadThemeColourIsDropped(t *testing.T) {
 	}
 	// A design with no theme stores no theme at all.
 	plain, _ := Encode(design.NewDocument("plain", 10, 5))
-	if raw, _ := Decode(plain); raw.Theme != (design.Theme{}) {
+	if raw, _ := Decode(plain); !raw.Theme.IsZero() {
 		t.Error("no theme in, none out")
 	}
 }
@@ -303,5 +303,31 @@ func TestScreenContractRoundTripAndCleaning(t *testing.T) {
 	n := got.Nodes[0]
 	if n.Bind != nil || n.ShowIf != "" || n.Event != "" || len(got.Keys) != 1 || got.Keys[0].Key != "b" {
 		t.Fatalf("not cleaned: %+v keys %+v", n, got.Keys)
+	}
+}
+
+
+func TestPaletteRoundTripAndCleaning(t *testing.T) {
+	d := design.NewDocument("Colours", 40, 10)
+	d.Theme.Palette = []design.Swatch{{Name: "Accent", Color: "#ff007f"}, {Name: "Dim", Color: "#6b7280"}}
+	d.Add(design.Node{Component: "lipgloss.label", Name: "Title", Rect: design.Rect{W: 10, H: 1},
+		Props: map[string]string{"color": "@Accent"}})
+	data, err := Encode(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, d) {
+		t.Fatalf("palette lost: got %+v, want %+v", got.Theme, d.Theme)
+	}
+
+	d.Theme.Palette = []design.Swatch{{Name: "Ok", Color: "#112233"}, {Name: "Ok", Color: "#445566"}, {Name: "9bad", Color: "#000000"}, {Name: "NoColour", Color: "nope"}}
+	data, _ = Encode(d)
+	got, _ = Decode(data)
+	if len(got.Theme.Palette) != 1 || got.Theme.Palette[0].Name != "Ok" || got.Theme.Palette[0].Color != "#112233" {
+		t.Errorf("not cleaned: %+v", got.Theme.Palette)
 	}
 }

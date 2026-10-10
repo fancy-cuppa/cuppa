@@ -67,6 +67,7 @@ func normalise(doc design.Document) design.Document {
 		doc.Profile = ""
 	}
 	doc.Keys = cleanKeys(doc.Keys)
+	doc.Theme.Palette = cleanPalette(doc.Theme.Palette)
 	nodes := cleanNodes(doc.Nodes, 0)
 	doc.Embedded = cleanEmbedded(doc.Embedded)
 	doc.Nodes = nodes
@@ -150,6 +151,22 @@ func cleanKeys(in []design.KeyBinding) []design.KeyBinding {
 		}
 		seen[k.Key] = true
 		out = append(out, k)
+	}
+	return out
+}
+
+// cleanPalette drops swatches with an invalid name or colour and repeated
+// names.
+func cleanPalette(in []design.Swatch) []design.Swatch {
+	var out []design.Swatch
+	seen := map[string]bool{}
+	for _, sw := range in {
+		color, err := space.Normalise(sw.Color)
+		if err != nil || color == "" || !design.ValidInputName(sw.Name) || seen[sw.Name] {
+			continue
+		}
+		seen[sw.Name] = true
+		out = append(out, design.Swatch{Name: sw.Name, Color: color})
 	}
 	return out
 }

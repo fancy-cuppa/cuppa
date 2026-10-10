@@ -45,7 +45,7 @@ var bubbleTableSource string
 // community widgets are drawn with Lip Gloss to look like the library they
 // stand for, so the generated project needs no extra module for them.
 var generated = map[string]bool{
-	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true,
+	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true, "lipgloss.swatch": true,
 	"bubbles.textinput": true, "bubbles.textarea": true, "bubbles.list": true, "bubbles.table": true,
 	"bubbles.viewport": true, "bubbles.paginator": true, "bubbles.spinner": true, "bubbles.progress": true,
 	"bubbles.stopwatch": true, "bubbles.timer": true, "bubbles.tree": true,

@@ -156,6 +156,28 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 		return field, true
 	}
 
+	// The palette: a typed field per named colour, in the order they were named.
+	type paletteField struct{ field, name, color string }
+	var palette []paletteField
+	paletteOf := map[string]string{}
+	for _, sw := range doc.Theme.Palette {
+		field := pascal(sw.Name)
+		if field == "" {
+			note("colour %q gives no Go name", sw.Name)
+			continue
+		}
+		if other, taken := paletteOf[field]; taken {
+			note("colour %q gives the name %s, which colour %q already has", sw.Name, field, other)
+			continue
+		}
+		paletteOf[field] = sw.Name
+		palette = append(palette, paletteField{field: field, name: sw.Name, color: sw.Color})
+	}
+	paletteFieldOf := map[string]string{}
+	for _, pf := range palette {
+		paletteFieldOf[pf.name] = pf.field
+	}
+
 	var events []string
 	eventOf := map[string]string{}
 	addEvent := func(e string) {
@@ -176,6 +198,11 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	for _, l := range placed {
 		ps := partSource{l: l}
 		def, _ := cat.Get(l.Kind)
+		for _, key := range sortedKeys(l.Swatches) {
+			if field, ok := paletteFieldOf[l.Swatches[key]]; ok {
+				ps.assign = append(ps.assign, fmt.Sprintf("if p.Palette.%s != \"\" {\n\t\t\t\tv[%q] = p.Palette.%s\n\t\t\t}", field, key, field))
+			}
+		}
 		for _, key := range sortedKeys(l.Bind) {
 			spec, ok := def.Prop(key)
 			if !ok {
@@ -228,10 +255,27 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	for _, in := range inputs {
 		fmt.Fprintf(&c, "\t// %s is the %s.\n\t%s %s\n", in.field, in.use, in.field, in.typ)
 	}
+	if len(palette) > 0 {
+		fmt.Fprintf(&c, "\t// Palette is the design's named colours; set one and every component that\n\t// uses it follows. An empty one keeps the design's colour.\n\tPalette %sPalette\n", ident)
+	}
 	c.WriteString("\t// Theme is the colours components follow; an empty one keeps the design's.\n\tTheme Theme\n}\n\n")
+	if len(palette) > 0 {
+		fmt.Fprintf(&c, "// %sPalette is a field per named colour of the design.\ntype %sPalette struct {\n", ident, ident)
+		for _, pf := range palette {
+			fmt.Fprintf(&c, "\t// %s is the colour named %s.\n\t%s string\n", pf.field, strconv.Quote(pf.name), pf.field)
+		}
+		fmt.Fprintf(&c, "}\n\n// Default%sPalette is the palette as it was designed.\nfunc Default%sPalette() %sPalette {\n\treturn %sPalette{\n", ident, ident, ident, ident)
+		for _, pf := range palette {
+			fmt.Fprintf(&c, "\t\t%s: %s,\n", pf.field, strconv.Quote(pf.color))
+		}
+		c.WriteString("\t}\n}\n\n")
+	}
 	fmt.Fprintf(&c, "// Default%sProps is the screen as it was designed: each input holds the value\n// it had in the design.\nfunc Default%sProps() %sProps {\n\treturn %sProps{\n", ident, ident, ident, ident)
 	for _, in := range inputs {
 		fmt.Fprintf(&c, "\t\t%s: %s,\n", in.field, in.def)
+	}
+	if len(palette) > 0 {
+		fmt.Fprintf(&c, "\t\tPalette: Default%sPalette(),\n", ident)
 	}
 	c.WriteString("\t}\n}\n\n")
 	fmt.Fprintf(&c, "// %sEvent is what a click on a component or a key raises. The concrete types\n// are the %s... structs below.\ntype %sEvent interface{ is%sEvent() }\n\n", ident, ident, ident, ident)

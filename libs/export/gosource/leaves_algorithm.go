@@ -1,6 +1,7 @@
 package gosource
 
 import (
+	"strings"
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
 	"github.com/meta-tui/cuppa/libs/document/drawlayer"
@@ -34,6 +35,9 @@ type leaf struct {
 	// shows it and the event a click raises.
 	Bind          map[string]string
 	ShowIf, Event string
+	// Swatches maps the colour properties that use a palette swatch ("@Name")
+	// to the swatch's name, so a screen can be handed another colour.
+	Swatches map[string]string
 	// Roles maps the colour properties the component has not set to the theme
 	// role they follow, so a screen can be handed a theme at run time.
 	Roles map[string]string
@@ -101,7 +105,7 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat, t)...)
 		default:
 			l := leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props,
-				Bind: n.Bind, ShowIf: n.ShowIf, Event: n.Event, Roles: rolesOf(n, cat)}
+				Bind: n.Bind, ShowIf: n.ShowIf, Event: n.Event, Roles: rolesOf(n, cat), Swatches: swatchesOf(n, cat, t.theme)}
 			if depth == 0 && (!n.Layout.IsZero() || n.Draggable || n.Resizable) {
 				l.Layout = n.Layout
 				l.Drag, l.Resize = n.Draggable, n.Resizable
@@ -154,4 +158,28 @@ func rolesOf(n design.Node, cat Catalog) map[string]string {
 		roles[spec.Key] = string(spec.Role)
 	}
 	return roles
+}
+
+// swatchesOf lists the colour properties of the node that use a swatch of the
+// palette.
+func swatchesOf(n design.Node, cat Catalog, theme design.Theme) map[string]string {
+	def, ok := cat.Get(n.Component)
+	if !ok {
+		return nil
+	}
+	var out map[string]string
+	for _, spec := range def.Props {
+		name, used := strings.CutPrefix(n.Props[spec.Key], design.TokenPrefix)
+		if spec.Kind != definition.PropColor || !used {
+			continue
+		}
+		if _, exists := theme.Colour(name); !exists {
+			continue
+		}
+		if out == nil {
+			out = map[string]string{}
+		}
+		out[spec.Key] = name
+	}
+	return out
 }

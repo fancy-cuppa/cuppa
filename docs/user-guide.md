@@ -138,6 +138,7 @@ The program places the **real components**: the Bubbles models (text input, text
 - **On click.** A component's *On click* names an event the screen raises when the component is clicked.
 - **Screen keys.** With nothing selected, *Screen keys* takes `key=Event:label` pairs separated by commas (`s=Save:save, esc=Back:back`). Each key raises its event, and the label is for the program's key bar.
 - **Theme.** The roles of the design's theme (text, muted, border, secondary, background) are handed to the screen at run time; components that set their own colour keep it.
+- **Named colours.** A colour you set on a property is named after it (*Foreground*, then *Foreground 2*). Under a colour property, the `name ◂ ▸` row steps through the names: choose the same name on another component and both follow it. With nothing selected, *Named colours* lists them (click one to change it, `[x]` to delete one that is not used, `[+ colour]` to add one). A Go screen exposes each name as a field, `p.Palette.Accent = "#33ccff"`, and every component that uses it follows. The *Colour swatch* component shows a colour as a block with its value and a label.
 
 *Export → Go screen (contract)…* writes the open design into a folder that is a package of its own, next to the screens already there. For a folder of designs at once use the command line, which also removes the files of a design that is gone:
 
