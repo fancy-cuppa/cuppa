@@ -63,9 +63,9 @@ func (m *Model) focusHints() string {
 	case inMenu:
 		return "Menu bar  ·  ←/→ menu  ·  ↓/↑ item  ·  Enter run  ·  Esc close"
 	case inPalette:
-		return "Palette  ·  F6 next area  ·  Ctrl+F search  ·  Esc canvas"
+		return "Palette  ·  ↑/↓ choose  ·  Enter place  ·  ←/→ fold  ·  / search  ·  F6 next area"
 	case inInspector:
 		return "Details  ·  F6 next area  ·  Esc canvas"
 	}
-	return "Canvas  ·  F6 next area  ·  F10 menu  ·  arrows move  ·  Del delete"
+	return "Canvas  ·  arrows move  ·  Alt+arrows resize  ·  Tab layer  ·  F6 area"
 }

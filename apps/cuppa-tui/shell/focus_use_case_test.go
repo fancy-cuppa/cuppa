@@ -134,7 +134,7 @@ func TestFocusedAreaIsFlaggedForTheScreenReader(t *testing.T) {
 func TestStatusBarListsTheKeysOfTheFocusedArea(t *testing.T) {
 	m := newShell(t)
 	var _ = design.Rect{}
-	if !strings.Contains(m.statusBar(), "F10 menu") {
+	if !strings.Contains(m.statusBar(), "Tab layer") {
 		t.Fatalf("canvas hints: %q", m.statusBar())
 	}
 	send(m, key('2', tea.ModAlt))
