@@ -37,6 +37,7 @@ const (
 	inPalette
 	inStage
 	inInspector
+	inMenu
 )
 
 // Default canvas size of a new design, in cells.
@@ -73,6 +74,9 @@ type Model struct {
 	w, h   int
 	layout layout
 
+	// focus is the area the keyboard is on: the menu bar, the palette, the
+	// canvas (the default) or the details bar.
+	focus pane
 	// owner is the pane a held-button gesture started in; it keeps receiving
 	// events even when the pointer leaves it.
 	owner pane
@@ -104,6 +108,7 @@ func New(cat *registry.Registry) *Model {
 		packs: packstate.Open(""),
 		stg:   stage.New(ed, live),
 		ins:   inspector.New(ed, live),
+		focus: inStage,
 	}
 	m.flow.SetOnLoad(m.adoptEmbedded)
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
@@ -242,6 +247,11 @@ func (m *Model) route(e pointer.Event) {
 	}
 	if m.owner == nowhere && m.dragging == "" {
 		if act, used := m.bar.Handle(e); used {
+			if m.bar.Open() {
+				m.setFocus(inMenu)
+			} else if m.focus == inMenu {
+				m.setFocus(inStage)
+			}
 			m.perform(act)
 			return
 		}
@@ -329,7 +339,9 @@ const shortcutsTemplate = "Ctrl+N  New            Ctrl+O  Open\n" +
 	"Ctrl+Shift+]  To front Ctrl+Shift+[  To back\n" +
 	"Arrows  Move the selection 1 cell (Shift: 10)\n" +
 	"Up/Down in a number: +1 / -1 (Shift: 10)\n" +
-	"Esc     Deselect / cancel\n\n" +
+	"F6      Next area (Shift+F6 previous, Alt+1..4 jump)\n" +
+	"F10     Open the menus (Alt+F/E/V/X/H one menu)\n" +
+	"Esc     Deselect / cancel / back to the canvas\n\n" +
 	"Everything else is the mouse: drag components from the left onto\n" +
 	"the canvas, drag the corners to resize."
 
@@ -411,6 +423,9 @@ func (m *Model) mouse(e pointer.Event) {
 	if m.dragging != "" {
 		m.dragFromPalette(e)
 	}
+	if e.Phase == pointer.Down && target != nowhere {
+		m.setFocus(target)
+	}
 	if e.Phase == pointer.Down && m.dragging == "" {
 		m.owner = target
 	}
@@ -429,6 +444,8 @@ func (m *Model) dragFromPalette(e pointer.Event) {
 			if _, err := m.ed.Add(m.dragging, cx, cy); err != nil {
 				return
 			}
+			// The new component is selected, so the keyboard is on the canvas.
+			m.setFocus(inStage)
 		}
 		m.endDrag()
 	case over:
@@ -491,11 +508,24 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		m.flow.SaveAs()
 		return
 	}
-	switch {
-	case m.bar.Open():
-		if esc {
-			m.bar.Close()
+	if m.run == nil && !m.ins.Dragging() && !m.ins.Editing() && !m.pal.Searching() && m.focusKey(text) {
+		return
+	}
+	if m.bar.Open() || m.focus == inMenu {
+		act, used := m.bar.Key(text)
+		if !m.bar.Focused() {
+			m.setFocus(inStage)
 		}
+		if act != "" {
+			m.perform(act)
+		}
+		// An open dropdown takes every key; the focused bar passes on the
+		// ones it does not use (Ctrl+Z still undoes).
+		if used || m.bar.Open() {
+			return
+		}
+	}
+	switch {
 	case m.run != nil:
 		m.previewKey(msg)
 	case m.ins.Dragging():
@@ -513,6 +543,8 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		}
 	case m.pal.Searching():
 		m.pal.Key(k.Text, back, enter, esc)
+	case esc && m.focus != inStage:
+		m.setFocus(inStage)
 	case esc:
 		m.endDrag()
 		m.ed.Clear()
@@ -627,7 +659,7 @@ func (m *Model) titleText() string {
 }
 
 func (m *Model) statusBar() string {
-	hint := "Drag a component from the left bar onto the canvas"
+	var hint string
 	switch {
 	case m.grab != noDivider || m.hover != noDivider:
 		hint = "Drag to change the width of the panel"
@@ -636,10 +668,14 @@ func (m *Model) statusBar() string {
 	case m.stg.Busy():
 		hint = "Release to finish"
 	default:
+		hint = m.focusHints()
+		if m.command {
+			hint = strings.ReplaceAll(hint, "Ctrl", "Cmd")
+		}
 		if n, ok := m.ed.Primary(); ok {
-			hint = fmt.Sprintf("%s  (%d,%d)  %d×%d", n.Name, n.Rect.X, n.Rect.Y, n.Rect.W, n.Rect.H)
+			hint = fmt.Sprintf("%s  (%d,%d)  %d×%d", n.Name, n.Rect.X, n.Rect.Y, n.Rect.W, n.Rect.H) + "  ·  " + hint
 		} else if st := m.flow.Status(); st != "" {
-			hint = st
+			hint = st + "  ·  " + hint
 		}
 	}
 	return theme.Fit(" "+theme.Dim(hint), m.w)

@@ -120,7 +120,11 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 | Arrow keys | Move the selection 1 cell (with Shift, 10 cells); each press is one undo step |
 | Up / Down in a number field | Add or subtract 1 (with Shift, 10); Enter ends the edit |
 | Ctrl+F | Go to the component search |
-| Esc | Deselect, cancel a drag, close a menu or dialog |
+| F6 / Shift+F6 | Move the keyboard to the next / previous area: menu bar, palette, canvas, details bar (the focused area's title is highlighted) |
+| Alt+1 to Alt+4 | Jump to the menu bar, palette, canvas or details bar |
+| F10, or Alt+F / E / V / X / H | Open the first menu, or File / Edit / View / Export / Help |
+| Left, Right, Up, Down, Enter, Esc in a menu | Change menu, move through items, run the item, close |
+| Esc | Deselect, cancel a drag, close a menu or dialog; from the menu bar, palette or details bar it returns to the canvas first |
 | Ctrl+Q | Quit (Ctrl+C is Copy) |
 
 **On a Mac**, the desktop app and the web page show **Cmd** where this page says Ctrl (and accept it); the Cmd key does what Ctrl does. In a terminal on a Mac, the terminal program keeps Cmd for itself, so use Ctrl there, unless your terminal reports Cmd to programs (kitty, WezTerm and Ghostty can), in which case Cmd works too.

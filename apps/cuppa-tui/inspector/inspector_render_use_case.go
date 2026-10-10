@@ -62,7 +62,11 @@ func plain(s string) string { return s }
 // Lines renders the pane as exactly h lines of w cells.
 func (m *Model) Lines() []string {
 	b := &builder{}
-	b.text(theme.Title(" DETAILS")).end()
+	title := theme.Title(" DETAILS")
+	if m.focused {
+		title = theme.Selected(" DETAILS ")
+	}
+	b.text(title).end()
 	m.history(b)
 	b.blank()
 	if n, ok := m.ed.Primary(); !ok {

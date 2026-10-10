@@ -35,6 +35,7 @@ type Model struct {
 	rows      []row
 	scroll    int
 	hover     int // list index under the pointer, -1 if none
+	focused   bool
 	w, h      int
 	query     string
 	searching bool
@@ -153,12 +154,19 @@ func (m *Model) Key(text string, backspace, enter, escape bool) {
 	m.scroll = 0
 }
 
+// SetFocused marks the pane as the one the keyboard is on; its title shows it.
+func (m *Model) SetFocused(on bool) { m.focused = on }
+
 // Leave clears the hover highlight when the pointer leaves the pane.
 func (m *Model) Leave() { m.hover = -1 }
 
 // Lines renders the pane as exactly h lines of w cells.
 func (m *Model) Lines() []string {
-	lines := []string{theme.Title(" COMPONENTS")}
+	title := theme.Title(" COMPONENTS")
+	if m.focused {
+		title = theme.Selected(" COMPONENTS ")
+	}
+	lines := []string{title}
 	search := " ⌕ search components"
 	switch {
 	case m.searching:
