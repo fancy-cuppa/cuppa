@@ -491,6 +491,9 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 	text := k.Keystroke()
 	enter, esc, back := k.Code == tea.KeyEnter, k.Code == tea.KeyEscape, k.Code == tea.KeyBackspace
 	if dlg := m.flow.Modal(); dlg != nil {
+		if nav, ok := dlg.(modal.Navigator); ok && !enter && !esc && !back && nav.Nav(text) {
+			return
+		}
 		dlg.Key(k.Text, back, enter, esc)
 		return
 	}

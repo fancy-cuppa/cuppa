@@ -163,7 +163,22 @@ Every control of the details bar that a click can press is a **stop**; the stops
 
 While a field is being edited its own keys apply, as before: typing, Up/Down to step a number, Enter to commit, Esc to cancel. Enter on the canvas, with a selection, puts the keyboard here.
 
-The rest of the proposal (steps 4 and 5) is not built yet.
+### Step 4: dialogs (issue #138, built)
+
+A dialog that can take navigation keys implements `modal.Navigator`; the shell offers it every key by name first, and what it does not use reaches it as typed text, as before. Enter and Esc keep their meaning everywhere.
+
+| Dialog | Keys |
+|---|---|
+| Message boxes (Save changes?, notices) | Tab / Shift+Tab or arrows choose the button Enter presses |
+| Name prompt | Tab / Shift+Tab move between the field, OK and Cancel; Enter on Cancel cancels |
+| Open / Save | Up / Down move through the list (a file's name fills the name field), PageUp / PageDown, Home / End, Alt+Up for the parent folder; Enter opens a highlighted folder, otherwise accepts the name |
+| Component packs | Up / Down choose a pack, Space switches it, Delete or `r` removes an installed pack, `a` adds one |
+| Colour scheme for the theme | Left / Right step (Shift: 10), Up / Down and PageUp / PageDown by 10, Home / End, a letter or digit jumps |
+| Colour picker | Tab / Shift+Tab change tab; arrows move through the swatches (16: 8 per row; 256: 6 per row, the cube's rows; Themes: the scheme's 16, with PageUp / PageDown for the scheme); on RGB and HSL Up / Down choose a slider and Left / Right change it (Shift: 10); typing still edits the value field |
+
+The Tab order the proposal listed for the colour picker (tab bar, swatches, value, buttons) became: Tab changes the tab, the value field always takes typing, Enter accepts. A separate focus ring would have made typing a hex value need an extra key.
+
+The rest of the proposal (step 5) is not built yet.
 
 ## Questions (answered)
 

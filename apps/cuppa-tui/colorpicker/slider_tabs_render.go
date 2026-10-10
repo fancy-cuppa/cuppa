@@ -59,8 +59,14 @@ func (m *Model) hslLines(y0 int) []string {
 // the number; pressing or dragging on the bar sets the value.
 func (m *Model) sliderLines(y0 int, sliders []slider) []string {
 	var lines []string
-	for _, s := range sliders {
+	for i, s := range sliders {
 		s := s
+		label := theme.Bold(s.label)
+		if i == m.slide {
+			label = theme.Selected(" " + s.label + " ")
+		} else {
+			label = " " + label + " "
+		}
 		step := func(d float64) func(int) {
 			return func(int) { s.set(math.Min(math.Max(math.Round(s.value)+d, 0), s.max)) }
 		}
@@ -69,7 +75,7 @@ func (m *Model) sliderLines(y0 int, sliders []slider) []string {
 			s.set(math.Round(t * s.max))
 		}
 		r := m.newRow(y0 + len(lines))
-		r.text(" " + theme.Bold(s.label) + " ")
+		r.text(label)
 		r.span(theme.Button("[-]", true), step(-1), nil).text(" ")
 		r.span(m.bar(s), fromX, fromX)
 		r.text(" ").span(theme.Button("[+]", true), step(1), nil)

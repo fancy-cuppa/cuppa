@@ -39,6 +39,9 @@ type Model struct {
 	enabled func(definition.Family) bool
 	toggle  func(definition.Family)
 
+	// cursor is the pack the keyboard is on, shown once it has moved.
+	cursor  int
+	moved   bool
 	rect    design.Rect
 	hoverY  int
 	hotBtn  string
@@ -79,7 +82,7 @@ func (m *Model) Lines() []string {
 		}
 		head := theme.Fit(fmt.Sprintf(" %s %s", mark, e.Pack.Name), max(inner-ansi.StringWidth(tail)-1, 1))
 		head += " " + tail
-		if m.hoverY == rowTop(i) {
+		if m.hoverY == rowTop(i) || m.moved && m.hoverY < 0 && i == m.cursor {
 			head = theme.Hovered(ansi.Strip(head))
 		}
 		content = append(content, " "+head, "      "+theme.Faded(theme.Fit(e.Pack.Description, inner-6)), "")
@@ -171,6 +174,35 @@ func (m *Model) Key(_ string, _, enter, esc bool) {
 	if enter || esc {
 		m.outcome, m.done = modal.Outcome{Button: doneButton, Canceled: esc}, true
 	}
+}
+
+// Nav implements modal.Navigator: Up and Down move through the packs, Space
+// switches the pack on or off, Delete or r removes an installed pack, a adds
+// one. Enter is Done.
+func (m *Model) Nav(name string) bool {
+	if len(m.entries) == 0 && name != "a" {
+		return false
+	}
+	switch name {
+	case "up":
+		m.cursor = (m.cursor + len(m.entries) - 1) % len(m.entries)
+	case "down":
+		m.cursor = (m.cursor + 1) % len(m.entries)
+	case "space":
+		m.toggle(m.entries[m.cursor].Pack.ID)
+	case "delete", "r":
+		pack := m.entries[m.cursor].Pack
+		if pack.Source == "" {
+			return true
+		}
+		m.outcome, m.done = modal.Outcome{Button: RemoveButton, Value: string(pack.ID)}, true
+	case "a":
+		m.outcome, m.done = modal.Outcome{Button: AddButton}, true
+	default:
+		return false
+	}
+	m.moved = true
+	return true
 }
 
 // Outcome implements modal.Modal.

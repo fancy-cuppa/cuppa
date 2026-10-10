@@ -27,8 +27,12 @@ type Model struct {
 	// per row, possibly with colour codes.
 	art []string
 
-	rect    design.Rect
-	hover   int
+	rect  design.Rect
+	hover int
+	// focus is the button Enter presses; it moves with Tab and the arrows and
+	// is drawn once the keyboard has moved it.
+	focus   int
+	moved   bool
 	spans   []span
 	outcome modal.Outcome
 	done    bool
@@ -119,7 +123,7 @@ func (m *Model) buttonRow() (string, []span) {
 		label := " " + b + " "
 		style := theme.Button
 		text := "[" + label + "]"
-		if i == m.hover {
+		if i == m.hover || m.hover < 0 && m.moved && i == m.focus {
 			text = theme.Selected(text)
 		} else {
 			text = style(text, true)
@@ -161,8 +165,24 @@ func (m *Model) Key(_ string, _, enter, esc bool) {
 	case esc:
 		m.finish("", true)
 	case enter:
-		m.finish(m.buttons[0], false)
+		m.finish(m.buttons[m.focus], false)
 	}
+}
+
+// Nav implements modal.Navigator: Tab, Shift+Tab and the arrows choose the
+// button that Enter presses.
+func (m *Model) Nav(name string) bool {
+	n := len(m.buttons)
+	switch name {
+	case "tab", "right", "down":
+		m.focus = (m.focus + 1) % n
+	case "shift+tab", "left", "up":
+		m.focus = (m.focus + n - 1) % n
+	default:
+		return false
+	}
+	m.moved = true
+	return true
 }
 
 func (m *Model) finish(button string, canceled bool) {
@@ -183,7 +203,7 @@ func (m *Model) Describe() []a11y.Node {
 	}
 	for i, b := range m.buttons {
 		btn := a11y.Button(b)
-		btn.Focused = i == 0 // Enter presses the first one
+		btn.Focused = i == m.focus // Enter presses this one
 		nodes = append(nodes, btn)
 	}
 	return nodes

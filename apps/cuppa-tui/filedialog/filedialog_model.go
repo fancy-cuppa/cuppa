@@ -51,6 +51,9 @@ type Model struct {
 	name   []rune
 	errMsg string
 	hover  int // list row under the pointer, -1 for none
+	// typed is true once the name field has been typed into, so Enter accepts
+	// the name rather than opening the highlighted folder.
+	typed bool
 
 	rect    design.Rect
 	okSpan  span
@@ -243,15 +246,63 @@ func (m *Model) Key(text string, back, enter, esc bool) {
 	switch {
 	case esc:
 		m.done, m.outcome = true, modal.Outcome{Canceled: true}
+	case enter && m.picked >= 0 && m.picked < len(m.entries) && m.entries[m.picked].dir && !m.typed:
+		m.clickEntry(m.picked)
 	case enter:
 		m.accept()
 	case back:
+		m.typed = true
 		if len(m.name) > 0 {
 			m.name = m.name[:len(m.name)-1]
 		}
 	case text != "":
 		m.name = append(m.name, []rune(text)...)
-		m.picked = -1
+		m.picked, m.typed = -1, true
+	}
+}
+
+// Nav implements modal.Navigator: Up and Down move the highlight through the
+// list (a file's name goes into the name field), PageUp and PageDown move by a
+// page, Home and End jump, and Alt+Up goes to the parent folder. Enter opens a
+// highlighted folder, or accepts the name.
+func (m *Model) Nav(name string) bool {
+	last := len(m.entries) - 1
+	switch name {
+	case "up":
+		m.highlight(m.picked - 1)
+	case "down":
+		m.highlight(m.picked + 1)
+	case "pgup":
+		m.highlight(m.picked - listRows)
+	case "pgdown":
+		m.highlight(m.picked + listRows)
+	case "home":
+		m.highlight(0)
+	case "end":
+		m.highlight(last)
+	case "alt+up":
+		m.cd(filepath.Dir(m.dir))
+	default:
+		return false
+	}
+	return true
+}
+
+// highlight moves the highlight to entry i (kept in range) and scrolls to it.
+func (m *Model) highlight(i int) {
+	if len(m.entries) == 0 {
+		return
+	}
+	i = min(max(i, 0), len(m.entries)-1)
+	m.picked, m.typed = i, false
+	switch {
+	case i < m.scroll:
+		m.scroll = i
+	case i >= m.scroll+listRows:
+		m.scroll = i - listRows + 1
+	}
+	if e := m.entries[i]; !e.dir {
+		m.name = []rune(e.name)
 	}
 }
 

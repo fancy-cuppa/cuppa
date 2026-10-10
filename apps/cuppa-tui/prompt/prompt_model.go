@@ -25,6 +25,8 @@ type Model struct {
 	text         []rune
 	hint         string
 
+	// focus is 0 for the text field, 1 for OK and 2 for Cancel.
+	focus   int
 	rect    design.Rect
 	hot     string
 	outcome modal.Outcome
@@ -60,7 +62,7 @@ func (m *Model) Lines() []string {
 }
 
 func (m *Model) button(id, label string) string {
-	if m.hot == id {
+	if m.hot == id || m.focus == 1 && id == "ok" || m.focus == 2 && id == "no" {
 		return theme.Selected(label)
 	}
 	return theme.Button(label, true)
@@ -106,8 +108,12 @@ func (m *Model) Key(text string, back, enter, esc bool) {
 	switch {
 	case esc:
 		m.finish(true)
+	case enter && m.focus == 2:
+		m.finish(true)
 	case enter:
 		m.confirm()
+	case m.focus != 0:
+		// A button has the keyboard; typing goes nowhere.
 	case back:
 		if len(m.text) > 0 {
 			m.text = m.text[:len(m.text)-1]
@@ -115,6 +121,25 @@ func (m *Model) Key(text string, back, enter, esc bool) {
 	case text != "":
 		m.text = append(m.text, []rune(text)...)
 	}
+}
+
+// Nav implements modal.Navigator: Tab and Shift+Tab move between the text
+// field, OK and Cancel; with a button focused the arrows move between them.
+func (m *Model) Nav(name string) bool {
+	switch name {
+	case "tab":
+		m.focus = (m.focus + 1) % 3
+	case "shift+tab":
+		m.focus = (m.focus + 2) % 3
+	case "left", "right":
+		if m.focus == 0 {
+			return false
+		}
+		m.focus = 3 - m.focus
+	default:
+		return false
+	}
+	return true
 }
 
 func (m *Model) confirm() {
@@ -136,12 +161,14 @@ func (m *Model) Outcome() (modal.Outcome, bool) { return m.outcome, m.done }
 // Describe reads the dialog out: its question, the text so far and the buttons.
 func (m *Model) Describe() []a11y.Node {
 	field := a11y.Field(m.label, string(m.text))
-	field.Focused = true
+	field.Focused = m.focus == 0
 	nodes := []a11y.Node{a11y.Heading(m.title), field}
 	if m.hint != "" {
 		nodes = append(nodes, a11y.Text(m.hint))
 	}
-	return append(nodes, a11y.Button("OK"), a11y.Button("Cancel"))
+	ok, cancel := a11y.Button("OK"), a11y.Button("Cancel")
+	ok.Focused, cancel.Focused = m.focus == 1, m.focus == 2
+	return append(nodes, ok, cancel)
 }
 
 // tail keeps the end of a long text, where the cursor is, with an ellipsis in front.
