@@ -132,6 +132,7 @@ func New(cat *registry.Registry) *Model {
 	m.flow.SetOnLoad(m.adoptEmbedded)
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
 	m.ins.BindColorPicker(m.pickColor)
+	m.ins.BindAsker(m.askQuestion)
 	m.ins.BindThemePicker(m.pickTheme)
 	m.tb.BindColorPicker(m.pickColor)
 	return m
@@ -330,6 +331,8 @@ func (m *Model) perform(a menubar.Action) {
 		m.saveAsComponent()
 	case menubar.EditPacks:
 		m.openPacks()
+	case menubar.ViewVariables:
+		m.openVariables()
 	case menubar.ExportPNG:
 		m.flow.ExportImage(image.PNG)
 	case menubar.ExportSVG:

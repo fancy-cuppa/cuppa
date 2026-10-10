@@ -431,7 +431,17 @@ func (m *Model) swatchRow(b *builder, n design.Node, p definition.PropSpec) {
 	if at >= 0 {
 		shown = theme.Bold(palette[at].Name)
 	}
+	field := "swatchname:" + p.Key
+	if m.editing == field {
+		b.text(m.buf + "█").end()
+		return
+	}
+	// Clicking the name renames it; the arrows step through the palette.
+	rename := func() { m.startEdit(field, current) }
+	if at < 0 {
+		rename = func() { step(1) }
+	}
 	b.addMouse(theme.Button("◂", !n.Locked), func() { step(-1) }).text(" ").
-		addStep(shown, func() { step(1) }, step).text(" ").
+		addStep(shown, rename, step).text(" ").
 		addMouse(theme.Button("▸", !n.Locked), func() { step(1) }).end()
 }
