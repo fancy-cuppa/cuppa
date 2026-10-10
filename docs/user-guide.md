@@ -124,6 +124,12 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 | Alt+1 to Alt+4 | Jump to the menu bar, palette, canvas or details bar |
 | F10, or Alt+F / E / V / X / H | Open the first menu, or File / Edit / View / Export / Help |
 | Left, Right, Up, Down, Enter, Esc in a menu | Change menu, move through items, run the item, close |
+| Up / Down, Home / End, Left / Right, Enter, `/` in the palette | Move through the components, fold or unfold a pack, place the component under the cursor on the canvas at the canvas cursor (and select it), start the search |
+| Arrow keys on an empty canvas | Move the canvas cursor (the `┼` mark; with Shift, 10 cells); it is where Enter in the palette places things, and it moves below the component just placed |
+| Alt + arrow keys | Resize the selected component: Right / Down grow it, Left / Up shrink it, 1 cell (with Shift, 10); one undo step per press |
+| Tab / Shift+Tab | Select the next / previous layer, back to front; Space adds the next layer to the selection |
+| Ctrl+A | Select every visible layer |
+| Enter on a selection | Move the keyboard to the details bar |
 | Esc | Deselect, cancel a drag, close a menu or dialog; from the menu bar, palette or details bar it returns to the canvas first |
 | Ctrl+Q | Quit (Ctrl+C is Copy) |
 

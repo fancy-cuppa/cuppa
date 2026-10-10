@@ -50,6 +50,10 @@ type Model struct {
 	marqueeAdditive        bool
 
 	ghost *design.Rect
+	// cursor is the canvas cell a keyboard user places components at; it is
+	// drawn only while showCursor is set.
+	cursor     [2]int
+	showCursor bool
 	// snapOn turns alignment snapping on; guides are the lines of the last snap.
 	snapOn bool
 	guides []snap.Guide

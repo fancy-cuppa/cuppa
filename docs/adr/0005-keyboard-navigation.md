@@ -131,9 +131,24 @@ How the keys a terminal cannot express reach the app:
 | Left / Right, Up / Down, Home / End, Enter, Esc | In the menu bar: change menu, move through items (separators and disabled items are skipped), run, close |
 | Esc | From the menu bar, palette or details bar: back to the canvas without touching the selection |
 
-The focused area's title is highlighted, the status bar lists the keys that work there, and the screen-reader description flags the focused area. Clicking an area, or dropping a component on the canvas, moves the focus there. The arrows still move the selection whichever area has the focus, so existing muscle memory is unchanged; steps 2 and 3 give the palette and the details bar their own arrow keys.
+The focused area's title is highlighted, the status bar lists the keys that work there, and the screen-reader description flags the focused area. Clicking an area, or dropping a component on the canvas, moves the focus there.
 
-The rest of the proposal (steps 2 to 5) is not built yet.
+### Step 2: palette and canvas (issue #136, built)
+
+| Key | What | Differs from the proposal |
+|---|---|---|
+| Up / Down, Home / End, Left / Right, `/` (palette) | Move, jump, fold or unfold a pack, start the search | As proposed |
+| Enter (palette) | Place the component under the cursor at the canvas cursor and select it; on a pack header, fold it | As proposed; the cursor then moves below the new component |
+| Arrows (canvas, nothing selected) | Move the canvas cursor, Shift: 10; drawn as `┼` | Shift is 10, as for moving |
+| Alt+arrows (canvas, one selected) | Resize by 1 cell, Shift: 10 | Not snapped: the step is the size |
+| Tab / Shift+Tab (canvas) | Select the next / previous layer, back to front, hidden layers skipped | As proposed |
+| Space (canvas) | Add the next layer to the selection (repeat for a run) | The proposal toggled the "highlighted" layer; there is no separate highlight, so Space extends the selection |
+| Ctrl+A | Select every visible layer | As proposed |
+| Enter (canvas, with a selection) | Move the keyboard to the details bar | As proposed |
+
+With the palette focused the arrows move through the palette, not the selection; the canvas keeps the nudge. PageUp/PageDown and Home/End for layer order were replaced by the Ctrl+[ family, as in the review decisions.
+
+The rest of the proposal (steps 3 to 5) is not built yet.
 
 ## Questions (answered)
 

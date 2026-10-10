@@ -77,6 +77,10 @@ type Model struct {
 	// focus is the area the keyboard is on: the menu bar, the palette, the
 	// canvas (the default) or the details bar.
 	focus pane
+	// curX, curY is the canvas cursor: where a component placed with the
+	// keyboard lands. layerCur is the layer Tab last stopped on.
+	curX, curY int
+	layerCur   design.NodeID
 	// owner is the pane a held-button gesture started in; it keeps receiving
 	// events even when the pointer leaves it.
 	owner pane
@@ -109,6 +113,8 @@ func New(cat *registry.Registry) *Model {
 		stg:   stage.New(ed, live),
 		ins:   inspector.New(ed, live),
 		focus: inStage,
+		curX:  4,
+		curY:  2,
 	}
 	m.flow.SetOnLoad(m.adoptEmbedded)
 	m.ins.BindSnap(m.stg.Snap, m.stg.SetSnap)
@@ -339,6 +345,8 @@ const shortcutsTemplate = "Ctrl+N  New            Ctrl+O  Open\n" +
 	"Ctrl+Shift+]  To front Ctrl+Shift+[  To back\n" +
 	"Arrows  Move the selection 1 cell (Shift: 10)\n" +
 	"Up/Down in a number: +1 / -1 (Shift: 10)\n" +
+	"Palette Up/Down choose, Enter place, Left/Right fold, / search\n" +
+	"Canvas  arrows move the cursor, Alt+arrows resize, Tab layer\n" +
 	"F6      Next area (Shift+F6 previous, Alt+1..4 jump)\n" +
 	"F10     Open the menus (Alt+F/E/V/X/H one menu)\n" +
 	"Esc     Deselect / cancel / back to the canvas\n\n" +
@@ -543,6 +551,8 @@ func (m *Model) key(msg tea.KeyPressMsg) {
 		}
 	case m.pal.Searching():
 		m.pal.Key(k.Text, back, enter, esc)
+	case m.focus == inPalette && m.paletteKey(text):
+	case m.focus == inStage && m.canvasKey(k, text):
 	case esc && m.focus != inStage:
 		m.setFocus(inStage)
 	case esc:
@@ -622,6 +632,7 @@ func (m *Model) render() string {
 		return ""
 	}
 	l := m.layout
+	m.stg.SetCursor(m.curX, m.curY, len(m.ed.Selected()) == 0 && (m.focus == inStage || m.focus == inPalette))
 	pal, stg, ins := m.pal.Lines(), m.stg.Lines(), m.ins.Lines()
 	left, right := m.separator(leftDivider), m.separator(rightDivider)
 	out := make([]string, 0, m.h)

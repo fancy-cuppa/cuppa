@@ -36,6 +36,8 @@ type Model struct {
 	scroll    int
 	hover     int // list index under the pointer, -1 if none
 	focused   bool
+	// cursor is the row the keyboard is on.
+	cursor    int
 	w, h      int
 	query     string
 	searching bool
@@ -151,7 +153,7 @@ func (m *Model) Key(text string, backspace, enter, escape bool) {
 		m.query += text
 	}
 	m.rebuild()
-	m.scroll = 0
+	m.scroll, m.cursor = 0, 0
 }
 
 // SetFocused marks the pane as the one the keyboard is on; its title shows it.
@@ -208,6 +210,9 @@ func (m *Model) renderRow(i int) string {
 		if m.query != "" {
 			s += " " + theme.Faded(strings.ToLower(m.cat.Title(r.def.Family)))
 		}
+	}
+	if m.focused && i == m.cursor {
+		return theme.Selected(theme.Fit(s, m.w))
 	}
 	if i == m.hover {
 		return theme.Hovered(theme.Fit(s, m.w))

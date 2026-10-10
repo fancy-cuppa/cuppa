@@ -69,6 +69,12 @@ func (m *Model) render() *grid.Grid {
 	if m.ghost != nil {
 		m.outline(view, *m.ghost, '░', grid.Style{Fg: theme.Accent})
 	}
+	if m.showCursor {
+		vx, vy := m.cursor[0]-m.offX, m.cursor[1]-m.offY
+		if view.In(vx, vy) {
+			view.Set(vx, vy, grid.Cell{Ch: '┼', Style: grid.Style{Fg: theme.Accent, Bold: true}})
+		}
+	}
 	return view
 }
 
