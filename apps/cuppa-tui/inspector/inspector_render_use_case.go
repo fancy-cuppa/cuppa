@@ -170,6 +170,7 @@ func (m *Model) single(b *builder, n design.Node) {
 	m.editable(b, "name", n.Name, n.Name)
 	b.end()
 	b.text(" ").add(theme.Dim("Type  "), nil).text(n.Component).end()
+	m.changeRow(b, n)
 	if n.Locked {
 		b.text(" " + theme.Faded("Locked: unlock it in Layers to edit")).end()
 	}
@@ -402,6 +403,36 @@ func (m *Model) behaviourRows(b *builder, n design.Node) {
 	}
 	b.text(" ").add(theme.Button(mark(n.Draggable, "Draggable"), !n.Locked), func() { m.ed.SetDraggable(n.ID, !n.Draggable) }).end()
 	b.text(" ").add(theme.Button(mark(n.Resizable, "Resizable"), !n.Locked), func() { m.ed.SetResizable(n.ID, !n.Resizable) }).end()
+}
+
+// changeRow offers the components that can take this one's place without
+// losing the variables bound to it (a text input for a colour picker, tabs for
+// dialog buttons). The arrows choose one, pressing its name changes the
+// component; the change is one undo step and keeps name, place, bindings and
+// the values that are valid for the new component.
+func (m *Model) changeRow(b *builder, n design.Node) {
+	options := m.ed.ChangeOptions(n.ID)
+	if len(options) == 0 || n.Locked {
+		return
+	}
+	at := 0
+	for i, d := range options {
+		if d.ID == m.changePick {
+			at = i
+		}
+	}
+	pick := options[at]
+	step := func(d int) { m.changePick = options[((at+d)%len(options)+len(options))%len(options)].ID }
+	apply := func() {
+		_, err := m.ed.ChangeComponent(n.ID, pick.ID, false)
+		m.report(err)
+		m.changePick = ""
+	}
+	b.text(" ").add(theme.Dim("Change "), nil)
+	b.addMouse(theme.Button("◂", true), func() { step(-1) }).text(" ").
+		addStep(theme.Bold(pick.Name), apply, step).text(" ").
+		addMouse(theme.Button("▸", true), func() { step(1) }).end()
+	b.text("  " + theme.Faded("keeps its variables")).end()
 }
 
 // swatchRow shows which named colour a colour property uses and steps through
