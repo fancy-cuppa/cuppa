@@ -135,6 +135,25 @@ func backdrop(w, h int, background string) string {
 	return strings.Join(lines, "\n")
 }
 
+// RowStyle is how a row of a Rows component is drawn.
+type RowStyle string
+
+// The row styles. The zero value draws a normal row.
+const (
+	RowNormal   RowStyle = "normal"
+	RowSelected RowStyle = "selected"
+	RowDim      RowStyle = "dim"
+	RowAccent   RowStyle = "accent"
+)
+
+// rowStyleName is the style as the component reads it.
+func rowStyleName(s RowStyle) string {
+	if s == "" {
+		return string(RowNormal)
+	}
+	return string(s)
+}
+
 // escaper makes an item or a cell safe to put in a list: a backslash before a
 // comma, a semicolon or a backslash is that character itself.
 var escaper = strings.NewReplacer(`\`, `\\`, ",", `\,`, ";", `\;`)

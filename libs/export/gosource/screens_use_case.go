@@ -193,6 +193,15 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 		events = append(events, e)
 	}
 
+	// Row types: a bound Rows component is a typed list, one struct per input.
+	type rowType struct {
+		name, input, signature string
+		fields                 []string
+		colour                 []bool
+	}
+	var rowTypes []rowType
+	rowTypeIndex := map[string]int{}
+
 	var parts []partSource
 	usesStrconv := false
 	for _, l := range placed {
@@ -206,6 +215,65 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 		for _, key := range sortedKeys(l.Bind) {
 			spec, ok := def.Prop(key)
 			if !ok {
+				continue
+			}
+			if l.Kind == rowsKind && key == "styles" && l.Bind[rowsKey] != "" {
+				note("the styles of %q follow the Style of each row of %q; the binding of its styles is not used", l.Name, l.Bind[rowsKey])
+				continue
+			}
+			if l.Kind == rowsKind && key == rowsKey {
+				cols := rowColumns(l.Props["columns"])
+				var fields []string
+				var colour []bool
+				taken := map[string]bool{"Style": true}
+				for i, c := range cols {
+					f := pascal(c.name)
+					if f == "" || taken[f] {
+						f = "Column" + strconv.Itoa(i+1)
+					}
+					taken[f] = true
+					fields = append(fields, f)
+					colour = append(colour, c.colour)
+				}
+				if len(fields) == 0 {
+					note("the rows of %q have no columns; name them in its Columns property", l.Name)
+					continue
+				}
+				typeName := ident + pascal(l.Bind[key]) + "Row"
+				signature := strings.Join(fields, ",")
+				if i, seen := rowTypeIndex[typeName]; seen && rowTypes[i].signature != signature {
+					note("input %q is used by rows with different columns; the second use stays as designed", l.Bind[key])
+					continue
+				}
+				var sample []string
+				styles := splitList(l.Props["styles"], ",")
+				for r, cells := range rowCells(l.Props[key]) {
+					var fs []string
+					for i, f := range fields {
+						if i < len(cells) {
+							fs = append(fs, f+": "+strconv.Quote(cells[i]))
+						}
+					}
+					style := "normal"
+					if r < len(styles) {
+						style = styles[r]
+					}
+					fs = append(fs, "Style: "+rowStyleConst(style))
+					sample = append(sample, "{"+strings.Join(fs, ", ")+"}")
+				}
+				field, ok := register(l.Bind[key], "[]"+typeName, "[]"+typeName+"{"+strings.Join(sample, ", ")+"}", fmt.Sprintf("%s of %q", spec.Label, l.Name))
+				if !ok {
+					continue
+				}
+				if _, seen := rowTypeIndex[typeName]; !seen {
+					rowTypeIndex[typeName] = len(rowTypes)
+					rowTypes = append(rowTypes, rowType{name: typeName, input: field, signature: signature, fields: fields, colour: colour})
+				}
+				var cells []string
+				for _, f := range fields {
+					cells = append(cells, "r."+f)
+				}
+				ps.assign = append(ps.assign, fmt.Sprintf("{\n\t\t\t\trows := make([][]string, len(p.%[1]s))\n\t\t\t\tstyles := make([]string, len(p.%[1]s))\n\t\t\t\tfor i, r := range p.%[1]s {\n\t\t\t\t\trows[i] = []string{%[2]s}\n\t\t\t\t\tstyles[i] = rowStyleName(r.Style)\n\t\t\t\t}\n\t\t\t\tv[%[3]q] = joinRows(rows)\n\t\t\t\tv[\"styles\"] = joinList(styles)\n\t\t\t}", field, strings.Join(cells, ", "), key))
 				continue
 			}
 			typ, lit := inputType(spec, key, l.Props[key])
@@ -269,6 +337,17 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 			fmt.Fprintf(&c, "\t\t%s: %s,\n", pf.field, strconv.Quote(pf.color))
 		}
 		c.WriteString("\t}\n}\n\n")
+	}
+	for _, rt := range rowTypes {
+		fmt.Fprintf(&c, "// %s is one row of %s. Style says how the row is drawn.\ntype %s struct {\n", rt.name, rt.input, rt.name)
+		for i, f := range rt.fields {
+			what := "a cell"
+			if rt.colour[i] {
+				what = "a colour"
+			}
+			fmt.Fprintf(&c, "\t// %s is %s.\n\t%s string\n", f, what, f)
+		}
+		c.WriteString("\t// Style is how the row is drawn: RowNormal, RowSelected, RowDim or RowAccent.\n\tStyle RowStyle\n}\n\n")
 	}
 	fmt.Fprintf(&c, "// Default%sProps is the screen as it was designed: each input holds the value\n// it had in the design.\nfunc Default%sProps() %sProps {\n\treturn %sProps{\n", ident, ident, ident, ident)
 	for _, in := range inputs {

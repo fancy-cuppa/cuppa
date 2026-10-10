@@ -49,6 +49,9 @@ func TestWidgetsDrawTheSameInTheDesignerAndTheProgram(t *testing.T) {
 		{"3d bar", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "bar"}},
 		{"3d line", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "line"}},
 		{"3d vector", "ntcharts.chart3d", 44, 14, map[string]string{"kind": "vector", "legend": "false", "title": ""}},
+		{"rows", "lipgloss.rows", 44, 5, nil},
+		{"rows spaces", "lipgloss.rows", 30, 3, map[string]string{"columns": "A:6,B:6,C", "rows": "  x,,z; y\\,w,,; q,r,s", "styles": "accent,dim,selected"}},
+		{"rows colours", "lipgloss.rows", 30, 3, map[string]string{"columns": "Name:8,Swatch:5:colour,Rest", "rows": "Tea,#ff0000,hot;Milk,,cold", "styles": "selected"}},
 	}
 	doc := design.NewDocument("widgets", 200, 400)
 	var nodes []design.Node

@@ -139,6 +139,7 @@ The program places the **real components**: the Bubbles models (text input, text
 - **Screen keys.** With nothing selected, *Screen keys* takes `key=Event:label` pairs separated by commas (`s=Save:save, esc=Back:back`). Each key raises its event, and the label is for the program's key bar.
 - **Theme.** The roles of the design's theme (text, muted, border, secondary, background) are handed to the screen at run time; components that set their own colour keep it.
 - **Named colours.** A colour you set on a property is named after it (*Foreground*, then *Foreground 2*). Under a colour property, the `name ◂ ▸` row steps through the names: choose the same name on another component and both follow it. With nothing selected, *Named colours* lists them (click one to change it, `[x]` to delete one that is not used, `[+ colour]` to add one). A Go screen exposes each name as a field, `p.Palette.Accent = "#33ccff"`, and every component that uses it follows. The *Colour swatch* component shows a colour as a block with its value and a label.
+- **Rows.** The *Rows* component (Lip Gloss) is a list whose rows have several parts and a style each. *Columns* names the parts (`Mark:2,Name:14,Swatch:6:colour,Value`: a width after the colon, `:colour` for a block of colour), *Sample rows* is what the design shows (cells between commas, rows between semicolons; spaces and empty cells are kept) and *Row styles* gives each sample row `normal`, `selected`, `dim` or `accent`. Bind its rows and the screen gets a typed list, `p.Slots = []screens.ColoursSlotsRow{{Mark: "▸", Name: "Accent", Swatch: "#7d56f4", Style: screens.RowSelected}}`, and a click on a row raises the event with `Y` as the row. See [ADR 0008](adr/0008-row-templates.md).
 - **Variables.** *View → Variables…* lists every named colour, screen input (bound property or *Show if*) and event, with its kind, its value and how many places use it. *Go to* selects the component that uses it; when there are several uses a list opens and you choose one. *Rename…* (or `r`) renames a variable everywhere. Typing a different name in a component's own row (the `⇄` line, *Show if*, *On click*, or the colour `name`) asks whether to *rename it everywhere* or *only this one* use another variable; a name that already exists simply links to it.
 
 *Export → Go screen (contract)…* writes the open design into a folder that is a package of its own, next to the screens already there. For a folder of designs at once use the command line, which also removes the files of a design that is gone:
@@ -163,7 +164,7 @@ if ev, ok := screens.ColoursHandle(frame, msg); ok {
 }
 ```
 
-Layout expressions follow the `width` and `height` you pass. A removed or renamed input or event is a compile error in your program. See [ADR 0007](adr/0007-screen-contracts.md) for the limits (lists cannot hold commas, text inputs draw a static cursor, groups and pack components cannot be bound).
+Layout expressions follow the `width` and `height` you pass. A removed or renamed input or event is a compile error in your program. See [ADR 0007](adr/0007-screen-contracts.md) for the limits (text inputs draw a static cursor, groups and pack components cannot be bound).
 
 If Freeze is not installed, the image items are greyed out; clicking one explains how to install it. After installing, restart Cuppa, or just click the item again.
 
