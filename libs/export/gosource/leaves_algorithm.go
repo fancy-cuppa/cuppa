@@ -21,6 +21,11 @@ type leaf struct {
 	Name  string
 	Rect  design.Rect
 	Props map[string]string
+	// Layout is set on a top-level component whose size or position follows
+	// the window; Rect is then its size at the canvas size.
+	Layout design.Layout
+	// MinW and MinH are the smallest size the component allows.
+	MinW, MinH int
 }
 
 // leaves flattens a document back to front: groups are replaced by their
@@ -84,7 +89,15 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			}
 			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat, t)...)
 		default:
-			out = append(out, leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props})
+			l := leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props}
+			if depth == 0 && !n.Layout.IsZero() {
+				l.Layout = n.Layout
+				l.MinW, l.MinH = 1, 1
+				if def, ok := cat.Get(n.Component); ok {
+					l.MinW, l.MinH = max(def.MinSize.W, 1), max(def.MinSize.H, 1)
+				}
+			}
+			out = append(out, l)
 		}
 	}
 	return out

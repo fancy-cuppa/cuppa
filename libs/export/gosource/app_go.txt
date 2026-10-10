@@ -14,10 +14,12 @@ type model struct {
 	parts []*part
 	// focus is the index of the component that reads the keyboard, or -1.
 	focus int
+	// w and h are the size of the window, once the terminal has said.
+	w, h int
 }
 
 func newModel() model {
-	m := model{focus: -1}
+	m := model{focus: -1, w: canvasW, h: canvasH}
 	for _, c := range layout {
 		m.parts = append(m.parts, build(c))
 	}
@@ -34,6 +36,12 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		cmds := []tea.Cmd{m.resize(msg.Width, msg.Height)}
+		for _, p := range m.parts {
+			cmds = append(cmds, p.update(msg))
+		}
+		return m, tea.Batch(cmds...)
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc":
@@ -66,6 +74,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, p.update(msg))
 	}
 	return m, tea.Batch(cmds...)
+}
+
+// resize places again every component that follows the window, for a window
+// of w by h cells. A component whose rectangle changed is built again, so it
+// starts from its initial state.
+func (m *model) resize(w, h int) tea.Cmd {
+	m.w, m.h = w, h
+	var cmds []tea.Cmd
+	for i := range layout {
+		c := &layout[i]
+		if c.Fit == nil {
+			continue
+		}
+		x, y, cw, ch := c.Fit(w, h)
+		cw, ch = min(max(cw, c.MinW), max(w, 1)), min(max(ch, c.MinH), max(h, 1))
+		x, y = min(max(x, 0), max(w-cw, 0)), min(max(y, 0), max(h-ch, 0))
+		if x == c.X && y == c.Y && cw == c.W && ch == c.H {
+			continue
+		}
+		c.X, c.Y, c.W, c.H = x, y, cw, ch
+		m.parts[i] = build(*c)
+		cmds = append(cmds, m.parts[i].start)
+		if i == m.focus && m.parts[i].focus != nil {
+			cmds = append(cmds, m.parts[i].focus(true))
+		}
+	}
+	return tea.Batch(cmds...)
 }
 
 // cycle moves the keyboard to the next (or previous) component that reads it.
@@ -115,7 +150,11 @@ func (m *model) focusAt(x, y int) tea.Cmd {
 }
 
 func (m model) View() tea.View {
-	layers := []*lipgloss.Layer{lipgloss.NewLayer(backdrop()).Z(0)}
+	w, h := canvasW, canvasH
+	if responsive {
+		w, h = m.w, m.h
+	}
+	layers := []*lipgloss.Layer{lipgloss.NewLayer(backdrop(w, h)).Z(0)}
 	for i, c := range layout {
 		layers = append(layers, lipgloss.NewLayer(m.parts[i].view()).X(c.X).Y(c.Y).Z(i+1))
 	}
@@ -126,8 +165,8 @@ func (m model) View() tea.View {
 }
 
 // backdrop is the canvas itself: its size and background colour.
-func backdrop() string {
-	row := make([]byte, canvasW)
+func backdrop(w, h int) string {
+	row := make([]byte, max(w, 1))
 	for i := range row {
 		row[i] = ' '
 	}
@@ -135,7 +174,7 @@ func backdrop() string {
 	if background != "" {
 		line = lipgloss.NewStyle().Background(lipgloss.Color(background)).Render(line)
 	}
-	lines := make([]string, canvasH)
+	lines := make([]string, max(h, 1))
 	for i := range lines {
 		lines[i] = line
 	}
