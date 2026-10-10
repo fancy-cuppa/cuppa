@@ -273,3 +273,35 @@ func TestLayoutExpressionsRoundTrip(t *testing.T) {
 		t.Fatalf("layout lost:\n got %+v\nwant %+v", got, d)
 	}
 }
+
+func TestScreenContractRoundTripAndCleaning(t *testing.T) {
+	d := design.NewDocument("Colours", 80, 24)
+	d.Add(design.Node{Component: "lipgloss.label", Name: "Title", Rect: design.Rect{W: 20, H: 1},
+		Bind: map[string]string{"text": "Title"}, ShowIf: "Show title", Event: "Open"})
+	d.Keys = []design.KeyBinding{{Key: "s", Event: "Save", Label: "save"}}
+	data, err := Encode(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, d) {
+		t.Fatalf("screen contract lost:\n got %+v\nwant %+v", got, d)
+	}
+
+	bad := design.NewDocument("Bad", 80, 24)
+	bad.Add(design.Node{Component: "lipgloss.label", Name: "x", Rect: design.Rect{W: 5, H: 1},
+		Bind: map[string]string{"text": "9 no"}, ShowIf: "!", Event: "1"})
+	bad.Keys = []design.KeyBinding{{Key: "", Event: "Save"}, {Key: "a", Event: "?"}, {Key: "b", Event: "Go"}}
+	data, _ = Encode(bad)
+	got, err = Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := got.Nodes[0]
+	if n.Bind != nil || n.ShowIf != "" || n.Event != "" || len(got.Keys) != 1 || got.Keys[0].Key != "b" {
+		t.Fatalf("not cleaned: %+v keys %+v", n, got.Keys)
+	}
+}

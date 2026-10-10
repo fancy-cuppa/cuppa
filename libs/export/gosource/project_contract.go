@@ -18,6 +18,9 @@ type Project struct {
 	Module string
 	// Files maps a file name to its content.
 	Files map[string]string
+	// Requires are go.mod requirement lines the project needs beyond Bubble Tea,
+	// Bubbles and Lip Gloss; GenerateScreens leaves adding them to the caller.
+	Requires []string
 	// Notes list what the generator could not do, one line each.
 	Notes []string
 }

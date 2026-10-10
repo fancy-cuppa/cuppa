@@ -42,6 +42,14 @@ func (m *Model) documentOptions(b *builder) {
 	}
 	b.blank()
 
+	b.text(theme.Bold(" Screen keys")).end()
+	keys := design.FormatKeys(doc.Keys)
+	b.text(" ")
+	m.editable(b, "keys", keys, keys)
+	b.end()
+	b.text(" " + theme.Faded("key=Event:label, ...")).end()
+	b.blank()
+
 	b.text(theme.Bold(" Effects")).end()
 	m.optionRow(b, "Grid dots", editor.EffectGrid)
 	m.optionRow(b, "Shadows", editor.EffectShadow)

@@ -180,6 +180,7 @@ func (m *Model) single(b *builder, n design.Node) {
 	m.numeric(b, n.ID, "W", "w", n.Rect.W, l.W)
 	m.numeric(b, n.ID, "H", "h", n.Rect.H, l.H)
 	m.behaviourRows(b, n)
+	m.screenRows(b, n)
 	b.blank()
 	doc := m.ed.Document()
 	b.text(fmt.Sprintf(" Layer %d of %d", doc.Index(n.ID)+1, len(doc.Nodes))).end()
@@ -265,15 +266,45 @@ func (m *Model) properties(b *builder, n design.Node) {
 		m.block(b, p.Label, 1, theme.Dim, nil)
 		if p.Kind == definition.PropText {
 			m.textProp(b, "prop:"+p.Key, value)
-			continue
+		} else {
+			b.text("  ")
+			m.propValue(b, n.ID, p, value)
+			if p.Role != definition.RoleNone {
+				m.themeMark(b, n.ID, p, own)
+			}
+			b.end()
 		}
-		b.text("  ")
-		m.propValue(b, n.ID, p, value)
-		if p.Role != definition.RoleNone {
-			m.themeMark(b, n.ID, p, own)
-		}
-		b.end()
+		m.bindRow(b, n, p.Key)
 	}
+}
+
+// bindRow shows the screen input a property is bound to, and lets it be
+// typed: a name binds the property, an empty one unbinds it.
+func (m *Model) bindRow(b *builder, n design.Node, key string) {
+	field := "bind:" + key
+	b.text("  " + theme.Faded("⇄ "))
+	if m.editing == field {
+		b.text(m.buf + "█").end()
+		return
+	}
+	name := n.Bind[key]
+	shown := name
+	if shown == "" {
+		shown = theme.Faded("input name…")
+	}
+	b.add(shown, func() { m.startEdit(field, name) }).end()
+}
+
+// screenRows are the two things a component says about the screen it is part
+// of when the design is exported as a screen: when it is shown and what a
+// click on it raises.
+func (m *Model) screenRows(b *builder, n design.Node) {
+	b.text(" ").add(theme.Dim("Show if "), nil)
+	m.editable(b, "showif", n.ShowIf, n.ShowIf)
+	b.end()
+	b.text(" ").add(theme.Dim("On click"), nil)
+	m.editable(b, "event", n.Event, n.Event)
+	b.end()
 }
 
 // textProp shows a text property wrapped to the pane; clicking any line edits it.

@@ -31,6 +31,7 @@ const (
 	ExportANSI     Action = "export.ansi"
 	ExportText     Action = "export.text"
 	ExportGo       Action = "export.go"
+	ExportScreens  Action = "export.screens"
 	HelpShortcuts  Action = "help.shortcuts"
 	HelpAbout      Action = "help.about"
 	nothing        Action = ""

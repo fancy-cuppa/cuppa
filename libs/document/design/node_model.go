@@ -26,6 +26,15 @@ type Node struct {
 	// from anywhere) or resize it (drag its bottom-right corner).
 	Draggable bool `json:"draggable,omitempty"`
 	Resizable bool `json:"resizable,omitempty"`
+	// Bind ties properties to named screen inputs: key is the property, value
+	// the input's name. The value stored in Props stays as the default and as
+	// what the design shows. See ADR 0007.
+	Bind map[string]string `json:"bind,omitempty"`
+	// ShowIf names a yes/no screen input; the component is drawn only while it
+	// is true. Empty means always.
+	ShowIf string `json:"showIf,omitempty"`
+	// Event names the screen event raised when the component is clicked.
+	Event string `json:"event,omitempty"`
 	// Children are set on a group: the components it holds, with rectangles
 	// relative to the group's top-left, laid out for a box of BaseW x BaseH. A
 	// placed group scales them with its own size.

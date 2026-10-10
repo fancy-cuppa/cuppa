@@ -137,7 +137,7 @@ func TestPropertiesEditThroughTheSchema(t *testing.T) {
 	if n.Props["border"] != "normal" {
 		t.Fatalf("border = %q", n.Props["border"])
 	}
-	clickText(t, m, "(empty)", "(empty)") // text prop (title)
+	clickText(t, m, "  (empty)", "(empty)") // text prop (title)
 	for _, r := range "Tea" {
 		m.Key(string(r), false, false, false)
 	}
