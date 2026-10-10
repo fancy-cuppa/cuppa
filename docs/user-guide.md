@@ -78,6 +78,17 @@ columns, and Cuppa remembers the widths for next time.
 steps, true colour on terminals that support it). The **Themes** tab lists 342 terminal colour schemes (Dracula, Nord, Solarized and more, from [bubbletint](https://github.com/lrstanley/bubbletint)): step with `«` `◂` `▸` `»` or the wheel, jump by letter, and click one of its 16 colours, or its text, page, cursor or selection colour; the design stores that colour as plain hex. Type a palette number (`0` to `255`) or hex (`#ff5fd7`) in the
 value field and press Enter, or choose **None** for no colour. Long text values wrap inside the bar.
 
+**Responsive layout.** A design is an interface, so a component's position and size can follow the canvas instead of being fixed. In the details bar, click the number of **X**, **Y**, **W** or **H** and type an expression instead of a number:
+
+| Type | Means |
+|---|---|
+| `30` | 30 cells (columns for X and W, rows for Y and H) |
+| `50%` | half of the canvas width (X, W) or height (Y, H) |
+| `100% - 10` | calculations with `+ - * /` and parentheses |
+| `min(50%, 40)`, `max(…)` | the smaller or larger value |
+
+The `[%]` button next to a row turns that axis into a percentage of the canvas and keeps it where it is; `[#]` turns it back into cells. Typing a plain number over an expression makes the axis fixed again. Dragging, resizing or nudging a component keeps its unit: a `100% - 10` wide component dragged two cells wider becomes `100% - 8`. To see the design at other terminal sizes, change the canvas width and height, or click one of the `[80×24]` `[120×40]` `[160×50]` buttons shown with nothing selected. A top bar that is as wide as the terminal and three rows tall is X `0`, Y `0`, W `100%`, H `3`; a left bar is W `30`, H `100% - 3`. Layout is saved in the `.cuppa` file and applies to components on the canvas; the children of a group keep scaling with their group.
+
 **Undo and redo.** `[Undo]` and `[Redo]` at the top of the details bar, the Edit menu, or Ctrl+Z / Ctrl+Y. A drag or a typed edit is one step.
 
 A `~` after a component in the palette means its preview is an approximation of the real thing.

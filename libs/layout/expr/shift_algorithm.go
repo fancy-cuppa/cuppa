@@ -94,3 +94,18 @@ func format(n node, min int) string {
 	}
 	return s
 }
+
+// PercentOf is the percentage of parent that resolves to exactly cells: the
+// shortest two-decimal one that does. With no parent it is just the cells.
+func PercentOf(cells, parent int) Expr {
+	if parent <= 0 {
+		return Cells(cells)
+	}
+	base := math.Round(float64(cells)*10000/float64(parent)) / 100
+	for _, d := range []float64{0, 0.01, -0.01, 0.02, -0.02} {
+		if e := Percent(math.Round((base+d)*100) / 100); e.Resolve(parent) == cells {
+			return e
+		}
+	}
+	return Cells(cells)
+}

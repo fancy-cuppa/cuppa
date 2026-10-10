@@ -95,8 +95,8 @@ func TestDraggingKeepsTheUnit(t *testing.T) {
 		t.Fatalf("after resize w = %d", got)
 	}
 	e.MoveSelectionBy(5, 0)
-	if got := e.Layout(id).X; got != "5" {
-		t.Fatalf("x = %q", got)
+	if got := rectOf(e, id).X; got != 5 || e.Layout(id).X != "" {
+		t.Fatalf("x = %d (%q): a fixed axis just moves", got, e.Layout(id).X)
 	}
 }
 
@@ -109,6 +109,25 @@ func TestLoadResolvesLayouts(t *testing.T) {
 	}
 	if e.Dirty() {
 		t.Fatal("resolving a loaded document is not an edit")
+	}
+}
+
+func TestToggleLayoutUnitKeepsTheSize(t *testing.T) {
+	e := newEditor()
+	id := mustAdd(t, e, "lipgloss.box", 8, 0)
+	if err := e.ToggleLayoutUnit(id, AxisX); err != nil {
+		t.Fatal(err)
+	}
+	if got := e.Layout(id).X; got != "10%" {
+		t.Fatalf("x = %q", got)
+	}
+	must(t, e.SetCanvasSize(160, 24))
+	if got := rectOf(e, id).X; got != 16 {
+		t.Fatalf("x at 160 = %d", got)
+	}
+	must(t, e.ToggleLayoutUnit(id, AxisX))
+	if e.Layout(id).X != "" {
+		t.Fatal("not fixed again")
 	}
 }
 

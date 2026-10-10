@@ -199,12 +199,18 @@ func (m *Model) apply(field, value string) {
 	case strings.HasPrefix(field, "prop:"):
 		m.report(m.ed.SetProp(n.ID, strings.TrimPrefix(field, "prop:"), value))
 	default:
-		v, err := strconv.Atoi(strings.TrimSpace(value))
-		if err != nil {
-			m.message = "enter a whole number"
-			return
+		value = strings.TrimSpace(value)
+		v, err := strconv.Atoi(value)
+		switch {
+		case err != nil:
+			// Not a plain number: an expression such as 50% or 100% - 10.
+			m.report(m.ed.SetLayout(n.ID, field, value))
+		case layoutOf(m.ed.Layout(n.ID), field) != "":
+			// A number typed over an expression makes the axis fixed.
+			m.report(m.ed.SetLayout(n.ID, field, value))
+		default:
+			m.setGeometry(n, field, v)
 		}
-		m.setGeometry(n, field, v)
 	}
 }
 
@@ -245,4 +251,18 @@ func (m *Model) nudge(field string, delta int) {
 	case "h":
 		m.setGeometry(n, field, n.Rect.H+delta)
 	}
+}
+
+func layoutOf(l design.Layout, field string) string {
+	switch field {
+	case "x":
+		return l.X
+	case "y":
+		return l.Y
+	case "w":
+		return l.W
+	case "h":
+		return l.H
+	}
+	return ""
 }

@@ -46,3 +46,16 @@ func TestShiftKeepsTheResolvedValueMoving(t *testing.T) {
 		}
 	}
 }
+
+func TestPercentOfResolvesBackToTheSameCells(t *testing.T) {
+	for parent := 1; parent <= 200; parent += 7 {
+		for cells := 0; cells <= parent; cells++ {
+			if got := PercentOf(cells, parent).Resolve(parent); got != cells {
+				t.Fatalf("%d of %d: %q resolves to %d", cells, parent, PercentOf(cells, parent).String(), got)
+			}
+		}
+	}
+	if PercentOf(24, 80).String() != "30%" {
+		t.Errorf("24 of 80 = %q", PercentOf(24, 80).String())
+	}
+}

@@ -17,8 +17,9 @@ const (
 )
 
 // SetLayout gives one axis of the node a size expression ("50%",
-// "100% - 10"), as one undo step; an empty value makes the axis fixed again at
-// its current cells. The node is resolved at the current canvas size at once.
+// "100% - 10"), as one undo step. An empty value makes the axis fixed again at
+// its current cells, and a plain number of cells sets the axis to that. The
+// node is resolved at the current canvas size at once.
 func (e *Editor) SetLayout(id design.NodeID, axis, value string) error {
 	n, ok := e.doc.Get(id)
 	if !ok {
@@ -28,21 +29,42 @@ func (e *Editor) SetLayout(id design.NodeID, axis, value string) error {
 		return fmt.Errorf("editor: the component is locked")
 	}
 	value = strings.TrimSpace(value)
-	if value != "" {
-		if _, err := expr.Parse(value); err != nil {
-			return fmt.Errorf("editor: %w", err)
-		}
-	}
 	field := layoutField(&n.Layout, axis)
 	if field == nil {
 		return fmt.Errorf("editor: no layout axis %q", axis)
 	}
-	if *field == value {
+	fixed, cells := false, 0
+	if value != "" {
+		x, err := expr.Parse(value)
+		if err != nil {
+			return fmt.Errorf("editor: %w", err)
+		}
+		if x.IsFixed() {
+			// A number of cells is not an expression: the axis becomes fixed.
+			fixed, cells, value = true, x.Resolve(0), ""
+		}
+	}
+	if *field == value && !fixed {
 		return nil
 	}
 	e.apply(func() bool {
+		r := n.Rect
+		if fixed {
+			switch axis {
+			case AxisX:
+				r.X = cells
+			case AxisY:
+				r.Y = cells
+			case AxisW:
+				r.W = cells
+			case AxisH:
+				r.H = cells
+			}
+			r = e.clampRect(n, r)
+		}
 		e.doc.Update(id, func(n *design.Node) {
 			*layoutField(&n.Layout, axis) = value
+			n.Rect = r
 		})
 		e.resolveNode(id)
 		return true
@@ -134,4 +156,30 @@ func (e *Editor) followRect(id design.NodeID, before design.Rect) {
 	l.W = shift(l.W, n.Rect.W-before.W, w)
 	l.H = shift(l.H, n.Rect.H-before.H, h)
 	e.doc.Update(id, func(n *design.Node) { n.Layout = l })
+}
+
+// ToggleLayoutUnit switches an axis between fixed cells and a percentage of
+// the canvas, keeping its current size and position, as one undo step.
+func (e *Editor) ToggleLayoutUnit(id design.NodeID, axis string) error {
+	n, ok := e.doc.Get(id)
+	if !ok {
+		return fmt.Errorf("editor: no such component")
+	}
+	field := layoutField(&n.Layout, axis)
+	if field == nil {
+		return fmt.Errorf("editor: no layout axis %q", axis)
+	}
+	if *field != "" {
+		return e.SetLayout(id, axis, "")
+	}
+	cells, parent := n.Rect.X, e.doc.Width
+	switch axis {
+	case AxisY:
+		cells, parent = n.Rect.Y, e.doc.Height
+	case AxisW:
+		cells = n.Rect.W
+	case AxisH:
+		cells, parent = n.Rect.H, e.doc.Height
+	}
+	return e.SetLayout(id, axis, expr.PercentOf(cells, parent).String())
 }
