@@ -8,8 +8,12 @@ import (
 
 func TestUpDownMoveThroughTheListAndEnterOpensAFolder(t *testing.T) {
 	dir := t.TempDir()
-	os.Mkdir(filepath.Join(dir, "sub"), 0o755)
-	os.WriteFile(filepath.Join(dir, "a.cuppa"), nil, 0o644)
+	if err := os.Mkdir(filepath.Join(dir, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "a.cuppa"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	m := New(Spec{Title: "Open", Dir: dir, Ext: ".cuppa"})
 	m.Place(100, 30)
 	m.Nav("down") // ".." is first when the folder has a parent
@@ -25,7 +29,9 @@ func TestUpDownMoveThroughTheListAndEnterOpensAFolder(t *testing.T) {
 
 func TestHighlightingAFileFillsTheNameAndEnterAcceptsIt(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "a.cuppa"), nil, 0o644)
+	if err := os.WriteFile(filepath.Join(dir, "a.cuppa"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
 	m := New(Spec{Title: "Open", Dir: dir, Ext: ".cuppa"})
 	m.Place(100, 30)
 	m.Nav("end")
