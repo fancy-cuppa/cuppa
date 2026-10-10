@@ -18,6 +18,7 @@ func (m *Model) documentOptions(b *builder) {
 	b.text(theme.Bold(" Canvas")).end()
 	m.canvasNumeric(b, "W", "canvas-w", doc.Width)
 	m.canvasNumeric(b, "H", "canvas-h", doc.Height)
+	m.sizePresets(b, doc)
 	b.text(" " + theme.Faded(fmt.Sprintf("%d components", len(doc.Nodes)))).end()
 	b.blank()
 
@@ -171,4 +172,22 @@ func (m *Model) optionRow(b *builder, label, name string) {
 	b.text(" ").add(theme.Button(mark+" "+label, true), func() {
 		m.report(m.ed.SetEffect(name, !m.ed.Effect(name)))
 	}).end()
+}
+
+// terminalSizes are the terminal sizes the canvas can be set to in one click,
+// to see how a layout with percentages behaves.
+var terminalSizes = [...][2]int{{80, 24}, {120, 40}, {160, 50}}
+
+// sizePresets is a row of buttons that set the canvas to a usual terminal size.
+func (m *Model) sizePresets(b *builder, doc design.Document) {
+	b.text(" ")
+	for i, s := range terminalSizes {
+		w, h := s[0], s[1]
+		label := fmt.Sprintf("[%d×%d]", w, h)
+		if i > 0 {
+			b.text(" ")
+		}
+		b.add(theme.Button(label, doc.Width != w || doc.Height != h), func() { m.report(m.ed.SetCanvasSize(w, h)) })
+	}
+	b.end()
 }

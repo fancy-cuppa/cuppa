@@ -78,6 +78,19 @@ columns, and Cuppa remembers the widths for next time.
 steps, true colour on terminals that support it). The **Themes** tab lists 342 terminal colour schemes (Dracula, Nord, Solarized and more, from [bubbletint](https://github.com/lrstanley/bubbletint)): step with `«` `◂` `▸` `»` or the wheel, jump by letter, and click one of its 16 colours, or its text, page, cursor or selection colour; the design stores that colour as plain hex. Type a palette number (`0` to `255`) or hex (`#ff5fd7`) in the
 value field and press Enter, or choose **None** for no colour. Long text values wrap inside the bar.
 
+**Responsive layout.** A design is an interface, so a component's position and size can follow the canvas instead of being fixed. In the details bar, click the number of **X**, **Y**, **W** or **H** and type an expression instead of a number:
+
+| Type | Means |
+|---|---|
+| `30` | 30 cells (columns for X and W, rows for Y and H) |
+| `50%` | half of the canvas width (X, W) or height (Y, H) |
+| `100% - 10` | calculations with `+ - * /` and parentheses |
+| `min(50%, 40)`, `max(…)` | the smaller or larger value |
+
+The `[%]` button next to a row turns that axis into a percentage of the canvas and keeps it where it is; `[#]` turns it back into cells. Typing a plain number over an expression makes the axis fixed again. Dragging, resizing or nudging a component keeps its unit: a `100% - 10` wide component dragged two cells wider becomes `100% - 8`. To see the design at other terminal sizes, change the canvas width and height, or click one of the `[80×24]` `[120×40]` `[160×50]` buttons shown with nothing selected. A top bar that is as wide as the terminal and three rows tall is X `0`, Y `0`, W `100%`, H `3`; a left bar is W `30`, H `100% - 3`. Layout is saved in the `.cuppa` file and applies to components on the canvas; the children of a group keep scaling with their group.
+
+**Draggable and resizable.** Under X, Y, W and H, *Draggable* and *Resizable* are for the person who uses the exported program, not for the design: a draggable component can be moved with the mouse from anywhere on it, a resizable one by dragging its bottom-right cell. They are saved in the `.cuppa` file and written into the Go export (see *Responsive export*); a component that follows the window keeps the change the person made when the window is resized.
+
 **Undo and redo.** `[Undo]` and `[Redo]` at the top of the details bar, the Edit menu, or Ctrl+Z / Ctrl+Y. A drag or a typed edit is one step.
 
 A `~` after a component in the palette means its preview is an approximation of the real thing.
@@ -114,6 +127,8 @@ go run .
 ```
 
 The program places the **real components**: the Bubbles models (text input, text area, list, table, tree, file picker, help, viewport, paginator, spinner, progress, stopwatch, timer), the Huh fields, Glamour markdown, the ntcharts charts, the Evertras bubble table, and Lip Gloss boxes (with their border gradient), labels, lists, tables, trees and tabs. The Huh spinner, the layout sketches (join, place) and the community widgets without a Bubble Tea v2 library (frame, dialog, status message, toast, flex box, boxer, date picker, overlay, status bar, file tree) are drawn to look like the library they stand for, using Lip Gloss. Components that need a library of their own (Huh, Glamour, ntcharts, the bubble table, big text, the QR code) add it to `go.mod` only when the design uses them, and the image reads the file named in its File property from where the program runs. Tab and Shift+Tab move between components that take input, a click focuses one, Esc quits. Groups and pack components are expanded into their parts, hidden components are left out, and the canvas background colour fills behind the components. A component the generator does not know appears as an empty frame; the export notice and the project's README list it. Effects, colour profiles and the light-terminal preview are not part of the generated program.
+
+**Responsive export.** Components with [layout expressions](#building-a-design) are written with a `Fit` function in `layout.go` that computes their rectangle from the window size, and the program places them again whenever the terminal is resized (and fills the whole window with the background colour). A component that is placed again starts from its initial state (typed text is not kept). Groups and pack components keep the size they have in the design.
 
 If Freeze is not installed, the image items are greyed out; clicking one explains how to install it. After installing, restart Cuppa, or just click the item again.
 

@@ -95,8 +95,8 @@ func TestDraggingKeepsTheUnit(t *testing.T) {
 		t.Fatalf("after resize w = %d", got)
 	}
 	e.MoveSelectionBy(5, 0)
-	if got := e.Layout(id).X; got != "5" {
-		t.Fatalf("x = %q", got)
+	if got := rectOf(e, id).X; got != 5 || e.Layout(id).X != "" {
+		t.Fatalf("x = %d (%q): a fixed axis just moves", got, e.Layout(id).X)
 	}
 }
 
@@ -112,9 +112,51 @@ func TestLoadResolvesLayouts(t *testing.T) {
 	}
 }
 
+func TestToggleLayoutUnitKeepsTheSize(t *testing.T) {
+	e := newEditor()
+	id := mustAdd(t, e, "lipgloss.box", 8, 0)
+	if err := e.ToggleLayoutUnit(id, AxisX); err != nil {
+		t.Fatal(err)
+	}
+	if got := e.Layout(id).X; got != "10%" {
+		t.Fatalf("x = %q", got)
+	}
+	must(t, e.SetCanvasSize(160, 24))
+	if got := rectOf(e, id).X; got != 16 {
+		t.Fatalf("x at 160 = %d", got)
+	}
+	must(t, e.ToggleLayoutUnit(id, AxisX))
+	if e.Layout(id).X != "" {
+		t.Fatal("not fixed again")
+	}
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRuntimeBehavioursAreUndoableAndRefusedWhenLocked(t *testing.T) {
+	e := newEditor()
+	id := mustAdd(t, e, "lipgloss.box", 0, 0)
+	if !e.SetDraggable(id, true) || !e.SetResizable(id, true) {
+		t.Fatal("refused")
+	}
+	n, _ := e.Document().Get(id)
+	if !n.Draggable || !n.Resizable {
+		t.Fatalf("flags = %+v", n)
+	}
+	if e.SetDraggable(id, true) {
+		t.Fatal("no change is not a step")
+	}
+	e.Undo()
+	if n, _ := e.Document().Get(id); n.Resizable || !n.Draggable {
+		t.Fatalf("undo: %+v", n)
+	}
+	e.SetLocked(id, true)
+	if e.SetResizable(id, true) {
+		t.Fatal("locked layer accepted a flag")
 	}
 }

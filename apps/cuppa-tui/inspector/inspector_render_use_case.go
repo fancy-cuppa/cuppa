@@ -174,10 +174,12 @@ func (m *Model) single(b *builder, n design.Node) {
 		b.text(" " + theme.Faded("Locked: unlock it in Layers to edit")).end()
 	}
 	b.blank()
-	m.numeric(b, "X", "x", n.Rect.X)
-	m.numeric(b, "Y", "y", n.Rect.Y)
-	m.numeric(b, "W", "w", n.Rect.W)
-	m.numeric(b, "H", "h", n.Rect.H)
+	l := n.Layout
+	m.numeric(b, n.ID, "X", "x", n.Rect.X, l.X)
+	m.numeric(b, n.ID, "Y", "y", n.Rect.Y, l.Y)
+	m.numeric(b, n.ID, "W", "w", n.Rect.W, l.W)
+	m.numeric(b, n.ID, "H", "h", n.Rect.H, l.H)
+	m.behaviourRows(b, n)
 	b.blank()
 	doc := m.ed.Document()
 	b.text(fmt.Sprintf(" Layer %d of %d", doc.Index(n.ID)+1, len(doc.Nodes))).end()
@@ -204,16 +206,29 @@ func (m *Model) editable(b *builder, field, value, initial string) {
 	b.add(value, func() { m.startEdit(field, initial) })
 }
 
-func (m *Model) numeric(b *builder, label, field string, v int) {
+// numeric is one geometry row: [-] value [+] and a unit button. A value that
+// follows the canvas shows its expression ("50%", "100% - 10"); the button
+// switches the axis between fixed cells and a percentage of the canvas.
+func (m *Model) numeric(b *builder, id design.NodeID, label, field string, v int, expression string) {
+	shown, initial := fmt.Sprintf("%4d", v), strconv.Itoa(v)
+	if expression != "" {
+		shown, initial = fmt.Sprintf("%4s", expression), expression
+	}
 	b.text(" " + theme.Dim(label+"  "))
 	b.addMouse(theme.Button("[-]", true), func() { m.nudge(field, -1) }).text(" ")
 	if m.editing == field {
 		b.text(m.buf + "█")
 	} else {
-		b.addStep(theme.Bold(fmt.Sprintf("%4d", v)), func() { m.startEdit(field, strconv.Itoa(v)) },
+		b.addStep(theme.Bold(shown), func() { m.startEdit(field, initial) },
 			func(d int) { m.nudge(field, d) })
 	}
-	b.text(" ").addMouse(theme.Button("[+]", true), func() { m.nudge(field, 1) }).end()
+	b.text(" ").addMouse(theme.Button("[+]", true), func() { m.nudge(field, 1) })
+	unit := "[%]"
+	if expression != "" {
+		unit = "[#]"
+	}
+	b.text(" ").add(theme.Button(unit, true), func() { m.report(m.ed.ToggleLayoutUnit(id, field)) })
+	b.end()
 }
 
 func (m *Model) order(b *builder) {
@@ -336,4 +351,17 @@ func (m *Model) themeMark(b *builder, id design.NodeID, p definition.PropSpec, o
 		return
 	}
 	b.text(" ").add(theme.Button("[theme]", true), func() { m.ed.ClearProp(id, p.Key) })
+}
+
+// behaviourRows are the two things the person using the exported program may
+// do with the component.
+func (m *Model) behaviourRows(b *builder, n design.Node) {
+	mark := func(on bool, label string) string {
+		if on {
+			return "[x] " + label
+		}
+		return "[ ] " + label
+	}
+	b.text(" ").add(theme.Button(mark(n.Draggable, "Draggable"), !n.Locked), func() { m.ed.SetDraggable(n.ID, !n.Draggable) }).end()
+	b.text(" ").add(theme.Button(mark(n.Resizable, "Resizable"), !n.Locked), func() { m.ed.SetResizable(n.ID, !n.Resizable) }).end()
 }

@@ -32,6 +32,18 @@ func (e Expr) Resolve(parent int) int {
 // IsFixed reports whether the expression does not depend on the parent size.
 func (e Expr) IsFixed() bool { return e.root == nil || !e.root.usesParent() }
 
+// GoSource writes the expression as a Go float64 expression for generated
+// code. parent is the name of an int variable that holds the parent's size on
+// the axis; the code uses a function div(a, b float64) float64 that gives 0
+// for a division by zero, and the built-in min and max. Wrap it in a rounding
+// down to get whole cells, as Resolve does.
+func (e Expr) GoSource(parent string) string {
+	if e.root == nil {
+		return "0.0"
+	}
+	return e.root.goSource(parent)
+}
+
 // String is the expression as written, trimmed.
 func (e Expr) String() string {
 	if e.root == nil {
@@ -55,22 +67,36 @@ func Percent(p float64) Expr {
 type node interface {
 	eval(parent float64) float64
 	usesParent() bool
+	// goSource is the node as a Go float64 expression; parent names the
+	// variable that holds the parent's size.
+	goSource(parent string) string
 }
 
 type number struct{ v float64 }
 
 func (n number) eval(float64) float64 { return n.v }
 func (number) usesParent() bool       { return false }
+func (n number) goSource(string) string {
+	s := strconv.FormatFloat(n.v, 'f', -1, 64)
+	if !strings.Contains(s, ".") {
+		s += ".0"
+	}
+	return s
+}
 
 type percent struct{ v float64 }
 
 func (p percent) eval(parent float64) float64 { return parent * p.v / 100 }
 func (percent) usesParent() bool              { return true }
+func (p percent) goSource(parent string) string {
+	return "(float64(" + parent + ") * " + number(p).goSource("") + " / 100.0)"
+}
 
 type negation struct{ x node }
 
 func (n negation) eval(parent float64) float64 { return -n.x.eval(parent) }
 func (n negation) usesParent() bool            { return n.x.usesParent() }
+func (n negation) goSource(parent string) string { return "(-" + n.x.goSource(parent) + ")" }
 
 type binary struct {
 	op   byte
@@ -94,6 +120,14 @@ func (b binary) eval(parent float64) float64 {
 }
 func (b binary) usesParent() bool { return b.l.usesParent() || b.r.usesParent() }
 
+func (b binary) goSource(parent string) string {
+	l, r := b.l.goSource(parent), b.r.goSource(parent)
+	if b.op == '/' {
+		return "div(" + l + ", " + r + ")"
+	}
+	return "(" + l + " " + string(b.op) + " " + r + ")"
+}
+
 type call struct {
 	fn   string
 	args []node
@@ -110,6 +144,14 @@ func (c call) eval(parent float64) float64 {
 		}
 	}
 	return out
+}
+
+func (c call) goSource(parent string) string {
+	args := make([]string, len(c.args))
+	for i, a := range c.args {
+		args[i] = a.goSource(parent)
+	}
+	return c.fn + "(" + strings.Join(args, ", ") + ")"
 }
 
 func (c call) usesParent() bool {

@@ -54,10 +54,7 @@ func (e *Editor) SetRect(id design.NodeID, r design.Rect, checkpoint bool) bool 
 	if !ok || n.Locked {
 		return false
 	}
-	minW, minH := e.minSize(n)
-	r.W = min(max(r.W, minW), e.doc.Width)
-	r.H = min(max(r.H, minH), e.doc.Height)
-	r = r.MoveInto(e.doc.Bounds())
+	r = e.clampRect(n, r)
 	if r == n.Rect {
 		return false
 	}
@@ -70,4 +67,13 @@ func (e *Editor) SetRect(id design.NodeID, r design.Rect, checkpoint bool) bool 
 		return e.apply(set)
 	}
 	return set()
+}
+
+// clampRect keeps r at least as big as the component allows and inside the
+// canvas.
+func (e *Editor) clampRect(n design.Node, r design.Rect) design.Rect {
+	minW, minH := e.minSize(n)
+	r.W = min(max(r.W, minW), e.doc.Width)
+	r.H = min(max(r.H, minH), e.doc.Height)
+	return r.MoveInto(e.doc.Bounds())
 }
