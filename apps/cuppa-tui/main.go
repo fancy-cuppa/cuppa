@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/packcmd"
+	"github.com/meta-tui/cuppa/apps/cuppa-tui/screenscmd"
 	"github.com/meta-tui/cuppa/apps/cuppa-tui/shell"
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 )
@@ -20,6 +21,9 @@ func main() {
 	}
 	if len(os.Args) > 1 && os.Args[1] == "pack" {
 		os.Exit(packcmd.Run(os.Args[2:], os.Stdout, os.Stderr))
+	}
+	if len(os.Args) > 1 && os.Args[1] == "screens" {
+		os.Exit(screenscmd.Run(os.Args[2:], os.Stdout, os.Stderr))
 	}
 	app := shell.New(standard.Default())
 	app.RestoreLayout()

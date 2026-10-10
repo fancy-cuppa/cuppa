@@ -66,6 +66,7 @@ func normalise(doc design.Document) design.Document {
 	if !design.ValidProfile(doc.Profile) {
 		doc.Profile = ""
 	}
+	doc.Keys = cleanKeys(doc.Keys)
 	nodes := cleanNodes(doc.Nodes, 0)
 	doc.Embedded = cleanEmbedded(doc.Embedded)
 	doc.Nodes = nodes
@@ -103,6 +104,7 @@ func cleanNodes(in []design.Node, depth int) []design.Node {
 			continue
 		}
 		seen[n.ID] = true
+		n = cleanScreenNames(n)
 		if n.Component == design.GroupComponent {
 			if depth >= maxGroupDepth || n.BaseW < 1 || n.BaseH < 1 {
 				continue
@@ -115,6 +117,39 @@ func cleanNodes(in []design.Node, depth int) []design.Node {
 			n.Children, n.BaseW, n.BaseH = nil, 0, 0
 		}
 		out = append(out, n)
+	}
+	return out
+}
+
+// cleanScreenNames drops screen input and event names a hand-edited file got
+// wrong, so the export never meets one it cannot turn into Go.
+func cleanScreenNames(n design.Node) design.Node {
+	for k, v := range n.Bind {
+		if !design.ValidInputName(v) {
+			delete(n.Bind, k)
+		}
+	}
+	if len(n.Bind) == 0 {
+		n.Bind = nil
+	}
+	if n.ShowIf != "" && !design.ValidInputName(n.ShowIf) {
+		n.ShowIf = ""
+	}
+	if n.Event != "" && !design.ValidInputName(n.Event) {
+		n.Event = ""
+	}
+	return n
+}
+
+func cleanKeys(in []design.KeyBinding) []design.KeyBinding {
+	var out []design.KeyBinding
+	seen := map[string]bool{}
+	for _, k := range in {
+		if k.Key == "" || seen[k.Key] || !design.ValidInputName(k.Event) {
+			continue
+		}
+		seen[k.Key] = true
+		out = append(out, k)
 	}
 	return out
 }

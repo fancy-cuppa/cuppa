@@ -229,22 +229,31 @@ func behaviourSource(l leaf) string {
 		parts = append(parts, "Resize: true")
 	}
 	parts = append(parts, fmt.Sprintf("MinW: %d, MinH: %d", l.MinW, l.MinH))
-	if !l.Layout.IsZero() {
-		axis := func(src string, fixed int, parent string) string {
-			if src == "" {
-				return strconv.Itoa(fixed)
-			}
-			e, err := expr.Parse(src)
-			if err != nil {
-				return strconv.Itoa(fixed)
-			}
-			return "cells(" + e.GoSource(parent) + ")"
-		}
-		parts = append(parts, fmt.Sprintf("Fit: func(w, h int) (x, y, cw, ch int) {\n\t\treturn %s, %s, %s, %s\n\t}",
-			axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
-			axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h")))
+	if fit := fitSource(l); fit != "" {
+		parts = append(parts, fit)
 	}
 	return ", " + strings.Join(parts, ", ")
+}
+
+// fitSource is the Fit field of a component whose size or position follows
+// the window ("" for a fixed one).
+func fitSource(l leaf) string {
+	if l.Layout.IsZero() {
+		return ""
+	}
+	axis := func(src string, fixed int, parent string) string {
+		if src == "" {
+			return strconv.Itoa(fixed)
+		}
+		e, err := expr.Parse(src)
+		if err != nil {
+			return strconv.Itoa(fixed)
+		}
+		return "cells(" + e.GoSource(parent) + ")"
+	}
+	return fmt.Sprintf("Fit: func(w, h int) (x, y, cw, ch int) {\n\t\treturn %s, %s, %s, %s\n\t}",
+		axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
+		axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h"))
 }
 
 func readme(doc design.Document, notes []string) string {

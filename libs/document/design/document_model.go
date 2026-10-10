@@ -28,6 +28,9 @@ type Document struct {
 	// part of an export: an export keeps the terminal's own colours.
 	Light bool `json:"light,omitempty"`
 	Effects  Effects `json:"effects,omitempty"`
+	// Keys are the keys of the screen: each raises an event when the design is
+	// exported as a screen (ADR 0007).
+	Keys []KeyBinding `json:"keys,omitempty"`
 	// Embedded are copies of the user-made components the design uses, so it
 	// still draws on a computer without their packs.
 	Embedded []Embedded `json:"components,omitempty"`
@@ -100,6 +103,7 @@ func (d Document) Clone() Document {
 		nodes[i] = n.Clone()
 	}
 	d.Nodes = nodes
+	d.Keys = append([]KeyBinding(nil), d.Keys...)
 	if d.Embedded != nil {
 		emb := make([]Embedded, len(d.Embedded))
 		for i, e := range d.Embedded {

@@ -182,6 +182,9 @@ func (m *Model) apply(field, value string) {
 	case field == "background":
 		m.report(m.ed.SetBackground(value))
 		return
+	case field == "keys":
+		m.report(m.ed.SetKeys(value))
+		return
 	case strings.HasPrefix(field, "theme-"):
 		m.report(m.ed.SetThemeColor(strings.TrimPrefix(field, "theme-"), value))
 		return
@@ -196,6 +199,12 @@ func (m *Model) apply(field, value string) {
 	switch {
 	case field == "name":
 		m.ed.Rename(n.ID, value)
+	case field == "showif":
+		m.report(m.ed.SetShowIf(n.ID, value))
+	case field == "event":
+		m.report(m.ed.SetEvent(n.ID, value))
+	case strings.HasPrefix(field, "bind:"):
+		m.report(m.ed.SetBinding(n.ID, strings.TrimPrefix(field, "bind:"), value))
 	case strings.HasPrefix(field, "prop:"):
 		m.report(m.ed.SetProp(n.ID, strings.TrimPrefix(field, "prop:"), value))
 	default:

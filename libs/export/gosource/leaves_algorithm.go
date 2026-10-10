@@ -29,6 +29,14 @@ type leaf struct {
 	// MinW and MinH are the smallest size the component allows (set when it
 	// follows the window or can be resized).
 	MinW, MinH int
+	// Bind, ShowIf and Event are the screen contract of the component (ADR
+	// 0007): its bound properties (key to input name), the yes/no input that
+	// shows it and the event a click raises.
+	Bind          map[string]string
+	ShowIf, Event string
+	// Roles maps the colour properties the component has not set to the theme
+	// role they follow, so a screen can be handed a theme at run time.
+	Roles map[string]string
 }
 
 // leaves flattens a document back to front: groups are replaced by their
@@ -92,7 +100,8 @@ func expand(nodes []design.Node, origin design.Rect, baseW, baseH, depth int, ov
 			}
 			out = append(out, expand(inner.Nodes, rect, inner.W, inner.H, depth+1, hand, cat, t)...)
 		default:
-			l := leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props}
+			l := leaf{Kind: n.Component, Name: n.Name, Rect: rect, Props: props,
+				Bind: n.Bind, ShowIf: n.ShowIf, Event: n.Event, Roles: rolesOf(n, cat)}
 			if depth == 0 && (!n.Layout.IsZero() || n.Draggable || n.Resizable) {
 				l.Layout = n.Layout
 				l.Drag, l.Resize = n.Draggable, n.Resizable
@@ -122,4 +131,27 @@ func withDefaults(n design.Node, cat Catalog, t themeOf) map[string]string {
 		props[k] = v
 	}
 	return props
+}
+
+// rolesOf lists the colour properties of the node that follow a theme role
+// because the node does not set them.
+func rolesOf(n design.Node, cat Catalog) map[string]string {
+	def, ok := cat.Get(n.Component)
+	if !ok {
+		return nil
+	}
+	var roles map[string]string
+	for _, spec := range def.Props {
+		if spec.Role == definition.RoleNone {
+			continue
+		}
+		if _, own := n.Props[spec.Key]; own {
+			continue
+		}
+		if roles == nil {
+			roles = map[string]string{}
+		}
+		roles[spec.Key] = string(spec.Role)
+	}
+	return roles
 }
