@@ -13,6 +13,7 @@
 
 - `mvd-colours-rows.cuppa`: the same screen with one *Rows* component for the eight slots instead of a swatch and a
   cursor marker each ([ADR 0008](../docs/adr/0008-row-templates.md)). The program fills `Slots []MVDColoursRowsSlotsRow`
-  and marks the cursor with `Style: RowSelected`; a click raises `Pick` with `Y` as the row.
+  and marks the cursor with `Style: RowSelected`; a click raises `Pick` with `Y` as the row. A *Colour picker* sits
+  under the list (bound to `Colour`, shown with `Show picker`): the program owns it and it replaces typing a colour.
 - `community-widgets.cuppa`: one of each component of the third catalog round (dropdown, prompt input and select,
   data tree, PDF viewer, 3D chart), as a screenshot reference.

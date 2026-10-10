@@ -88,6 +88,15 @@ func New(opts ...Option) Model {
 // Value is the colour: "", a palette number or "#rrggbb".
 func (m Model) Value() string { return m.value }
 
+// Hex is the colour as "#rrggbb" whatever the value is: a palette colour is
+// given as the terminal palette (xterm) shows it. It is "" for no colour.
+func (m Model) Hex() string {
+	if c, _, ok := pickerParse(m.value); ok {
+		return c.hex()
+	}
+	return ""
+}
+
 // SetValue sets the colour. A value that is not "", a palette number or hex
 // is ignored.
 func (m Model) SetValue(value string) Model {

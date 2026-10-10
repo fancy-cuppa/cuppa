@@ -15,7 +15,7 @@ import (
 var colourPickerLibrary string
 
 // colourPickerVersion is the release of the library the copy is of.
-const colourPickerVersion = "v0.1.1"
+const colourPickerVersion = "v0.1.2"
 
 // colourPickerNames are the exported names of the library. In a program they
 // share a package with the rest of the generated code, so each is prefixed.

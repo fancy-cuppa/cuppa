@@ -17,7 +17,7 @@ publishes one is [bubble-colourpicker](https://github.com/meta-tui/bubble-colour
   "name": "colourpicker",
   "title": "Colour picker",
   "description": "Tabs for the 16 and 256 terminal palettes and for RGB and HSL sliders.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "homepage": "https://github.com/meta-tui/bubble-colourpicker",
   "go": {
