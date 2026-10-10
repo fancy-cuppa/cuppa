@@ -46,6 +46,9 @@ type Model struct {
 	// were at the last render.
 	stop, stops int
 
+	// changePick is the component the Change row is showing (an id), or "".
+	changePick string
+
 	editing string // field being typed into: "x", "y", "w", "h", "name" or "prop:<key>"
 	buf     string
 	message string
