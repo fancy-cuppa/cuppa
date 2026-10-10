@@ -178,7 +178,17 @@ A dialog that can take navigation keys implements `modal.Navigator`; the shell o
 
 The Tab order the proposal listed for the colour picker (tab bar, swatches, value, buttons) became: Tab changes the tab, the value field always takes typing, Enter accepts. A separate focus ring would have made typing a hex value need an extra key.
 
-The rest of the proposal (step 5) is not built yet.
+### Step 5: screen reader and the key table (issue #139, built)
+
+- The shell announces what the keyboard did through the description's status line: focus moving to an area, the layer selected (name, size, place, locked or hidden), a move or resize and where it ended, a refusal with its reason (locked, edge, smallest size), the menu item or palette row or details control reached. A repeat of the same words alternates a zero-width mark so it is heard again; feedback from the file flow (Saved…) takes over when it changes.
+- The description flags the focused node of the menu bar, palette, canvas and details bar, the cursor row of the palette, and the focused control of the name prompt and message boxes.
+- Help → Shortcuts is built from one table (`shortcuts_table_model.go`) and a test fails when the user guide does not mention a key in it, so the dialog and the guide cannot drift.
+
+### Modifier keys on mouse gestures (owner request)
+
+As in an image editor: Shift while moving keeps the move to 0°, 45° or 90° (as it looks, two columns per row); Shift while resizing keeps the proportions; Alt while resizing grows from the centre; both together scale around the centre. Snapping to guides is off during a locked move. The keyboard resize (Alt+arrows) is unchanged: Alt is its own modifier there and Shift already means ten.
+
+The proposal is built.
 
 ## Questions (answered)
 

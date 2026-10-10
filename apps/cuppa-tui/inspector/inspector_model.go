@@ -25,6 +25,9 @@ type region struct {
 	// Right on the keyboard stop; mouseOnly spans are not keyboard stops.
 	step      func(delta int)
 	mouseOnly bool
+	// label is the stop as it is read out: the text before it on its line and
+	// its own text.
+	label string
 	// layer is set on a layer name: pressing it can start a drag of that layer.
 	layer design.NodeID
 }

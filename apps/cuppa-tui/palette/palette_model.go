@@ -220,6 +220,29 @@ func (m *Model) renderRow(i int) string {
 	return s
 }
 
+// rowText is how a row is read out.
+func (m *Model) rowText(r row) string {
+	switch {
+	case r.header && m.collapsed[r.family]:
+		return m.cat.Title(r.family) + ", pack, folded"
+	case r.header:
+		return m.cat.Title(r.family) + ", pack"
+	}
+	name := r.def.Name
+	if r.def.Status == definition.StatusPlaceholder {
+		name += ", approximate preview"
+	}
+	return name
+}
+
+// Current is the row under the keyboard cursor, as it is read out.
+func (m *Model) Current() string {
+	if m.cursor < 0 || m.cursor >= len(m.rows) {
+		return ""
+	}
+	return m.rowText(m.rows[m.cursor])
+}
+
 // Describe lists the components by pack, with folded packs said as such.
 func (m *Model) Describe() []a11y.Node {
 	label := "Components"
@@ -227,19 +250,10 @@ func (m *Model) Describe() []a11y.Node {
 		label = "Components matching " + m.query
 	}
 	var items []a11y.Node
-	for _, r := range m.rows {
-		switch {
-		case r.header && m.collapsed[r.family]:
-			items = append(items, a11y.Item(m.cat.Title(r.family)+", pack, folded", false))
-		case r.header:
-			items = append(items, a11y.Item(m.cat.Title(r.family)+", pack", false))
-		default:
-			name := r.def.Name
-			if r.def.Status == definition.StatusPlaceholder {
-				name += ", approximate preview"
-			}
-			items = append(items, a11y.Item(name, false))
-		}
+	for i, r := range m.rows {
+		item := a11y.Item(m.rowText(r), false)
+		item.Focused = m.focused && i == m.cursor
+		items = append(items, item)
 	}
 	return []a11y.Node{a11y.Heading("Components"), a11y.List(label, items...)}
 }

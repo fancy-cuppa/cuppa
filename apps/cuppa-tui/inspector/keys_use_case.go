@@ -26,6 +26,15 @@ func (m *Model) stopRegions() []region {
 	return out
 }
 
+// Current is the stop under the keyboard, as it is read out.
+func (m *Model) Current() string {
+	stops := m.stopRegions()
+	if m.stop < 0 || m.stop >= len(stops) {
+		return ""
+	}
+	return stops[m.stop].label
+}
+
 // Focus puts the keyboard on the bar, on its first stop.
 func (m *Model) Focus() { m.stop = 0 }
 

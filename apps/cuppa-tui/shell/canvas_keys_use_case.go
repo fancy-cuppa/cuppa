@@ -1,6 +1,8 @@
 package shell
 
 import (
+	"fmt"
+
 	tea "charm.land/bubbletea/v2"
 	"github.com/meta-tui/cuppa/libs/document/design"
 )
@@ -16,6 +18,8 @@ func (m *Model) paletteKey(text string) bool {
 	}
 	if id := m.pal.NavKey(text); id != "" {
 		m.placeAtCursor(id)
+	} else {
+		m.say(m.pal.Current())
 	}
 	return true
 }
@@ -33,6 +37,7 @@ func (m *Model) placeAtCursor(id string) {
 	}
 	m.layerCur = nid
 	doc := m.ed.Document()
+	m.say(fmt.Sprintf("Placed %s at %d, %d", n.Name, n.Rect.X, n.Rect.Y))
 	m.curX, m.curY = n.Rect.X, n.Rect.Bottom()+1
 	if m.curY >= doc.Height {
 		m.curX, m.curY = min(n.Rect.Right()+1, doc.Width-1), 0
@@ -50,8 +55,10 @@ func (m *Model) canvasKey(k tea.Key, text string) bool {
 			dir = -1
 		}
 		m.stepLayer(dir)
+		m.saySelection()
 	case text == "space":
 		m.extendSelection()
+		m.saySelection()
 	case text == "ctrl+a":
 		var ids []design.NodeID
 		for _, n := range m.ed.Document().Nodes {
@@ -60,9 +67,11 @@ func (m *Model) canvasKey(k tea.Key, text string) bool {
 			}
 		}
 		m.ed.Select(ids...)
+		m.saySelection()
 	case text == "enter" && len(selected) > 0:
 		m.ins.Focus()
 		m.setFocus(inInspector)
+		m.sayFocus()
 	case isArrow(k.Code) && k.Mod&tea.ModAlt != 0:
 		if len(selected) != 1 {
 			return false
@@ -70,6 +79,7 @@ func (m *Model) canvasKey(k tea.Key, text string) bool {
 		m.resizeSelection(k)
 	case isArrow(k.Code) && len(selected) == 0:
 		m.moveCursor(k)
+		m.sayCursor()
 	default:
 		return false
 	}
@@ -168,6 +178,13 @@ func (m *Model) resizeSelection(k tea.Key) {
 	}
 	step := stepSize(k)
 	r := n.Rect
+	defer func() {
+		if got, ok := m.ed.Primary(); ok && got.Rect != n.Rect {
+			m.say(fmt.Sprintf("Resized to %d by %d", got.Rect.W, got.Rect.H))
+		} else {
+			m.sayRefusal("resize")
+		}
+	}()
 	switch k.Code {
 	case tea.KeyLeft:
 		r.W -= step
