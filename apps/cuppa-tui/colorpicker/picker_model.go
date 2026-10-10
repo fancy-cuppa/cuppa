@@ -48,6 +48,8 @@ type Model struct {
 	title string
 
 	tab   tab
+	// slide is the slider the keyboard is on (RGB and HSL tabs).
+	slide int
 	// scheme is the colour scheme the Themes tab shows (an index into scheme.All).
 	scheme int
 	empty bool // no colour

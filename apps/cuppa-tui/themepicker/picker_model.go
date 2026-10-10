@@ -122,6 +122,37 @@ func (m *Model) Key(_ string, _, enter, esc bool) {
 	}
 }
 
+// Nav implements modal.Navigator: Left and Right step through the schemes
+// (Shift: ten), Up and Down by ten, Home and End jump, a letter or digit
+// jumps to the first scheme that starts with it.
+func (m *Model) Nav(name string) bool {
+	switch name {
+	case "left":
+		m.step(-1)
+	case "right":
+		m.step(1)
+	case "shift+left", "up", "pgup":
+		m.step(-10)
+	case "shift+right", "down", "pgdown":
+		m.step(10)
+	case "home":
+		m.index = 0
+	case "end":
+		m.index = len(scheme.All()) - 1
+	default:
+		r := []rune(name)
+		if len(r) != 1 || !unicode.IsLetter(r[0]) && !unicode.IsDigit(r[0]) {
+			return false
+		}
+		if unicode.IsDigit(r[0]) {
+			m.jump('#')
+		} else {
+			m.jump(unicode.ToUpper(r[0]))
+		}
+	}
+	return true
+}
+
 func (m *Model) apply() {
 	m.done, m.outcome = true, modal.Outcome{Button: "Apply", Value: m.value()}
 }

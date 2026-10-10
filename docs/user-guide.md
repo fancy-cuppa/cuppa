@@ -141,6 +141,17 @@ If Freeze is not installed, the image items are greyed out; clicking one explain
 
 **Keys a plain terminal cannot tell apart.** Ctrl+Shift+S looks like Ctrl+S, and Ctrl+[ looks like Esc, to a terminal that only sends the old key codes. Terminals that report full key presses (those that implement the Kitty keyboard protocol or CSI u, such as kitty, WezTerm and Ghostty) send them properly, and so do the desktop app and the web page. Check yours: if Ctrl+Shift+S saves without asking for a name, it does not. Elsewhere, use the menus: *File ▸ Save As…* and the *Edit* menu's layer items do the same.
 
+## Dialogs by keyboard
+
+| Dialog | Keys |
+|---|---|
+| Message boxes | Tab / Shift+Tab or the arrows choose the button, Enter presses it, Esc cancels |
+| Name prompt | Tab / Shift+Tab move between the field and the buttons |
+| Open / Save | Up / Down move through the files (the name fills in), PageUp / PageDown, Home / End, Alt+Up goes to the parent folder; Enter opens a folder or accepts the name |
+| Component packs | Up / Down choose, Space switches a pack on or off, Delete or `r` removes an installed pack, `a` adds one, Enter is Done |
+| Colour scheme (theme) | Left / Right step (Shift: 10), Up / Down by 10, a letter jumps to it |
+| Colour picker | Tab / Shift+Tab change tab; arrows move through swatches; on RGB and HSL, Up / Down choose a slider and Left / Right change it (Shift: 10); PageUp / PageDown change the scheme on Themes; type a value any time |
+
 ## Troubleshooting
 
 - **Clicks do nothing**: your terminal needs mouse reporting. Try Windows Terminal, iTerm2, kitty or WezTerm.
