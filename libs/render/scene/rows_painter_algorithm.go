@@ -9,27 +9,50 @@ import (
 )
 
 // rowsColumn is one column of the Rows component: its name, its width (0 for
-// the rest of the row) and whether its cells are colours.
+// the rest of the row) and how its cells are drawn.
 type rowsColumn struct {
-	name   string
-	width  int
-	colour bool
+	name  string
+	width int
+	// colour makes the cell a block of that colour (a background); glyph makes
+	// it full blocks drawn in that colour.
+	colour, glyph bool
+	// ellipsis cuts a cell that is too long with "…".
+	ellipsis bool
+	// fg and bg are the colour of the column's text and its background; selBg
+	// is the background the column takes on a selected row. They are colours or
+	// @Name of the palette.
+	fg, bg, selBg string
 }
 
-// rowsColumns reads "Name[:width][:colour]" items separated by commas. A
-// column without a width takes twelve cells, except the last, which takes what
-// is left of the row.
+// rowsColumns reads "Name[:width][:token]..." items separated by commas. A
+// token is colour, glyph, ellipsis, fg=<colour>, bg=<colour> or
+// selbg=<colour>. A column without a width takes twelve cells, except the
+// last, which takes what is left of the row.
 func rowsColumns(spec string) []rowsColumn {
 	var out []rowsColumn
 	for _, item := range rowsSplit(spec, ",", true) {
 		parts := strings.Split(strings.TrimSpace(item), ":")
 		col := rowsColumn{name: strings.TrimSpace(parts[0])}
 		for _, extra := range parts[1:] {
-			extra = strings.ToLower(strings.TrimSpace(extra))
+			extra = strings.TrimSpace(extra)
+			lower := strings.ToLower(extra)
 			if n, err := strconv.Atoi(extra); err == nil {
 				col.width = max(n, 0)
-			} else if extra == "colour" || extra == "color" {
+				continue
+			}
+			switch {
+			case lower == "colour" || lower == "color":
 				col.colour = true
+			case lower == "glyph":
+				col.glyph = true
+			case lower == "ellipsis":
+				col.ellipsis = true
+			case strings.HasPrefix(lower, "fg="):
+				col.fg = strings.TrimSpace(extra[3:])
+			case strings.HasPrefix(lower, "bg="):
+				col.bg = strings.TrimSpace(extra[3:])
+			case strings.HasPrefix(lower, "selbg="):
+				col.selBg = strings.TrimSpace(extra[6:])
 			}
 		}
 		out = append(out, col)
@@ -82,28 +105,78 @@ func rowsCells(s string) [][]string {
 	return rows
 }
 
+// paletteColour resolves a colour of a column or a cell: a name of the
+// design's palette (@Name) through the palette the screen hands its parts, any
+// other text as it is.
+func paletteColour(p Props, c string) string {
+	c = strings.TrimSpace(c)
+	name, isName := strings.CutPrefix(c, "@")
+	if !isName {
+		return c
+	}
+	for _, entry := range strings.Split(p.Str("theme.palette"), ";") {
+		if key, value, ok := strings.Cut(entry, "="); ok && key == name {
+			return value
+		}
+	}
+	return ""
+}
+
+// cellStyleOf reads the style a program gave one cell: "fg|bg|flags" with the
+// flags b (bold), d (dim) and r (reverse).
+func cellStyleOf(p Props, code string, base grid.Style) grid.Style {
+	if code == "" || code == "-" {
+		return base
+	}
+	parts := strings.Split(code, "|")
+	if len(parts) > 0 && parts[0] != "" {
+		base.Fg = paletteColour(p, parts[0])
+	}
+	if len(parts) > 1 && parts[1] != "" {
+		base.Bg = paletteColour(p, parts[1])
+	}
+	if len(parts) > 2 {
+		base.Bold = base.Bold || strings.Contains(parts[2], "b")
+		base.Dim = base.Dim || strings.Contains(parts[2], "d")
+		base.Reverse = base.Reverse || strings.Contains(parts[2], "r")
+	}
+	return base
+}
+
 // paintRows draws the Rows component: one line per row, the cells laid out in
 // the columns the design names, and each row in the style it was given:
-// "selected" inverts the row in the accent colour, "dim" mutes it and "accent"
-// colours its text.
+// "selected" inverts the row in the accent colour (or, when a column has a
+// selbg, only gives those columns their background), "dim" mutes it and
+// "accent" colours its text. A column can set its own colours, cut with an
+// ellipsis, or draw a colour as a block or as glyphs; a program can restyle a
+// cell, and the text of a cell may carry SGR colours.
 func paintRows(g *grid.Grid, p Props) {
 	accent := p.Str("color")
 	columns := rowsColumns(p.Str("columns"))
 	styles := p.List("styles")
+	cellStyles := rowsCells(p.Str("cellstyles"))
+	anySelBg := false
+	for _, c := range columns {
+		anySelBg = anySelBg || c.selBg != ""
+	}
 	for y, row := range rowsCells(p.Str("rows")) {
 		if y >= g.H {
 			break
 		}
-		style := grid.Style{}
+		base := grid.Style{}
+		isSelected := false
 		if y < len(styles) {
 			switch styles[y] {
 			case "selected":
-				style = selected(accent)
-				g.Fill(design.Rect{X: 0, Y: y, W: g.W, H: 1}, ' ', style)
+				isSelected = true
+				if !anySelBg {
+					base = selected(accent)
+					g.Fill(design.Rect{X: 0, Y: y, W: g.W, H: 1}, ' ', base)
+				}
 			case "dim":
-				style = p.Dim()
+				base = p.Dim()
 			case "accent":
-				style = grid.Style{Fg: accent}
+				base = grid.Style{Fg: accent}
 			}
 		}
 		x := 0
@@ -117,14 +190,35 @@ func paintRows(g *grid.Grid, p Props) {
 			if i < len(row) {
 				cell = row[i]
 			}
+			style := base
+			if col.fg != "" {
+				style.Fg = paletteColour(p, col.fg)
+			}
+			if col.bg != "" {
+				style.Bg = paletteColour(p, col.bg)
+			}
+			if isSelected && col.selBg != "" {
+				style.Bg = paletteColour(p, col.selBg)
+			}
+			if y < len(cellStyles) && i < len(cellStyles[y]) {
+				style = cellStyleOf(p, cellStyles[y][i], style)
+			}
 			switch {
 			case w <= 0:
 			case col.colour && cell != "":
 				g.Fill(design.Rect{X: x, Y: y, W: w, H: 1}, ' ', grid.Style{Bg: cell})
-			case col.colour:
+			case col.glyph && cell != "":
+				g.Text(x, y, strings.Repeat("█", w), grid.Style{Fg: cell}, w)
+			case col.colour || col.glyph:
 				g.Text(x, y, "·", p.Dim(), w)
 			default:
-				g.Text(x, y, cell, style, w)
+				if style.Bg != "" {
+					g.Fill(design.Rect{X: x, Y: y, W: w, H: 1}, ' ', grid.Style{Bg: style.Bg})
+				}
+				at := x
+				for _, run := range cutRuns(parseSGR(cell, style), w, col.ellipsis) {
+					at += g.Text(at, y, run.text, run.style, 0)
+				}
 			}
 			x += w
 		}

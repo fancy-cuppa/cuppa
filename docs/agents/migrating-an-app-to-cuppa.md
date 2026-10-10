@@ -102,6 +102,33 @@ over `frame.View` with Lip Gloss layers at the region of a named component (`fra
 `cuppa component options` lists components that carry the same kind of data (ports, ADR 0009); `change`
 keeps the name, place, bindings, show-if and event. Do this instead of deleting and re-adding.
 
+## An input the app owns (text area, text input, viewport)
+
+Do not try to make the design draw a cursor. Keep your own Bubbles model, size it from the design and put its
+view in a *Model view* (`lipgloss.slot`) component bound to a string input:
+
+```go
+r, _ := screens.EditorLayout(props, w, h).RegionNamed("Paste")   // where the slot is, without drawing
+m.textarea.SetWidth(r.W); m.textarea.SetHeight(r.H)
+props.PasteView = m.textarea.View()                             // real cursor, scroll, placeholder
+frame := screens.Editor(props, w, h)
+```
+
+A one-line text input inside a *Rows* cell works the same way: its `View()` goes into the cell text (SGR
+colours are kept and the cell is cut to the column width).
+
+## Keys, events and the key bar
+
+`keys` in the design (`key=Event:label`) raise events and say what the keys are called. A key bar that changes
+with the mode is a *Key bar* component with its hints bound: the program fills `[]<Name>Hint{Key, Label}`
+from the same table it uses for the keys, and a click on the bar arrives as the component's event with `X`.
+
+## What to commit
+
+Commit the designs (`designs/*.cuppa`) and the generated package (`cuppa_*.go`, `*_screen_*.go`), and say in
+the commit which `cuppa-tui` version wrote them, so CI and a contributor without Cuppa can build. Regenerate
+with `cuppa screens` and review the diff; never edit a generated file.
+
 ## Limits to know now
 
 - A bound text input is a string with a static cursor; real cursor/selection/scroll offset are gaps to report.

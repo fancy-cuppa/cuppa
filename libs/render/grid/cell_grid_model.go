@@ -14,6 +14,8 @@ import (
 type Style struct {
 	Fg, Bg    string
 	Bold, Dim bool
+	// Reverse swaps the foreground and the background.
+	Reverse bool
 }
 
 // Cell is one character with its style. A zero Ch means "never painted".
@@ -144,7 +146,7 @@ func render(s Style, text string) string {
 	if s == (Style{}) {
 		return text
 	}
-	st := lipgloss.NewStyle().Bold(s.Bold).Faint(s.Dim)
+	st := lipgloss.NewStyle().Bold(s.Bold).Faint(s.Dim).Reverse(s.Reverse)
 	if s.Fg != "" {
 		st = st.Foreground(lipgloss.Color(s.Fg))
 	}

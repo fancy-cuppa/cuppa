@@ -55,6 +55,12 @@ The field names come from the column names (`Mark`, `Name`, `Swatch`, `Hex`); a 
 - Binding `styles` as well is ignored with a note: the style of a row is the `Style` of its struct.
 - Two rows components that share an input name must have the same columns.
 
+### Column styles, cell styles and cells with colours (batch 1 for MVD)
+
+`columns` takes more tokens after the name and width: `fg=<colour>`, `bg=<colour>`, `selbg=<colour>` (the background the column takes on a selected row; when any column has one, a selected row no longer inverts the whole line), `ellipsis` (a cell that is cut ends in `…`), `colour` (the cell is a block of that background) and `glyph` (the cell is `█` repeated to the width, drawn in that colour). A colour is a palette name (`@Accent`), `#rrggbb` or a palette number. Names are read through the palette the screen hands its parts (`theme.palette`), so a program that sets `p.Palette.Accent` restyles the column.
+
+Every typed row also has a `<Column>Style CellStyle{Fg, Bg string; Bold, Dim, Reverse bool}` next to each cell: what the program says about that cell now (a green tick, a red error tag, the cell under the cursor). It wins over the column's style, and the zero value keeps it. The text of a cell may carry SGR escape sequences (colours, bold, dim, reverse): they are parsed into cells and cut by width, so a text input's view can be a cell.
+
 ### What does not change
 
 - `lipgloss.list` and the Bubbles components keep trimming their items. Rows are the way to a list with alignment, styles or several parts per row.

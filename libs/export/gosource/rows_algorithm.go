@@ -9,6 +9,10 @@ import (
 // contract (ADR 0008).
 const rowsKind = "lipgloss.rows"
 
+// keybarKind is the component whose bound hints are a typed list of keys and
+// labels.
+const keybarKind = "lipgloss.keybar"
+
 // colourPickerKind is the component whose bound value is a ColourPicker the
 // program owns.
 const colourPickerKind = "lipgloss.colourpicker"
@@ -28,7 +32,7 @@ func rowColumns(spec string) []rowColumn {
 		col := rowColumn{name: strings.TrimSpace(parts[0])}
 		for _, extra := range parts[1:] {
 			extra = strings.ToLower(strings.TrimSpace(extra))
-			if _, err := strconv.Atoi(extra); err != nil && (extra == "colour" || extra == "color") {
+			if _, err := strconv.Atoi(extra); err != nil && (extra == "colour" || extra == "color" || extra == "glyph") {
 				col.colour = true
 			}
 		}
@@ -87,4 +91,21 @@ func rowStyleConst(style string) string {
 		return "RowAccent"
 	}
 	return "RowNormal"
+}
+
+// keybarHints reads the hints property of a key bar: "key:label" items
+// separated by commas; the key ends at the first colon.
+func keybarHints(spec string) [][2]string {
+	var out [][2]string
+	for _, item := range rowSplit(spec, ",", true) {
+		key, label, ok := strings.Cut(item, ":")
+		if !ok {
+			key, label = item, ""
+		}
+		if strings.TrimSpace(key) == "" && strings.TrimSpace(label) == "" {
+			continue
+		}
+		out = append(out, [2]string{key, label})
+	}
+	return out
 }

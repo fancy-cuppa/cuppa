@@ -54,6 +54,11 @@ func TestWidgetsDrawTheSameInTheDesignerAndTheProgram(t *testing.T) {
 		{"picker 256", "lipgloss.colourpicker", 46, 23, map[string]string{"tab": "256", "value": "#00ff00"}},
 		{"picker hsl", "lipgloss.colourpicker", 46, 10, map[string]string{"tab": "HSL", "value": "", "slide": "2"}},
 		{"rows", "lipgloss.rows", 44, 5, nil},
+		{"rows tokens", "lipgloss.rows", 40, 3, map[string]string{"columns": "Mark:2:fg=@Accent,Label:12:selbg=#00005f,Swatch:2:glyph,Value:ellipsis:fg=#00f0ff", "rows": "▸,Parallel,#ff007f,a very long value that is cut;,Folder,#3ddc84,/tmp", "styles": "selected,normal", "cellstyles": "-,-,-,#112233|#445566|bd;-,-,-,-"}},
+		{"rows sgr", "lipgloss.rows", 30, 2, map[string]string{"columns": "A:10,B", "rows": "\x1b[31mred\x1b[0m text,\x1b[1;38;5;220mbold\x1b[0m and more", "styles": "normal"}},
+		{"keybar", "lipgloss.keybar", 60, 1, nil},
+		{"keybar clipped", "lipgloss.keybar", 20, 1, map[string]string{"hints": "enter:apply,esc:cancel,tab:next,s:save", "gap": "3"}},
+		{"slot", "lipgloss.slot", 30, 3, map[string]string{"view": "first\x1b[7m cursor\x1b[0m line\nsecond line"}},
 		{"rows spaces", "lipgloss.rows", 30, 3, map[string]string{"columns": "A:6,B:6,C", "rows": "  x,,z; y\\,w,,; q,r,s", "styles": "accent,dim,selected"}},
 		{"rows colours", "lipgloss.rows", 30, 3, map[string]string{"columns": "Name:8,Swatch:5:colour,Rest", "rows": "Tea,#ff0000,hot;Milk,,cold", "styles": "selected"}},
 	}

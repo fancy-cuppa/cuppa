@@ -201,12 +201,25 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	}
 	var rowTypes []rowType
 	rowTypeIndex := map[string]int{}
+	// Hint types: a bound key bar is a typed list of keys and labels.
+	type hintType struct{ name, input string }
+	var hintTypes []hintType
+	hintTypeIndex := map[string]bool{}
 
 	var parts []partSource
 	usesStrconv := false
 	for _, l := range placed {
 		ps := partSource{l: l}
 		def, _ := cat.Get(l.Kind)
+		if l.Kind == rowsKind && len(palette) > 0 {
+			// Columns and cells name colours (@Name); they are read through
+			// the palette the program hands in.
+			var args []string
+			for _, pf := range palette {
+				args = append(args, strconv.Quote(pf.name), "p.Palette."+pf.field, strconv.Quote(pf.color))
+			}
+			ps.assign = append(ps.assign, fmt.Sprintf("v[\"theme.palette\"] = paletteCode(%s)", strings.Join(args, ", ")))
+		}
 		for _, key := range sortedKeys(l.Swatches) {
 			if field, ok := paletteFieldOf[l.Swatches[key]]; ok {
 				ps.assign = append(ps.assign, fmt.Sprintf("if p.Palette.%s != \"\" {\n\t\t\t\tv[%q] = p.Palette.%s\n\t\t\t}", field, key, field))
@@ -238,6 +251,23 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 					fmt.Sprintf("v[\"slide\"] = strconv.Itoa(p.%s.Slide())", field))
 				continue
 			}
+			if l.Kind == keybarKind && key == "hints" {
+				typeName := ident + pascal(l.Bind[key]) + "Hint"
+				var sample []string
+				for _, h := range keybarHints(l.Props[key]) {
+					sample = append(sample, "{Key: "+strconv.Quote(h[0])+", Label: "+strconv.Quote(h[1])+"}")
+				}
+				field, ok := register(l.Bind[key], "[]"+typeName, "[]"+typeName+"{"+strings.Join(sample, ", ")+"}", fmt.Sprintf("%s of %q", spec.Label, l.Name))
+				if !ok {
+					continue
+				}
+				if !hintTypeIndex[typeName] {
+					hintTypeIndex[typeName] = true
+					hintTypes = append(hintTypes, hintType{name: typeName, input: field})
+				}
+				ps.assign = append(ps.assign, fmt.Sprintf("{\n\t\t\t\titems := make([]string, len(p.%[1]s))\n\t\t\t\tfor i, h := range p.%[1]s {\n\t\t\t\t\titems[i] = h.Key + \":\" + h.Label\n\t\t\t\t}\n\t\t\t\tv[%[2]q] = joinList(items)\n\t\t\t}", field, key))
+				continue
+			}
 			if l.Kind == rowsKind && key == "styles" && l.Bind[rowsKey] != "" {
 				note("the styles of %q follow the Style of each row of %q; the binding of its styles is not used", l.Name, l.Bind[rowsKey])
 				continue
@@ -253,6 +283,7 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 						f = "Column" + strconv.Itoa(i+1)
 					}
 					taken[f] = true
+					taken[f+"Style"] = true
 					fields = append(fields, f)
 					colour = append(colour, c.colour)
 				}
@@ -294,7 +325,11 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 				for _, f := range fields {
 					cells = append(cells, "r."+f)
 				}
-				ps.assign = append(ps.assign, fmt.Sprintf("{\n\t\t\t\trows := make([][]string, len(p.%[1]s))\n\t\t\t\tstyles := make([]string, len(p.%[1]s))\n\t\t\t\tfor i, r := range p.%[1]s {\n\t\t\t\t\trows[i] = []string{%[2]s}\n\t\t\t\t\tstyles[i] = rowStyleName(r.Style)\n\t\t\t\t}\n\t\t\t\tv[%[3]q] = joinRows(rows)\n\t\t\t\tv[\"styles\"] = joinList(styles)\n\t\t\t}", field, strings.Join(cells, ", "), key))
+				var cellStyleCells []string
+				for _, f := range fields {
+					cellStyleCells = append(cellStyleCells, "cellStyleCode(r."+f+"Style)")
+				}
+				ps.assign = append(ps.assign, fmt.Sprintf("{\n\t\t\t\trows := make([][]string, len(p.%[1]s))\n\t\t\t\tcellStyles := make([][]string, len(p.%[1]s))\n\t\t\t\tstyles := make([]string, len(p.%[1]s))\n\t\t\t\tfor i, r := range p.%[1]s {\n\t\t\t\t\trows[i] = []string{%[2]s}\n\t\t\t\t\tcellStyles[i] = []string{%[4]s}\n\t\t\t\t\tstyles[i] = rowStyleName(r.Style)\n\t\t\t\t}\n\t\t\t\tv[%[3]q] = joinRows(rows)\n\t\t\t\tv[\"cellstyles\"] = joinRows(cellStyles)\n\t\t\t\tv[\"styles\"] = joinList(styles)\n\t\t\t}", field, strings.Join(cells, ", "), key, strings.Join(cellStyleCells, ", ")))
 				continue
 			}
 			typ, lit := inputType(spec, key, l.Props[key])
@@ -368,7 +403,13 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 			}
 			fmt.Fprintf(&c, "\t// %s is %s.\n\t%s string\n", f, what, f)
 		}
+		for _, f := range rt.fields {
+			fmt.Fprintf(&c, "\t// %sStyle restyles the %s cell of this row; the zero value keeps the column's style.\n\t%sStyle CellStyle\n", f, f, f)
+		}
 		c.WriteString("\t// Style is how the row is drawn: RowNormal, RowSelected, RowDim or RowAccent.\n\tStyle RowStyle\n}\n\n")
+	}
+	for _, ht := range hintTypes {
+		fmt.Fprintf(&c, "// %s is one hint of the key bar %s.\ntype %s struct{ Key, Label string }\n\n", ht.name, ht.input, ht.name)
 	}
 	fmt.Fprintf(&c, "// Default%sProps is the screen as it was designed: each input holds the value\n// it had in the design.\nfunc Default%sProps() %sProps {\n\treturn %sProps{\n", ident, ident, ident, ident)
 	for _, in := range inputs {
@@ -431,6 +472,7 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	v.WriteString("}\n\n")
 	fmt.Fprintf(&v, "// %s draws the screen in an area of w by h cells for the values in p.\nfunc %s(p %sProps, w, h int) Frame {\n\treturn drawScreen(%sParts, p, p.Theme, w, h, %sBackground)\n}\n\n", ident, ident, ident, lower, lower)
 	fmt.Fprintf(&v, "// %sSize is the size of area the screen was designed for.\nfunc %sSize() (w, h int) { return %sWidth, %sHeight }\n\n", ident, ident, lower, lower)
+	fmt.Fprintf(&v, "// %sLayout is the screen without its drawing: the frame has the regions of the\n// visible components, so a program can size a model of its own before it is\n// drawn into one of them.\nfunc %sLayout(p %sProps, w, h int) Frame {\n\treturn layoutScreen(%sParts, p, p.Theme, w, h)\n}\n\n", ident, ident, ident, lower)
 	fmt.Fprintf(&v, "// %sHandle turns a click or a key into the screen's event. ok is false when\n// the message raises none. f is the frame the screen last returned.\nfunc %sHandle(f Frame, msg tea.Msg) (%sEvent, bool) {\n", ident, ident, ident)
 	clicks := false
 	for _, ps := range parts {
