@@ -77,6 +77,12 @@ var painters = map[string]painter{
 	"community.qrcode":       paintQRCode,
 	"community.image":        paintImage,
 	"community.toast":         paintToast,
+	"community.dropdown":      paintDropdown,
+	"community.promptinput":  paintPromptInput,
+	"community.promptselect": paintPromptSelect,
+	"community.datatree":     paintDataTree,
+	"community.pdfview":      paintPDFView,
+	"ntcharts.chart3d":       paintChart3D,
 }
 
 // Render paints every visible node of doc, back to front, onto a new grid the
