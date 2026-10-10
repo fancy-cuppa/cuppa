@@ -88,6 +88,9 @@ func GenerateScreens(docs []design.Document, cat Catalog, pkg string) Project {
 // asPackage puts a runtime template into the screens package, marked as
 // generated.
 func asPackage(text, pkg string) string {
+	text = strings.ReplaceAll(text, "
+", "
+")
 	text = strings.Replace(text, "package main", "package "+pkg, 1)
 	text = strings.ReplaceAll(text, "It is yours to change;\n// layout.go is the part that comes from the design.", "Cuppa writes it again on every export;\n// the screens' contract and view files are the part that comes from the designs.")
 	text = strings.ReplaceAll(text, "Change them freely.", "Cuppa writes them again on every export.")
