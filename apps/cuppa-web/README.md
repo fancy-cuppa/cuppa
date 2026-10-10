@@ -19,7 +19,7 @@ cd frontend && npm install && npm run build && npm run preview
 - `frontend/src/wasm_runtime.ts` gives `createWailsSocket` the `EventsOn` /
   `EventsEmit` it expects (its `runtime` option), so the page needs no new socket.
 
-## Two patches, applied at build time
+## Patches, applied at build time
 
 Bubble Tea v2.1.0 and `atotto/clipboard` do not build for `js/wasm`.
 `build-wasm.cjs` copies them next to the build, adds the files in `wasmpatch/`
@@ -28,11 +28,12 @@ Nothing is forked or committed. (`go build -overlay` cannot be used: Go refuses
 overlays inside the module cache.)
 
 1. `tty_js.go`: no terminal to put in raw mode, no process to suspend, no resize signal.
-2. `mapNl := false`: Bubble Tea assumes a line feed returns the cursor to column
-   0 everywhere except Windows. tty-go rewrites each line feed as `ESC D`
-   (same column), which is only right under the Windows assumption. Without this
-   the screen is scrambled. **tty-go has the same mismatch on Linux and macOS
-   (see the finding below).**
+2. `clipboard_js.go`: the clipboard has no browser backend yet.
+
+There used to be a third patch, `mapNl := false`, because tty-go rewrote every
+line feed as `ESC D`. tty-go v0.1.4 follows Bubble Tea's own rule instead (IND
+where it keeps the column, `\r\n` elsewhere, which includes `GOOS=js`), so the
+build takes Bubble Tea as it is.
 
 ## Result
 
@@ -47,13 +48,3 @@ Not done, in rough order of effort:
 - **Threads:** Go wasm is single-threaded and runs on the page's main thread. A Web Worker would keep the page responsive.
 - **Settings and packs:** layout and user packs are read from disk; they are skipped here.
 - **Accessibility:** the desktop app wraps the model with `terminal.Describe` (screen-reader snapshots). It lives in `cuppa-desktop`, so it is not used here yet.
-
-## Finding for tty-go (not verified on Linux or macOS)
-
-`session.rawLineFeeds` rewrites `\n` as `ESC D` for every OS, but Bubble Tea
-v2.1.0 only emits "line feed, same column" on Windows
-(`mapNl := runtime.GOOS != "windows" && p.ttyInput == nil`). On Linux and macOS
-it assumes the line feed also returns to column 0, so the rewrite should apply
-only when `runtime.GOOS == "windows"`. The browser build hit exactly this
-(`GOOS=js`); `cuppa-desktop` on Linux and macOS very likely does too. Read from
-the code only: the desktop app has not been run on those systems.

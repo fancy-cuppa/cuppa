@@ -38,21 +38,8 @@ function patched (module, name, patch, file) {
   return target
 }
 
-// Bubble Tea assumes a line feed also returns the cursor to column 0 on every
-// OS but Windows. tty-go rewrites each line feed as IND (ESC D, same column),
-// which is only right when Bubble Tea assumes the Windows behaviour, so the
-// browser build takes that branch too.
-function windowsNewlines (target) {
-  const file = join(target, 'tea.go')
-  const before = 'mapNl := runtime.GOOS != "windows" && p.ttyInput == nil'
-  const source = readFileSync(file, 'utf8')
-  if (!source.includes(before)) throw new Error('Bubble Tea changed: update windowsNewlines in build-wasm.cjs')
-  writeFileSync(file, source.replace(before, 'mapNl := false; _ = runtime.GOOS'))
-}
-
 mkdirSync(out, { recursive: true })
 const tea = patched('charm.land/bubbletea/v2', 'bubbletea', 'bubbletea_tty_js.go.txt', 'tty_js.go')
-windowsNewlines(tea)
 const clip = patched('github.com/atotto/clipboard', 'clipboard', 'clipboard_js.go.txt', 'clipboard_js.go')
 
 // The repository's go.work, with absolute paths and the two replacements.
