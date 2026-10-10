@@ -1,6 +1,6 @@
 # 6. Responsive layout
 
-Status: accepted (epic #150).
+Status: accepted and built (epic #150). The dogfood design is `examples/cuppa-shell.cuppa`, checked by a test at two terminal sizes.
 
 ## Context
 
