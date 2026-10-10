@@ -78,12 +78,12 @@ func (m *Model) layerRow(b *builder, node design.Node, row int) {
 	if node.Hidden {
 		eye = theme.Faded("○")
 	}
-	b.add(eye, func() { m.ed.SetHidden(id, !node.Hidden) }).text(" ")
+	b.addMouse(eye, func() { m.ed.SetHidden(id, !node.Hidden) }).text(" ")
 	lock := theme.Faded("▢")
 	if node.Locked {
 		lock = theme.Title("▣")
 	}
-	b.add(lock, func() { m.ed.SetLocked(id, !node.Locked) }).text(" ")
+	b.addMouse(lock, func() { m.ed.SetLocked(id, !node.Locked) }).text(" ")
 
 	name := node.Name
 	rest := max(m.w-b.x, 1)

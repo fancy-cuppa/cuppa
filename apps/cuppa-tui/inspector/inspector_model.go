@@ -21,6 +21,10 @@ type Catalog interface {
 type region struct {
 	y, x0, x1 int
 	act       func()
+	// step changes the value by one in a direction (-1 or +1), for Left and
+	// Right on the keyboard stop; mouseOnly spans are not keyboard stops.
+	step      func(delta int)
+	mouseOnly bool
 	// layer is set on a layer name: pressing it can start a drag of that layer.
 	layer design.NodeID
 }
@@ -34,6 +38,9 @@ type Model struct {
 	scroll  int
 	regions []region
 	total   int // content height of the last render
+	// stop is the keyboard stop that has the focus and stops how many there
+	// were at the last render.
+	stop, stops int
 
 	editing string // field being typed into: "x", "y", "w", "h", "name" or "prop:<key>"
 	buf     string

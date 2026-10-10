@@ -61,6 +61,7 @@ func (m *Model) canvasKey(k tea.Key, text string) bool {
 		}
 		m.ed.Select(ids...)
 	case text == "enter" && len(selected) > 0:
+		m.ins.Focus()
 		m.setFocus(inInspector)
 	case isArrow(k.Code) && k.Mod&tea.ModAlt != 0:
 		if len(selected) != 1 {

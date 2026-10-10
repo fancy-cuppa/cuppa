@@ -148,7 +148,22 @@ The focused area's title is highlighted, the status bar lists the keys that work
 
 With the palette focused the arrows move through the palette, not the selection; the canvas keeps the nudge. PageUp/PageDown and Home/End for layer order were replaced by the Ctrl+[ family, as in the review decisions.
 
-The rest of the proposal (steps 3 to 5) is not built yet.
+### Step 3: details bar (issue #137, built)
+
+Every control of the details bar that a click can press is a **stop**; the stops are in reading order and the focused one is highlighted. The `[-]`/`[+]` and `◂`/`▸` buttons are not stops of their own: the value between them is, and Left/Right (or `-`/`+`) change it.
+
+| Key | What |
+|---|---|
+| Tab / Down, Shift+Tab / Up | Next / previous stop (wraps) |
+| Enter, Space | Press the stop: edit a text or number, press a button, toggle a checkbox, step a choice, open the colour picker, select a layer |
+| Left / Right, `-` / `+` | On a number or a choice: change by 1, with Shift by 10. On other stops: previous / next |
+| `h`, `l` (on a layer) | Hide or show, lock or unlock |
+| Alt+Up / Alt+Down (on a layer) | Move it toward the front / back |
+| Delete (on a layer) | Delete it (a locked layer refuses, as for the mouse) |
+
+While a field is being edited its own keys apply, as before: typing, Up/Down to step a number, Enter to commit, Esc to cancel. Enter on the canvas, with a selection, puts the keyboard here.
+
+The rest of the proposal (steps 4 and 5) is not built yet.
 
 ## Questions (answered)
 
