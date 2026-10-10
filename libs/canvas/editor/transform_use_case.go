@@ -24,7 +24,9 @@ func (e *Editor) MoveSelectionBy(dx, dy int) bool {
 		return false
 	}
 	for _, id := range ids {
+		before, _ := e.doc.Get(id)
 		e.doc.Update(id, func(n *design.Node) { n.Rect = n.Rect.Translate(dx, dy) })
+		e.followRect(id, before.Rect)
 	}
 	return true
 }
@@ -61,6 +63,7 @@ func (e *Editor) SetRect(id design.NodeID, r design.Rect, checkpoint bool) bool 
 	}
 	set := func() bool {
 		e.doc.Update(id, func(n *design.Node) { n.Rect = r })
+		e.followRect(id, n.Rect)
 		return true
 	}
 	if checkpoint {

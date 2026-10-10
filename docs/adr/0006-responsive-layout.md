@@ -29,7 +29,9 @@ The parent is the canvas or the group that holds the node. Percentages are of th
 
 ### Storage
 
-`Node` gains an optional `Layout` with one expression per axis. A node without one is fixed, as today. `Rect` stays the **resolved** rectangle at the current preview size, so renderers and old tools need no change. Because an older build would silently drop `Layout` on save, the file format version goes from 1 to 2 (an identity migration) and an older build reports the file as written by a newer version.
+`Node` gains an optional `Layout` with one expression per axis. A node without one is fixed, as today. `Rect` stays the **resolved** rectangle at the canvas size saved in the file, so renderers and older tools need no change. The field is optional, so by the format policy ([spec](../spec/cuppa-format.md)) the version stays at 1 and old files open unchanged. An older build would drop the expressions when it saves such a file; that is the same trade-off `hidden` and `locked` made.
+
+Expressions apply to top-level components; the children of a group keep scaling with the group.
 
 ### Preview size
 
@@ -52,13 +54,14 @@ The generated program computes rectangles from the window size at run time (`tea
 ## Consequences
 
 - Old files open unchanged: every node is fixed.
+- The canvas size is the preview size: changing it re-resolves every component that has expressions.
 - The editor must keep two things in step for a layout node: the expression and the resolved rectangle.
 - The exported runtime grows with the layout and mouse code.
 
 ## Order of work
 
 1. Expression parser and resolver (`libs/layout`).
-2. Model, format v2 with migration, and a resizable preview viewport.
+2. Model and editor commands (no version bump), and a resizable preview viewport.
 3. Editing expressions and units in the details bar.
 4. Responsive Go export.
 5. Draggable and resizable runtime flags.

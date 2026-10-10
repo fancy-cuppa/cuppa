@@ -257,3 +257,19 @@ func TestTheThemeRoundTripsAndABadThemeColourIsDropped(t *testing.T) {
 		t.Error("no theme in, none out")
 	}
 }
+
+func TestLayoutExpressionsRoundTrip(t *testing.T) {
+	d := design.NewDocument("Shell", 120, 40)
+	d.Add(design.Node{Component: "lipgloss.box", Name: "Top bar", Rect: design.Rect{W: 120, H: 3}, Layout: design.Layout{X: "0", Y: "0", W: "100%", H: "3"}})
+	data, err := Encode(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, d) {
+		t.Fatalf("layout lost:\n got %+v\nwant %+v", got, d)
+	}
+}
