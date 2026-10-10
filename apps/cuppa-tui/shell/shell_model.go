@@ -659,7 +659,7 @@ func (m *Model) titleText() string {
 }
 
 func (m *Model) statusBar() string {
-	hint := "Drag a component from the left bar onto the canvas"
+	var hint string
 	switch {
 	case m.grab != noDivider || m.hover != noDivider:
 		hint = "Drag to change the width of the panel"

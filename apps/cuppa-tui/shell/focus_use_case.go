@@ -57,19 +57,6 @@ func (m *Model) focusKey(text string) bool {
 	return true
 }
 
-// focusName is the area's name as the status bar and the screen reader say it.
-func focusName(p pane) string {
-	switch p {
-	case inMenu:
-		return "Menu bar"
-	case inPalette:
-		return "Palette"
-	case inInspector:
-		return "Details"
-	}
-	return "Canvas"
-}
-
 // focusHints are the keys that work in the focused area.
 func (m *Model) focusHints() string {
 	switch m.focus {
