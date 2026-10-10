@@ -10,7 +10,7 @@ import (
 func (m *Model) say(text string) {
 	m.announceN++
 	if m.announceN%2 == 0 {
-		text += "​"
+		text += "\u200b"
 	}
 	m.announce = text
 }
@@ -81,4 +81,4 @@ func (m *Model) sayRefusal(verb string) {
 func (m *Model) sayCursor() { m.say(fmt.Sprintf("Cursor at %d, %d", m.curX, m.curY)) }
 
 // spoken trims an announcement for tests.
-func spoken(s string) string { return strings.TrimSuffix(s, "​") }
+func spoken(s string) string { return strings.TrimSuffix(s, "\u200b") }

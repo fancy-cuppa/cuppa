@@ -50,9 +50,9 @@ func ResizeWith(r design.Rect, h Handle, dx, dy, minW, minH int, mods ResizeModi
 		sw, sh := float64(w)/float64(r.W), float64(hh)/float64(r.H)
 		var s float64
 		switch {
-		case (left || right) && !(top || bottom):
+		case (left || right) && !top && !bottom:
 			s = sw
-		case (top || bottom) && !(left || right):
+		case (top || bottom) && !left && !right:
 			s = sh
 		case math.Abs(sw-1) >= math.Abs(sh-1):
 			s = sw
