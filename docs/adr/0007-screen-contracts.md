@@ -55,6 +55,10 @@ Two things are exposed to the program, both with the design's value as the defau
 
 The *Colour swatch* component (`lipgloss.swatch`) shows a colour as a block with its value and a label, the way a list of colours is drawn; its colour is a normal colour property, so it can use a named colour.
 
+### Variables
+
+Named colours, inputs and events are the design's **variables**. *View → Variables…* lists them with their kind, value and every place they are used (`Editor.Variables`), goes to a use (choosing from a list when there are several), and renames a variable everywhere (`Editor.RenameVariable`, one undo step, refused onto a name that already exists). Renaming from a component's own row asks whether to rename the variable everywhere or make only that use point to another variable (`Editor.Relink`); a name that already exists links without asking.
+
 ### Regions
 
 `Frame.Regions` lists the visible components with their rectangle, back to front. The program can place something over a component (`Frame.RegionNamed`) or hit-test itself. A click is resolved to the topmost region that raises an event.

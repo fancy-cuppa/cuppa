@@ -3,6 +3,7 @@
 package inspector
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -57,6 +58,9 @@ type Model struct {
 	pickColor ColorPicker
 	// pickTheme opens the dialog that fills the theme from a colour scheme.
 	pickTheme ThemePicker
+	// ask opens a question with buttons; nil means the answer is always the
+	// first button.
+	ask Asker
 
 	// The layer list: a drag in progress, where the list starts and how long it
 	// is (content rows, set at render), and where the trash button is.
@@ -83,6 +87,14 @@ type ColorPicker func(title, current string, apply func(color string))
 // calls apply with the background and the theme colours it chose. The shell
 // provides it.
 type ThemePicker func(apply func(background string, t design.Theme))
+
+// Asker opens a question box with buttons and calls then with the label of
+// the one pressed. The shell provides it.
+type Asker func(title, body string, buttons []string, then func(button string))
+
+// BindAsker sets how the inspector asks the person a question, such as
+// whether renaming a variable renames it everywhere.
+func (m *Model) BindAsker(a Asker) { m.ask = a }
 
 // BindThemePicker sets how the Theme section's scheme button opens the dialog.
 // Without it the button is not shown.
@@ -206,11 +218,16 @@ func (m *Model) apply(field, value string) {
 	case field == "name":
 		m.ed.Rename(n.ID, value)
 	case field == "showif":
-		m.report(m.ed.SetShowIf(n.ID, value))
+		m.changeVariable(editor.VarInput, n.ShowIf, value, editor.Use{Node: n.ID, Role: editor.UseShowIf})
 	case field == "event":
-		m.report(m.ed.SetEvent(n.ID, value))
+		m.changeVariable(editor.VarEvent, n.Event, value, editor.Use{Node: n.ID, Role: editor.UseEvent})
 	case strings.HasPrefix(field, "bind:"):
-		m.report(m.ed.SetBinding(n.ID, strings.TrimPrefix(field, "bind:"), value))
+		key := strings.TrimPrefix(field, "bind:")
+		m.changeVariable(editor.VarInput, n.Bind[key], value, editor.Use{Node: n.ID, Prop: key, Role: editor.UseProp})
+	case strings.HasPrefix(field, "swatchname:"):
+		key := strings.TrimPrefix(field, "swatchname:")
+		current, _ := strings.CutPrefix(n.Props[key], design.TokenPrefix)
+		m.changeVariable(editor.VarColour, current, value, editor.Use{Node: n.ID, Prop: key, Role: editor.UseProp})
 	case strings.HasPrefix(field, "prop:"):
 		key := strings.TrimPrefix(field, "prop:")
 		if def, ok := m.cat.Get(n.Component); ok {
@@ -287,4 +304,67 @@ func layoutOf(l design.Layout, field string) string {
 		return l.H
 	}
 	return ""
+}
+
+// changeVariable sets what a component's use of a variable is called. When the
+// variable is used elsewhere too, the person is asked whether the new name
+// renames the variable everywhere or only makes this use point to another
+// variable.
+func (m *Model) changeVariable(kind editor.VariableKind, current, to string, use editor.Use) {
+	to = design.CleanInputName(to)
+	relink := func() {
+		if kind == editor.VarColour && use.Role == editor.UseProp {
+			if _, ok := m.ed.Document().Theme.Colour(to); !ok && to != "" {
+				// Another variable that does not exist yet: it starts with the
+				// colour this one has.
+				value, _ := m.ed.Document().Theme.Colour(current)
+				if err := m.ed.SetSwatch(to, value); err != nil {
+					m.report(err)
+					return
+				}
+			}
+		}
+		m.report(m.ed.Relink(use, kind, to))
+	}
+	if to == "" || to == current {
+		if to == "" && current != "" && use.Role == editor.UseProp && kind == editor.VarInput {
+			m.report(m.ed.SetBinding(use.Node, use.Prop, ""))
+		} else if to == "" && use.Role == editor.UseShowIf {
+			m.report(m.ed.SetShowIf(use.Node, ""))
+		} else if to == "" && use.Role == editor.UseEvent {
+			m.report(m.ed.SetEvent(use.Node, ""))
+		}
+		return
+	}
+	var uses int
+	exists := false
+	for _, v := range m.ed.Variables() {
+		if v.Kind != kind {
+			continue
+		}
+		if v.Name == current {
+			uses = len(v.Uses)
+		}
+		if v.Name == to {
+			exists = true
+		}
+	}
+	switch {
+	case current == "" || exists:
+		relink()
+	case uses <= 1:
+		m.report(m.ed.RenameVariable(kind, current, to))
+	case m.ask == nil:
+		relink()
+	default:
+		body := fmt.Sprintf("%q is used in %d places.\nRename it to %q everywhere, or make only this one use %q?", current, uses, to, to)
+		m.ask("Rename variable", body, []string{"Rename everywhere", "Only this one", "Cancel"}, func(button string) {
+			switch button {
+			case "Rename everywhere":
+				m.report(m.ed.RenameVariable(kind, current, to))
+			case "Only this one":
+				relink()
+			}
+		})
+	}
 }
