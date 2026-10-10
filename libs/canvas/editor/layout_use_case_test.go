@@ -31,12 +31,12 @@ func TestLayoutExpressionsFollowTheCanvas(t *testing.T) {
 		t.Fatalf("at 120x40: %+v", got)
 	}
 	side := mustAdd(t, e, "lipgloss.box", 0, 2)
-	e.SetLayout(side, AxisH, "100% - 3")
-	e.SetLayout(side, AxisW, "30")
+	must(t, e.SetLayout(side, AxisH, "100% - 3"))
+	must(t, e.SetLayout(side, AxisW, "30"))
 	if got := rectOf(e, side); got.H != 37 || got.W != 30 {
 		t.Fatalf("sidebar: %+v", got)
 	}
-	e.SetCanvasSize(80, 24)
+	must(t, e.SetCanvasSize(80, 24))
 	if got := rectOf(e, side); got.H != 21 {
 		t.Fatalf("sidebar at 80x24: %+v", got)
 	}
@@ -63,7 +63,7 @@ func TestLayoutRefusesBadExpressionsAndLockedNodes(t *testing.T) {
 func TestLayoutIsOneUndoStepAndClearingFixesTheAxis(t *testing.T) {
 	e := newEditor()
 	id := mustAdd(t, e, "lipgloss.box", 0, 0)
-	e.SetLayout(id, AxisW, "50%")
+	must(t, e.SetLayout(id, AxisW, "50%"))
 	if rectOf(e, id).W != 40 {
 		t.Fatalf("w = %d", rectOf(e, id).W)
 	}
@@ -72,8 +72,8 @@ func TestLayoutIsOneUndoStepAndClearingFixesTheAxis(t *testing.T) {
 		t.Fatalf("after undo: w=%d layout=%+v", got, e.Layout(id))
 	}
 	e.Redo()
-	e.SetLayout(id, AxisW, "")
-	e.SetCanvasSize(120, 24)
+	must(t, e.SetLayout(id, AxisW, ""))
+	must(t, e.SetCanvasSize(120, 24))
 	if got := rectOf(e, id).W; got != 40 {
 		t.Fatalf("fixed axis moved: %d", got)
 	}
@@ -82,15 +82,15 @@ func TestLayoutIsOneUndoStepAndClearingFixesTheAxis(t *testing.T) {
 func TestDraggingKeepsTheUnit(t *testing.T) {
 	e := newEditor()
 	id := mustAdd(t, e, "lipgloss.box", 0, 0)
-	e.SetLayout(id, AxisW, "100% - 10")
-	e.SetLayout(id, AxisX, "0")
+	must(t, e.SetLayout(id, AxisW, "100% - 10"))
+	must(t, e.SetLayout(id, AxisX, "0"))
 	e.Checkpoint()
 	e.Select(id)
 	e.SetRect(id, design.Rect{X: 0, Y: 0, W: 60, H: 6}, false)
 	if got := e.Layout(id).W; got != "100% - 20" {
 		t.Fatalf("w = %q, want 100%% - 20", got)
 	}
-	e.SetCanvasSize(120, 24)
+	must(t, e.SetCanvasSize(120, 24))
 	if got := rectOf(e, id).W; got != 100 {
 		t.Fatalf("after resize w = %d", got)
 	}
@@ -109,5 +109,12 @@ func TestLoadResolvesLayouts(t *testing.T) {
 	}
 	if e.Dirty() {
 		t.Fatal("resolving a loaded document is not an edit")
+	}
+}
+
+func must(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
