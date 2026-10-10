@@ -22,13 +22,18 @@ func TestWidgetsPackComponentsDrawAtTheirDefaultSize(t *testing.T) {
 		t.Fatal(issues)
 	}
 	want := map[string]string{
-		"widgets.divider":         "──────",
-		"widgets.badge":           "NEW",
-		"widgets.key-hint":        "Ctrl+C",
-		"widgets.stat-card":       "Cups today",
-		"widgets.breadcrumb":      "Home › Teas › Earl Grey",
-		"widgets.sidebar-menu":    "Dashboard",
-		"widgets.command-palette": "Type a command",
+		"widgets.divider":           "──────",
+		"widgets.badge":             "NEW",
+		"widgets.key-hint":          "Ctrl+C",
+		"widgets.stat-card":         "Cups today",
+		"widgets.breadcrumb":        "Home › Teas › Earl Grey",
+		"widgets.sidebar-menu":      "Dashboard",
+		"widgets.command-palette":   "Type a command",
+		"controls.checkbox":         "[x] Steep for three minutes",
+		"controls.radio":            "(•) Green tea",
+		"controls.toggle":           "[━●] Notifications",
+		"controls.accordion-open":   "▾ Details",
+		"controls.accordion-closed": "▸ Details",
 	}
 	for id, text := range want {
 		def, ok := cat.Get(id)

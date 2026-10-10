@@ -46,7 +46,7 @@ func TestInstallingAPackCopiesItAndAddsItsComponents(t *testing.T) {
 	if _, ok := m.cat.Get("tea-shop.card"); !ok {
 		t.Fatal("the component is in the catalog now")
 	}
-	m.pal.SetSize(m.layout.palette.W, 80)
+	m.pal.SetSize(m.layout.palette.W, 160)
 	if !strings.Contains(paletteText(m), "Tea shop") {
 		t.Fatalf("the palette lists the pack:\n%s", paletteText(m))
 	}

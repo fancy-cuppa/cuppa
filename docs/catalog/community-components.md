@@ -9,7 +9,7 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (61, plus 9 in the bundled packs)
+## What the catalog has today (61, plus 14 in the bundled packs)
 
 | Family | Components |
 |---|---|
@@ -19,7 +19,7 @@ and cannot mix v1 and v2, so v1-only components stay placeholders there.
 | Glamour (1) | markdown |
 | ntcharts (8) | bar, line, sparkline, streamline, time series, heatmap, canvas, 3D chart |
 | Community (19) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast, bigtext, qrcode, image, dropdown, promptinput, promptselect, datatree, pdfview |
-| Bundled packs (9) | Card, Alert; Divider, Badge, Key hint, Stat card, Breadcrumb, Sidebar menu, Command palette |
+| Bundled packs (14) | Card, Alert; Divider, Badge, Key hint, Stat card, Breadcrumb, Sidebar menu, Command palette; Checkbox, Radio, Toggle, Accordion (open and closed) |
 
 ## 1. Official libraries: what is missing
 
@@ -159,14 +159,14 @@ builds a program with 17 variants and compares every character, so the two canno
 | Spinner | `bubbles.spinner`, `huh.spinner` |
 | Input, TextArea | `bubbles.textinput`, `bubbles.textarea`, `huh.input`, `huh.text`, `community.promptinput` |
 | Select | `bubbles.list`, `huh.select`, `community.dropdown`, `community.promptselect` |
-| Checkbox, Radio, Toggle | **Not yet**: a pack (section 3) |
+| Checkbox, Radio, Toggle | Controls pack (#183) |
 | Form | `huh.form` |
 | Table, List | `bubbles.table`, `lipgloss.table`, `community.bubbletable`, `bubbles.list` |
 | Modal | `community.overlay`, `community.dialog` |
 | Card | Starter pack: Card |
 | Menu | Widgets pack: Sidebar menu |
 | Tabs | `lipgloss.tabs` |
-| Accordion | **Not yet**: a pack |
+| Accordion | Controls pack: Accordion (open) and (closed) (#183) |
 | AppLayout, PageLayout, PanelLayout, GridLayout | Responsive layout expressions on every component, `community.flexbox`, `community.boxer` |
 
 ## 7. How a component is added (a checklist for the MCP and the agent instructions)
