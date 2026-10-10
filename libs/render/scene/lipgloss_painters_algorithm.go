@@ -58,6 +58,8 @@ func marker(kind string, i int) string {
 		return fmt.Sprintf("%c. ", 'A'+rune(i%26))
 	case "dash":
 		return "- "
+	case "none":
+		return ""
 	}
 	return "• "
 }
@@ -81,7 +83,7 @@ func paintTree(g *grid.Grid, p Props) {
 func paintTable(g *grid.Grid, p Props) {
 	headers := p.List("headers")
 	var rows [][]string
-	for _, r := range splitList(p.Str("rows"), ";") {
+	for _, r := range splitRaw(p.Str("rows"), ";") {
 		rows = append(rows, splitList(r, ","))
 	}
 	cols := len(headers)

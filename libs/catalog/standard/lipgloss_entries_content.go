@@ -37,7 +37,7 @@ func lipglossEntries() []definition.Definition {
 			DefaultSize: size(20, 5), MinSize: size(6, 1), Import: lipglossImport + "/list", Status: definition.StatusSupported,
 			Props: []definition.PropSpec{
 				textProp("items", "Items (comma separated)", "Tea,Milk,Sugar"),
-				choiceProp("enumerator", "Enumerator", "bullet", "bullet", "arabic", "alphabet", "dash"),
+				choiceProp("enumerator", "Enumerator", "bullet", "bullet", "arabic", "alphabet", "dash", "none"),
 				colorProp("color", "Color", "255"),
 			},
 		},

@@ -227,7 +227,7 @@ func drawFrameWithName(cv *drawing, name string) {
 
 func lgTablePart(c placed, p props) *part {
 	var rows [][]string
-	for _, r := range split(p.str("rows"), ";") {
+	for _, r := range splitRaw(p.str("rows"), ";") {
 		rows = append(rows, split(r, ","))
 	}
 	t := table.New().

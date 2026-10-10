@@ -26,7 +26,7 @@ func bubbleTablePart(c placed, p props) (out *part) {
 		columns = append(columns, table.NewColumn("c"+strconv.Itoa(i), n, each))
 	}
 	var rows []table.Row
-	for _, line := range split(p.str("rows"), ";") {
+	for _, line := range splitRaw(p.str("rows"), ";") {
 		data := table.RowData{}
 		for i, cell := range split(line, ",") {
 			data["c"+strconv.Itoa(i)] = cell
