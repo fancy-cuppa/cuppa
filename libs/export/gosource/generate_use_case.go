@@ -29,6 +29,9 @@ var qrCodeSource string
 //go:embed image_go.txt
 var imageSource string
 
+//go:embed community_widgets_go.txt
+var communityWidgetsSource string
+
 //go:embed huh_go.txt
 var huhSource string
 
@@ -63,6 +66,8 @@ var generated = map[string]bool{
 	"ntcharts.sparkline": true, "ntcharts.barchart": true, "ntcharts.linechart": true,
 	"ntcharts.streamline": true, "ntcharts.timeseries": true, "ntcharts.heatmap": true, "ntcharts.canvas": true,
 	"community.bubbletable": true,
+	"community.dropdown":    true, "community.promptinput": true, "community.promptselect": true,
+	"community.datatree":    true, "community.pdfview": true, "ntcharts.chart3d": true,
 	// drawRun is what the drawing layer is expanded into.
 	drawRunKind: true,
 }
@@ -89,6 +94,13 @@ var extensions = map[string]extension{
 	"community.bigtext": {"bigtext.go", bigTextSource, figletRequire},
 	"community.qrcode":  {"qrcode.go", qrCodeSource, qrRequire},
 	"community.image":   {"image.go", imageSource, ""},
+
+	"community.dropdown":     {"community_widgets.go", communityWidgetsSource, ""},
+	"community.promptinput":  {"community_widgets.go", communityWidgetsSource, ""},
+	"community.promptselect": {"community_widgets.go", communityWidgetsSource, ""},
+	"community.datatree":     {"community_widgets.go", communityWidgetsSource, ""},
+	"community.pdfview":      {"community_widgets.go", communityWidgetsSource, ""},
+	"ntcharts.chart3d":       {"community_widgets.go", communityWidgetsSource, ""},
 
 	"huh.input":       {"huh.go", huhSource, huhRequire},
 	"huh.text":        {"huh.go", huhSource, huhRequire},

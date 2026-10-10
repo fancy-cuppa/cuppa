@@ -1,6 +1,6 @@
 # Component research
 
-Two rounds: #26 (first catalog) and #103 (2026-10-09, this page). Every Bubble Tea / Lip Gloss
+Three rounds: #26 (first catalog), #103 (2026-10-09) and #181 (2026-10-10, section 5). Every Bubble Tea / Lip Gloss
 version below was read from the module's `go.mod` on the Go proxy (latest release); stars,
 licence and last push come from the GitHub API; features come from each project's README. "README
 says" marks a claim I did not check in code.
@@ -9,17 +9,17 @@ Cuppa targets Bubble Tea, Lip Gloss and Bubbles **v2** (`charm.land/...`). A v1 
 be *designed* in Cuppa (the preview is a drawing), but the generated program (#44) is one module
 and cannot mix v1 and v2, so v1-only components stay placeholders there.
 
-## What the catalog has today (63)
+## What the catalog has today (61, plus 9 in the bundled packs)
 
 | Family | Components |
 |---|---|
 | Bubbles (13) | textinput, textarea, list, table, tree, viewport, paginator, filepicker, spinner, progress, timer, stopwatch, help |
 | Huh (9) | input, text, select, multiselect, confirm, note, spinner, filepicker, form |
-| Lip Gloss (9) | box, label, list, tabs, table, tree, joinh, joinv, place |
+| Lip Gloss (10) | box, label, list, tabs, table, tree, joinh, joinv, place, swatch |
 | Glamour (1) | markdown |
-| ntcharts (7) | bar, line, sparkline, streamline, time series, heatmap, canvas |
-| Community (14) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast, bigtext, qrcode, image |
-| Bundled pack (2) | Card, Alert |
+| ntcharts (8) | bar, line, sparkline, streamline, time series, heatmap, canvas, 3D chart |
+| Community (19) | bubbletable, flexbox, boxer, datepicker, overlay, statusbar, filetree, frame, dialog, statusmessage, toast, bigtext, qrcode, image, dropdown, promptinput, promptselect, datatree, pdfview |
+| Bundled packs (9) | Card, Alert; Divider, Badge, Key hint, Stat card, Breadcrumb, Sidebar menu, Command palette |
 
 ## 1. Official libraries: what is missing
 
@@ -48,7 +48,7 @@ Bubble Tea column: the major version in the module's `go.mod`.
 | lrstanley/bubblezone/v2 | Mouse regions | v2.0.0 (2026-02) | 918 | MIT | **v2** | Non-visual. README says it may not work with the Lip Gloss v2 compositor, which has its own mouse support |
 | clambin/bubbles (codeberg) | **frame** (titled container), **dialog** (buttons), **statusbar**, FilterTable, ticker, msglogger | v0.14.1 (2026-08) | n/a | MIT | **v2** | **Added** (#107): `community.frame`, `community.dialog`, `community.statusmessage`. Its status bar is one message line with a level and a spinner, not teacup's four segments, so teacup's `community.statusbar` stays |
 | DaltonSW/BubbleUp/v2 | Toast notifications: info, error, success, custom; six positions; NerdFont, Unicode or ASCII symbols | v2.0.0 (2026-08) | 52 | MIT | **v2** | **Added** (#107): `community.toast`. The import path is `go.dalton.dog/bubbleup/v2` (the github.com path on the proxy is the v1 module) |
-| erikgeiser/promptkit | Selection, text input, confirmation prompts | v0.12.0 (2026-07) | 311 | MIT | **v2** | Still skip: Huh covers these |
+| erikgeiser/promptkit | Selection, text input, confirmation prompts | v0.12.0 (2026-07) | 311 | MIT | **v2** | **Added** (#181): `community.promptinput` and `community.promptselect`; Huh covers the same inside forms, promptkit is the stand-alone prompt |
 | CameronJHall/bubble-datepicker/v2 | Date picker (a fork of EthanEFung's) | v2.0.0 pre (2026-03) | 0 | MIT | **v2** | **Done** (#107): `community.datepicker` now points at this; the original is v1 and unmaintained since January |
 | sraaaaaaay/bubbletea-modal/v2 | Modal, dialog and toast overlays using `lipgloss.NewLayer()` | pre-release (2026-04) | 0 | MIT | **v2** (but `go.mod` still lists Lip Gloss v1) | Backlog: watch; replaces `community.overlay` if it matures |
 | rmhubbert/bubbletea-overlay | Overlay compositing | v0.6.9 (2026-08) | 126 | MIT | v1 | Keep as placeholder; superseded by Lip Gloss v2 layers |
@@ -123,3 +123,58 @@ path (`/v2`) the generator must import.
 
 - Re-run the `go.mod` check (Go proxy `@latest`) when libraries release; the v1 rows are the ones to watch.
 - Not verified: I read features from READMEs and did not build any of these libraries against Bubble Tea v2.1; each addition's issue should do that first.
+
+## 5. Round 3 (#181): a list of components brought by the user
+
+Each row was checked on 2026-10-10 against the repository, its `go.mod` and its README.
+
+| Asked for | Source | Finding | Decision |
+|---|---|---|---|
+| Dropdown | madicen/bubble-dropdown | MIT, 1 star, pushed 2026-07. The v2 API is the sub-module `github.com/madicen/bubble-dropdown/v2` (package `dropdownv2`). Needs bubblezone and bubble-overlay | **Added**: `community.dropdown` |
+| TextInput, Selection (Promptkit) | erikgeiser/promptkit | MIT, v2 (`charm.land/bubbletea/v2`), 311 stars. Packages `.../textinput` and `.../selection` | **Added**: `community.promptinput`, `community.promptselect` |
+| Data-Tree | Evertras/bubble-data-tree | MIT, but Bubble Tea v0.19 and last pushed 2022 | **Added** as a placeholder (like teacup): `community.datatree`. Its drawing is an approximation: the README shows one screenshot only |
+| NTCharts 3D | NimbleMarkets/ntcharts3d | MIT, v0.1.0, Go 1.26, GPU-based rendering with a software fallback, pins an unreleased ntcharts commit | **Added** as a placeholder: `ntcharts.chart3d`. The generated program draws the sketch; use the real module by hand |
+| NTCharts PDF viewer | NimbleMarkets/ntcharts-pdf | MIT, 2 stars; pdfium through WASM; its `go.mod` replaces Bubble Tea with a fork for the browser build | **Added** as a placeholder: `community.pdfview` |
+| Viewport, Table, List, TextInput, TextArea, FilePicker, Spinner, Progress, Paginator, Help, Timer, Stopwatch; Huh form, input, text, select, multiselect, confirm, filepicker; Evertras bubble-table; ntcharts canvas, time series, bar chart | charm and others | Already in the catalog | None |
+| Key | charmbracelet/bubbles/key | Not visual. Keys are the design's *Screen keys* (`key=Event:label`) and `bubbles.help` draws them | Skip |
+| Marinelli Panes | john-marinelli/panes | **No licence file** (GitHub reports none) and Bubble Tea v1, 19 stars | **Skip**: no licence means no right to use it. `community.boxer` and `lipgloss.joinh` cover pane layouts. Worth asking the author for a licence |
+| Funkit Components | github.com/Funkit/bubbletea-components | The URL returns 404; the user Funkit has no such repository | **Skip**: needs the right address |
+| Rust bubbletea-widgets | crates.io | A Rust crate. Cuppa exports Go | Skip |
+| bubblyui | newbpydev/bubblyui | MIT, 17 stars. A framework, not a widget set: Vue-style reactivity (`ctx.Ref`, `.Setup().Template()`) that replaces the Bubble Tea architecture and starts the program itself (`bubbly.Run()`). Bubble Tea **v1** (v1.3.10), pulls in Sentry and Prometheus. Its built-ins depend on the bubblyui runtime and are not standalone | **Not adopted**: an export that imports it would stop being a plain Bubble Tea program, and v1 cannot mix with v2. Its component list is useful as a checklist (section 6) |
+
+### How the new components are drawn
+
+The designer paints them with `libs/render/scene/community_widgets_painters_algorithm.go`; the
+exported program carries the same drawing in `libs/export/gosource/community_widgets_go.txt`
+(standard library and Lip Gloss only, so no extra module). `TestWidgetsDrawTheSameInTheDesignerAndTheProgram`
+builds a program with 17 variants and compares every character, so the two cannot drift. The
+`Import` field of each entry is the real module path, for whoever swaps the sketch for the library.
+
+## 6. bubblyui's component list against the catalog
+
+| bubblyui | Cuppa today |
+|---|---|
+| Button, Text, Icon, Spacer | `lipgloss.box`, `lipgloss.label`; no separate button |
+| Badge | Widgets pack: Badge |
+| Spinner | `bubbles.spinner`, `huh.spinner` |
+| Input, TextArea | `bubbles.textinput`, `bubbles.textarea`, `huh.input`, `huh.text`, `community.promptinput` |
+| Select | `bubbles.list`, `huh.select`, `community.dropdown`, `community.promptselect` |
+| Checkbox, Radio, Toggle | **Not yet**: a pack (section 3) |
+| Form | `huh.form` |
+| Table, List | `bubbles.table`, `lipgloss.table`, `community.bubbletable`, `bubbles.list` |
+| Modal | `community.overlay`, `community.dialog` |
+| Card | Starter pack: Card |
+| Menu | Widgets pack: Sidebar menu |
+| Tabs | `lipgloss.tabs` |
+| Accordion | **Not yet**: a pack |
+| AppLayout, PageLayout, PanelLayout, GridLayout | Responsive layout expressions on every component, `community.flexbox`, `community.boxer` |
+
+## 7. How a component is added (a checklist for the MCP and the agent instructions)
+
+1. **Check it** against "How an entry is chosen" below: visible, permissive licence, not a duplicate, Bubble Tea v2 preferred. Read its `go.mod` on the proxy and its README. Record what you found in a table above.
+2. **Entry**: add a `definition.Definition` in `libs/catalog/standard/` (`community_widgets_entries_content.go` for community ones): `ID` (`family.name`), `Name`, `Family`, one-line `Description`, `DefaultSize`, `MinSize`, `Import` (the real module path, with `/v2` when the module has one), `Status` and the props from the README's options (`textProp`, `intProp`, `boolProp`, `choiceProp`, `colorProp`). Lists are comma separated; multi-line values use `|`.
+3. **Designer painter**: a `paintX(g *grid.Grid, p Props)` in `libs/render/scene/`, registered in `scene_render_use_case.go`. It must survive any size from 0x0 and any prop value.
+4. **Exported drawing**: the same drawing in the runtime, registered in `libs/export/gosource/generate_use_case.go` (`generated` and `extensions`). Names in a runtime file share one package with `runtime.go` and `widgets.go`, so prefix them.
+5. **Tests**: a case in the painter test, a variant in `TestWidgetsDrawTheSameInTheDesignerAndTheProgram`; the default-registry consistency test runs by itself.
+6. **Docs**: the counts here and in `README.md`, and the user guide if the component has something to learn.
+7. **Check**: `go test ./...` and `golangci-lint run ./...` in `libs/catalog`, `libs/render`, `libs/export`.

@@ -15,6 +15,7 @@ func All() []definition.Definition {
 	defs = append(defs, glamourEntries()...)
 	defs = append(defs, ntchartsEntries()...)
 	defs = append(defs, communityEntries()...)
+	defs = append(defs, communityWidgetEntries()...)
 	return withRoles(defs)
 }
 
