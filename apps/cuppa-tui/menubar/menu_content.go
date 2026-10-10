@@ -45,12 +45,14 @@ type item struct {
 
 type menu struct {
 	label string
-	items []item
+	// mnemonic is the letter that opens the menu with Alt held.
+	mnemonic rune
+	items    []item
 }
 
 // menus is the whole menu bar, left to right.
 var menus = []menu{
-	{"File", []item{
+	{"File", 'f', []item{
 		{"New", "Ctrl+N", FileNew},
 		{"Open…", "Ctrl+O", FileOpen},
 		{separatorLabel, "", nothing},
@@ -59,7 +61,7 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Quit", "Ctrl+Q", FileQuit},
 	}},
-	{"Edit", []item{
+	{"Edit", 'e', []item{
 		{"Undo", "Ctrl+Z", EditUndo},
 		{"Redo", "Ctrl+Y / Ctrl+Shift+Z", EditRedo},
 		{separatorLabel, "", nothing},
@@ -80,10 +82,10 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Component packs…", "", EditPacks},
 	}},
-	{"View", []item{
+	{"View", 'v', []item{
 		{"Preview design", "Ctrl+P", ViewPreview},
 	}},
-	{"Export", []item{
+	{"Export", 'x', []item{
 		{"Image (PNG)…", "", ExportPNG},
 		{"Image (SVG)…", "", ExportSVG},
 		{"Image (WebP)…", "", ExportWebP},
@@ -93,7 +95,7 @@ var menus = []menu{
 		{separatorLabel, "", nothing},
 		{"Go source (Bubble Tea)…", "", ExportGo},
 	}},
-	{"Help", []item{
+	{"Help", 'h', []item{
 		{"Shortcuts", "", HelpShortcuts},
 		{"About Cuppa", "", HelpAbout},
 	}},

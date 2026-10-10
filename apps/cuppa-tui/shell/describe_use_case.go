@@ -26,11 +26,21 @@ func (m *Model) Describe() a11y.Snapshot {
 	if m.run != nil {
 		snap.Nodes = append(snap.Nodes, a11y.Text("Preview running. Escape goes back to editing."))
 	}
-	snap.Nodes = append(snap.Nodes, m.bar.Describe()...)
-	snap.Nodes = append(snap.Nodes, m.pal.Describe()...)
-	snap.Nodes = append(snap.Nodes,
+	snap.Nodes = append(snap.Nodes, m.focused(inMenu, m.bar.Describe())...)
+	snap.Nodes = append(snap.Nodes, m.focused(inPalette, m.pal.Describe())...)
+	snap.Nodes = append(snap.Nodes, m.focused(inStage, []a11y.Node{
 		a11y.Heading("Canvas"),
-		a11y.Text(fmt.Sprintf("%d by %d cells, %d components", doc.Width, doc.Height, len(doc.Nodes))))
-	snap.Nodes = append(snap.Nodes, m.ins.Describe()...)
+		a11y.Text(fmt.Sprintf("%d by %d cells, %d components", doc.Width, doc.Height, len(doc.Nodes))),
+	})...)
+	snap.Nodes = append(snap.Nodes, m.focused(inInspector, m.ins.Describe())...)
 	return snap
+}
+
+// focused flags the first node of an area when the keyboard is on it, so a
+// screen reader announces where it is.
+func (m *Model) focused(area pane, nodes []a11y.Node) []a11y.Node {
+	if m.focus == area && len(nodes) > 0 {
+		nodes[0].Focused = true
+	}
+	return nodes
 }

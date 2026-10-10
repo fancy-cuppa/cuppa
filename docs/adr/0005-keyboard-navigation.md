@@ -86,7 +86,7 @@ Terminals cannot tell these apart or deliver them reliably, so none is used: Ctr
 
 Each step is its own pull request, tested by feeding key sequences to the shell and checking the editor and the description.
 
-1. **Focus model, F6, status hints, menu bar keys, dialog Tab order.** The foundation; nothing else works without it.
+1. **Focus model, F6, status hints, menu bar keys.** The foundation; nothing else works without it. Built (issue #135). Dialog Tab order moved to step 4.
 2. **Palette and canvas:** the canvas cursor, place with Enter, Tab selection, move and resize with arrows, layer order keys.
 3. **Details bar:** field focus, editing, steppers, checkboxes, layers list keys.
 4. **Colour picker and the remaining dialogs.**
@@ -121,11 +121,25 @@ How the keys a terminal cannot express reach the app:
 - The menus show Cmd on a Mac in the desktop app (from the operating system) and in the browser (from the User Agent). The terminal program keeps showing Ctrl: the terminal emulator, not Cuppa, owns Cmd there.
 - Where a terminal sends only the old codes, the same actions stay in the menus.
 
-The focus model, F6, menu keys and the rest of the proposal are not built yet.
+### Step 1: focus model and menu keys (issue #135, built)
 
-## Open questions
+| Key | What |
+|---|---|
+| F6 / Shift+F6 | Next / previous area: menu bar, palette, canvas, details bar |
+| Alt+1 to Alt+4 | Jump to the menu bar, palette, canvas or details bar |
+| F10, Alt+F / E / V / X / H | Open the first menu, or the File / Edit / View / Export / Help menu |
+| Left / Right, Up / Down, Home / End, Enter, Esc | In the menu bar: change menu, move through items (separators and disabled items are skipped), run, close |
+| Esc | From the menu bar, palette or details bar: back to the canvas without touching the selection |
 
-1. **F6 or Ctrl+Tab / Alt+number** to switch areas? F6 is proposed because terminals deliver it; Alt+1 to Alt+4 (jump straight to an area) could be added as well.
-2. **Space or Enter** to toggle a checkbox? Proposed: Space toggles, Enter edits or presses, as in most desktop apps.
-3. **Vim keys** (`h j k l`) as aliases for the arrows on the canvas and lists? Not proposed now, to keep one way to do things; cheap to add later.
-4. Should the canvas cursor be drawn only while it is the target of an Enter (palette focus), or always when nothing is selected? Proposed: always, so the user can see where things will land.
+The focused area's title is highlighted, the status bar lists the keys that work there, and the screen-reader description flags the focused area. Clicking an area, or dropping a component on the canvas, moves the focus there. The arrows still move the selection whichever area has the focus, so existing muscle memory is unchanged; steps 2 and 3 give the palette and the details bar their own arrow keys.
+
+The rest of the proposal (steps 2 to 5) is not built yet.
+
+## Questions (answered)
+
+Answered (2026-10-10, by the owner accepting the recommendations):
+
+1. **F6 plus Alt+1 to Alt+4** to switch areas. Ctrl+Tab is not used.
+2. **Space** toggles a checkbox; Enter edits or presses.
+3. **No Vim keys** for now; cheap to add later.
+4. The **canvas cursor is always drawn** when nothing is selected, so the user can see where things will land.

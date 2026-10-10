@@ -41,6 +41,10 @@ type Model struct {
 	command bool
 	// iconFont draws the logo from the icon font instead of the teacup character.
 	iconFont bool
+	// focused is true while the keyboard is on the bar; cursor is the menu it
+	// is on. A dropdown that is open always has the cursor on it.
+	focused bool
+	cursor  int
 }
 
 // New returns a closed bar.
@@ -95,6 +99,126 @@ func (m *Model) Open() bool { return m.open >= 0 }
 // Close hides the dropdown.
 func (m *Model) Close() { m.open, m.hover = -1, -1 }
 
+// Focused reports whether the keyboard is on the bar.
+func (m *Model) Focused() bool { return m.focused }
+
+// Focus puts the keyboard on the bar (on the menu it was last on), or takes
+// it off and closes the dropdown.
+func (m *Model) Focus(on bool) {
+	m.focused = on
+	if !on {
+		m.Close()
+	}
+}
+
+// OpenMnemonic opens the menu whose Alt letter is r (Alt+F for File) and
+// reports whether there is one.
+func (m *Model) OpenMnemonic(r rune) bool {
+	for i, mn := range menus {
+		if mn.mnemonic == r {
+			m.focused = true
+			m.openMenu(i)
+			return true
+		}
+	}
+	return false
+}
+
+// OpenFirst opens the first menu, as F10 does.
+func (m *Model) OpenFirst() {
+	m.focused = true
+	m.openMenu(m.cursor)
+}
+
+func (m *Model) openMenu(i int) {
+	m.cursor, m.open = i, i
+	m.hover = m.step(-1, 1)
+}
+
+// step is the next dropdown item from index from in direction dir that can be
+// chosen: separators and disabled items are skipped, and it wraps. It is -1
+// when there is none.
+func (m *Model) step(from, dir int) int {
+	items := menus[m.open].items
+	n := len(items)
+	for k := 1; k <= n; k++ {
+		i := ((from+dir*k)%n + n) % n
+		it := items[i]
+		if it.label != separatorLabel && !m.disabled[it.action] {
+			return i
+		}
+	}
+	return -1
+}
+
+// Key takes a key while the bar has the keyboard: left and right change menu,
+// down opens it (and moves through it), up moves back, home and end jump,
+// enter runs the item or opens the menu, esc closes the dropdown and then
+// gives the keyboard back. It returns the chosen action and whether the key
+// was used.
+func (m *Model) Key(name string) (Action, bool) {
+	if !m.focused && !m.Open() {
+		return nothing, false
+	}
+	m.focused = true
+	switch name {
+	case "left", "right":
+		dir := 1
+		if name == "left" {
+			dir = -1
+		}
+		next := ((m.cursor+dir)%len(menus) + len(menus)) % len(menus)
+		if m.Open() {
+			m.openMenu(next)
+		} else {
+			m.cursor = next
+		}
+	case "down", "up":
+		if !m.Open() {
+			if name == "down" {
+				m.openMenu(m.cursor)
+			}
+			break
+		}
+		dir := 1
+		if name == "up" {
+			dir = -1
+		}
+		from := m.hover
+		if from < 0 && dir < 0 {
+			from = 0
+		}
+		m.hover = m.step(from, dir)
+	case "home":
+		if m.Open() {
+			m.hover = m.step(-1, 1)
+		}
+	case "end":
+		if m.Open() {
+			m.hover = m.step(0, -1)
+		}
+	case "enter":
+		if !m.Open() {
+			m.openMenu(m.cursor)
+			break
+		}
+		if m.hover >= 0 {
+			act := menus[m.open].items[m.hover].action
+			m.Focus(false)
+			return act, true
+		}
+	case "esc":
+		if m.Open() {
+			m.Close()
+		} else {
+			m.focused = false
+		}
+	default:
+		return nothing, false
+	}
+	return nothing, true
+}
+
 // layout computes where each label sits.
 func (m *Model) layout() {
 	m.labelX = m.labelX[:0]
@@ -113,10 +237,10 @@ func (m *Model) Line(right string) string {
 	b.WriteString(theme.Faded("│ "))
 	for i, mn := range menus {
 		label := " " + mn.label + " "
-		switch i {
-		case m.open:
+		switch {
+		case i == m.open, i == m.cursor && m.focused:
 			label = theme.Selected(label)
-		case m.hoverBar:
+		case i == m.hoverBar:
 			label = theme.Hovered(label)
 		default:
 			label = theme.Dim(label)

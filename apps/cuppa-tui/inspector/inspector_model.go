@@ -30,6 +30,7 @@ type Model struct {
 	ed      *editor.Editor
 	cat     Catalog
 	w, h    int
+	focused bool
 	scroll  int
 	regions []region
 	total   int // content height of the last render
