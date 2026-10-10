@@ -19,7 +19,7 @@ func TestTheDrawingLeavesWhatIsUnderItVisible(t *testing.T) {
 	if c := g.At(2, 2); c.Ch != 'h' {
 		t.Fatalf("the label under the drawing is covered: %q", c.Ch)
 	}
-	if c := g.At(20, 5); c.Ch != '#' || c.Style.Fg != "212" {
+	if c := g.At(20, 5); c.Ch != '#' || c.Fg != "212" {
 		t.Fatalf("the drawn cell = %+v", c)
 	}
 }
