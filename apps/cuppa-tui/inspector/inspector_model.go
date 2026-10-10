@@ -182,6 +182,12 @@ func (m *Model) apply(field, value string) {
 	case field == "background":
 		m.report(m.ed.SetBackground(value))
 		return
+	case field == "swatch-new":
+		m.report(m.ed.SetSwatch(value, "#ffffff"))
+		return
+	case strings.HasPrefix(field, "swatch:"):
+		m.report(m.ed.SetSwatch(strings.TrimPrefix(field, "swatch:"), value))
+		return
 	case field == "keys":
 		m.report(m.ed.SetKeys(value))
 		return
@@ -206,7 +212,14 @@ func (m *Model) apply(field, value string) {
 	case strings.HasPrefix(field, "bind:"):
 		m.report(m.ed.SetBinding(n.ID, strings.TrimPrefix(field, "bind:"), value))
 	case strings.HasPrefix(field, "prop:"):
-		m.report(m.ed.SetProp(n.ID, strings.TrimPrefix(field, "prop:"), value))
+		key := strings.TrimPrefix(field, "prop:")
+		if def, ok := m.cat.Get(n.Component); ok {
+			if spec, ok := def.Prop(key); ok && spec.Kind == definition.PropColor && !strings.HasPrefix(strings.TrimSpace(value), design.TokenPrefix) {
+				m.report(m.ed.SetColour(n.ID, key, value))
+				return
+			}
+		}
+		m.report(m.ed.SetProp(n.ID, key, value))
 	default:
 		value = strings.TrimSpace(value)
 		v, err := strconv.Atoi(value)

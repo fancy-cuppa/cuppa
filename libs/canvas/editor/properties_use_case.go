@@ -41,8 +41,13 @@ func (e *Editor) SetProp(id design.NodeID, key, value string) error {
 	if !ok {
 		return fmt.Errorf("editor: %s has no property %q", def.ID, key)
 	}
-	value, err := normalise(spec, value)
-	if err != nil {
+	var err error
+	if ref, exists := e.isSwatchRef(value); ref && spec.Kind == definition.PropColor {
+		if !exists {
+			return fmt.Errorf("editor: there is no colour %s in the palette", strings.TrimSpace(value))
+		}
+		value = strings.TrimSpace(value)
+	} else if value, err = normalise(spec, value); err != nil {
 		return err
 	}
 	// A colour that follows the theme is only left alone when it already holds

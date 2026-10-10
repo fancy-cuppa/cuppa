@@ -48,7 +48,12 @@ Callbacks were rejected: Bubble Tea models are values, so a closure that sets a 
 
 ### Theme
 
-The design's theme roles (text, muted, border, secondary and the background) are the **theme tokens**. A colour a component has not set follows its role; the screen takes a `Theme` in its props, and an empty value keeps the design's own colour. A colour that must differ per screen state is a bound colour property.
+Two things are exposed to the program, both with the design's value as the default and an empty value keeping it:
+
+- **Theme roles** (text, muted, border, secondary, background): a colour a component has not set follows its role. The screen takes a `Theme` in its props.
+- **Named colours** (the palette, `document.theme.palette`): every colour set in the details bar gets a name taken from its property (`Foreground`, then `Foreground 2`), and other components can use the same name, so they stay in step. A colour property holds `@Name` and resolves through the palette in the preview and in every export. A Go screen exposes each name as a typed field, `p.Palette.Accent`, and a component that uses a name follows what the program puts there. A name in use cannot be deleted.
+
+The *Colour swatch* component (`lipgloss.swatch`) shows a colour as a block with its value and a label, the way a list of colours is drawn; its colour is a normal colour property, so it can use a named colour.
 
 ### Regions
 

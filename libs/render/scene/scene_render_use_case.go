@@ -72,6 +72,7 @@ var painters = map[string]painter{
 	"community.frame":         paintTitledFrame,
 	"community.dialog":        paintDialog,
 	"community.statusmessage": paintStatusMessage,
+	"lipgloss.swatch":         paintSwatch,
 	"community.bigtext":      paintBigText,
 	"community.qrcode":       paintQRCode,
 	"community.image":        paintImage,

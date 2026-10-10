@@ -16,7 +16,7 @@ import (
 func coloursScreen() design.Document {
 	doc := design.NewDocument("Colours", 60, 12)
 	doc.Add(design.Node{Component: "lipgloss.label", Name: "Title", Rect: design.Rect{X: 2, Y: 0, W: 30, H: 1},
-		Props: map[string]string{"text": "Colours"}, Bind: map[string]string{"text": "Title"}})
+		Props: map[string]string{"text": "Colours", "color": "@Accent"}, Bind: map[string]string{"text": "Title"}})
 	doc.Add(design.Node{Component: "lipgloss.list", Name: "Slots", Rect: design.Rect{X: 2, Y: 2, W: 30, H: 5},
 		Props: map[string]string{"items": "Accent, Focus"}, Bind: map[string]string{"items": "Slots"}})
 	doc.Add(design.Node{Component: "lipgloss.label", Name: "Status", Rect: design.Rect{X: 2, Y: 8, W: 30, H: 1},
@@ -24,6 +24,7 @@ func coloursScreen() design.Document {
 	doc.Add(design.Node{Component: "lipgloss.box", Name: "Save button", Rect: design.Rect{X: 40, Y: 2, W: 12, H: 3},
 		Props: map[string]string{"title": "Save"}, Event: "Save", Layout: design.Layout{X: "100% - 20"}})
 	doc.Keys = []design.KeyBinding{{Key: "s", Event: "Save", Label: "save"}, {Key: "esc", Event: "Back", Label: "back"}}
+	doc.Theme.Palette = []design.Swatch{{Name: "Accent", Color: "#ff0000"}, {Name: "Dim colour", Color: "#666666"}}
 	return doc
 }
 
@@ -37,6 +38,11 @@ func TestScreensExportContract(t *testing.T) {
 		"Status string",
 		"ShowStatus bool",
 		"Theme Theme",
+		"Palette ColoursPalette",
+		"type ColoursPalette struct",
+		"Accent string",
+		"DimColour string",
+		"func DefaultColoursPalette() ColoursPalette",
 		"func DefaultColoursProps() ColoursProps",
 		`[]string{"Accent", "Focus"}`,
 		"type ColoursSave struct{ X, Y int }",
@@ -167,6 +173,19 @@ func TestColoursScreen(t *testing.T) {
 	themed := Colours(p2, 60, 12).View
 	if plain == themed {
 		t.Errorf("theme did not change the drawing:\n%q", themed)
+	}
+	// A palette colour changed by the program reaches every component that
+	// uses it, and an empty one keeps the design's colour.
+	red := Colours(DefaultColoursProps(), 60, 12).View
+	p3 := DefaultColoursProps()
+	p3.Palette.Accent = "#00ff00"
+	green := Colours(p3, 60, 12).View
+	if !strings.Contains(red, "255;0;0") || !strings.Contains(green, "0;255;0") || strings.Contains(green, "255;0;0") {
+		t.Errorf("palette colour did not follow: red %q green %q", red, green)
+	}
+	p3.Palette.Accent = ""
+	if again := Colours(p3, 60, 12).View; again != red {
+		t.Error("an empty palette colour must keep the design's")
 	}
 	if len(ColoursKeys) != 2 {
 		t.Errorf("keys %v", ColoursKeys)

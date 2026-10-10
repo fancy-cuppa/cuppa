@@ -166,6 +166,12 @@ func (d Definition) Effective(own map[string]string, theme design.Theme, backgro
 			out[k] = v
 		}
 	}
+	// A colour property set to "@Name" uses the palette swatch of that name.
+	for _, p := range d.Props {
+		if p.Kind == PropColor {
+			out[p.Key] = theme.Resolve(out[p.Key])
+		}
+	}
 	return out
 }
 

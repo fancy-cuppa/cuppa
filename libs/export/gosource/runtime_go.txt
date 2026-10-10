@@ -163,6 +163,8 @@ func buildPart(c placed) *part {
 		return staticPart(label(c.W, p))
 	case "lipgloss.list":
 		return staticPart(listBlock(c.W, c.H, p))
+	case "lipgloss.swatch":
+		return staticPart(swatchBlock(c.H, p))
 	case "bubbles.tree":
 		return treePart(p, c.W, c.H)
 	case "huh.spinner":
@@ -765,4 +767,33 @@ func parseReading(s string) time.Duration {
 		seconds = seconds*60 + n
 	}
 	return time.Duration(seconds * float64(time.Second))
+}
+
+// swatchBlock is a colour shown as a block with its value and a label: the
+// first line holds all three, further lines only the block.
+func swatchBlock(h int, p props) string {
+	text := fg(p.str("textColor"))
+	label := p.str("label")
+	x := 0
+	var first strings.Builder
+	if label != "" {
+		w := p.integer("labelWidth", 0)
+		if w <= 0 {
+			w = lipgloss.Width(label) + 2
+		}
+		first.WriteString(text.Render(label))
+		first.WriteString(strings.Repeat(" ", max(w-lipgloss.Width(label), 0)))
+		x = max(w, lipgloss.Width(label))
+	}
+	width := max(p.integer("swatch", 2), 1)
+	block := lipgloss.NewStyle().Background(lipgloss.Color(p.str("color"))).Render(strings.Repeat(" ", width))
+	first.WriteString(block)
+	if p.flag("showValue") {
+		first.WriteString(" " + text.Render(p.str("color")))
+	}
+	lines := []string{first.String()}
+	for i := 1; i < max(h, 1); i++ {
+		lines = append(lines, strings.Repeat(" ", x)+block)
+	}
+	return strings.Join(lines, "\n")
 }

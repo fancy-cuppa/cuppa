@@ -1,6 +1,9 @@
 package design
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Document is a design: a fixed-size canvas and the nodes placed on it.
 // Nodes are ordered back to front, so the last node is drawn on top.
@@ -51,6 +54,46 @@ type Theme struct {
 	Border string `json:"border,omitempty"`
 	// Secondary is the accent colour: highlights, prompts, bars.
 	Secondary string `json:"secondary,omitempty"`
+	// Palette is the design's named colours. A colour property set to "@Name"
+	// uses the swatch of that name, and a screen exported from the design
+	// exposes each swatch so the program can change it (ADR 0007).
+	Palette []Swatch `json:"palette,omitempty"`
+}
+
+// IsZero reports whether no theme colour and no palette colour is set.
+func (t Theme) IsZero() bool {
+	return t.Text == "" && t.Muted == "" && t.Border == "" && t.Secondary == "" && len(t.Palette) == 0
+}
+
+// Swatch is one named colour of a palette.
+type Swatch struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+// TokenPrefix starts a colour property value that names a palette swatch.
+const TokenPrefix = "@"
+
+// Colour returns the colour of the swatch called name.
+func (t Theme) Colour(name string) (string, bool) {
+	for _, s := range t.Palette {
+		if s.Name == name {
+			return s.Color, true
+		}
+	}
+	return "", false
+}
+
+// Resolve returns the colour a property value stands for: the swatch's colour
+// for "@Name" (empty when the swatch does not exist), the value itself
+// otherwise.
+func (t Theme) Resolve(value string) string {
+	name, ok := strings.CutPrefix(value, TokenPrefix)
+	if !ok {
+		return value
+	}
+	c, _ := t.Colour(name)
+	return c
 }
 
 // Embedded is a copy of a pack component kept inside a design. ID is the
@@ -104,6 +147,7 @@ func (d Document) Clone() Document {
 	}
 	d.Nodes = nodes
 	d.Keys = append([]KeyBinding(nil), d.Keys...)
+	d.Theme.Palette = append([]Swatch(nil), d.Theme.Palette...)
 	if d.Embedded != nil {
 		emb := make([]Embedded, len(d.Embedded))
 		for i, e := range d.Embedded {

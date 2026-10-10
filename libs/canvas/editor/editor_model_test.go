@@ -291,7 +291,7 @@ func TestSetThemeIsOneUndoStep(t *testing.T) {
 		t.Fatalf("theme = %q %+v", doc.Background, doc.Theme)
 	}
 	e.Undo()
-	if doc = e.Document(); doc.Background != "" || doc.Theme != (design.Theme{}) {
+	if doc = e.Document(); doc.Background != "" || !doc.Theme.IsZero() {
 		t.Fatalf("one undo should take back the whole preset: %q %+v", doc.Background, doc.Theme)
 	}
 	if err := e.SetTheme("nope", design.Theme{}); err == nil {
