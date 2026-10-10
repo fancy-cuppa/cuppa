@@ -9,6 +9,10 @@ import (
 // contract (ADR 0008).
 const rowsKind = "lipgloss.rows"
 
+// colourPickerKind is the component whose bound value is a ColourPicker the
+// program owns.
+const colourPickerKind = "lipgloss.colourpicker"
+
 // rowColumn is one column of a Rows component.
 type rowColumn struct {
 	name   string

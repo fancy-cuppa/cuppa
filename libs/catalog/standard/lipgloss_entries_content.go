@@ -45,6 +45,18 @@ func lipglossEntries() []definition.Definition {
 			},
 		},
 		{
+			ID: "lipgloss.colourpicker", Name: "Colour picker", Family: definition.FamilyLipgloss,
+			Description: "Cuppa's colour dialog as a component: tabs for the 16 and 256 palettes and for RGB and HSL sliders, a preview and the value. From github.com/meta-tui/bubble-colourpicker, which any Bubble Tea v2 program can use. Bind the value so the program owns it: the screen then takes a ColourPicker it updates with the keys and the mouse. The width is 46; the 256 tab needs 23 rows.",
+			DefaultSize: size(46, 10), MinSize: size(46, 4), Import: "github.com/meta-tui/bubble-colourpicker", Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				colorProp("value", "Colour (empty for none)", "#ff007f"),
+				textProp("tabs", "Tabs (16, 256, RGB, HSL)", "16,256,RGB,HSL"),
+				choiceProp("tab", "Tab shown", "RGB", "16", "256", "RGB", "HSL"),
+				intProp("slide", "Slider the keyboard is on (RGB, HSL)", 0, 0, 2),
+				colorProp("color", "Accent", "212"),
+			},
+		},
+		{
 			ID: "lipgloss.rows", Name: "Rows", Family: definition.FamilyLipgloss,
 			Description: "A repeated row: the design names the columns, the program gives the rows and the style of each (normal, selected, dim, accent). Bind rows to make a typed list in the screen's contract.",
 			DefaultSize: size(44, 5), MinSize: size(8, 1), Import: lipglossImport, Status: definition.StatusSupported,

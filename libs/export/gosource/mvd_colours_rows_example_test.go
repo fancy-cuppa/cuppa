@@ -65,13 +65,22 @@ func mvdColoursRows(t *testing.T) design.Document {
 	must(ed.SetBinding(list, "rows", "Slots"))
 	must(ed.SetEvent(list, "Pick"))
 
-	help := add("lipgloss.label", "Help", 2, 12, 76, 1)
+	help := add("lipgloss.label", "Help", 2, 10, 76, 1)
 	must(ed.SetProp(help, "text", "Colours are #rgb or #rrggbb and apply as soon as you accept them."))
 	must(ed.UseSwatch(help, "color", "Dim"))
 	must(ed.SetLayout(help, editor.AxisW, "100% - 4"))
 	must(ed.SetBinding(help, "text", "Help"))
 
-	status := add("lipgloss.label", "Status", 2, 14, 76, 1)
+	// The colour picker opens under the list on the slot that is being
+	// changed: the program owns it and shows it with "Show picker".
+	picker := add("lipgloss.colourpicker", "Picker", 2, 11, 46, 10)
+	must(ed.SetProp(picker, "tabs", "16,RGB,HSL"))
+	must(ed.SetProp(picker, "tab", "RGB"))
+	must(ed.UseSwatch(picker, "color", "Accent"))
+	must(ed.SetBinding(picker, "value", "Colour"))
+	must(ed.SetShowIf(picker, "Show picker"))
+
+	status := add("lipgloss.label", "Status", 2, 21, 76, 1)
 	must(ed.SetProp(status, "text", "not a colour"))
 	must(ed.UseSwatch(status, "color", "Error"))
 	must(ed.SetLayout(status, editor.AxisW, "100% - 4"))
@@ -114,6 +123,8 @@ func TestMVDColoursRowsExample(t *testing.T) {
 	contract := p.Files["mvd_colours_rows_screen_contract.go"]
 	for _, wantSrc := range []string{
 		"Slots []MVDColoursRowsSlotsRow",
+		"Colour ColourPicker",
+		"ShowPicker bool",
 		"type MVDColoursRowsSlotsRow struct",
 		"Swatch string",
 		"Style RowStyle",
