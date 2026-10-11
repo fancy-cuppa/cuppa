@@ -18,8 +18,29 @@ func paintBox(g *grid.Grid, p Props) {
 	style := fg(p.Str("color"))
 	g.Box(full(g), grid.BorderNamed(p.Str("border")), style)
 	blendBorder(g, p.Str("color"), p.Str("gradient"))
-	if title := p.Str("title"); title != "" && g.W > 4 {
-		g.Text(2, 0, " "+title+" ", grid.Style{Fg: p.Str("color"), Bold: true}, g.W-4)
+	if g.W <= 4 {
+		return
+	}
+	// The title sits in the top edge after one border cell; a right label sits
+	// before the last one. The title is cut with an ellipsis to leave the
+	// label its room.
+	title, right := p.Str("title"), p.Str("right")
+	maxBlock, rightBlock := g.W-4, ""
+	if right != "" {
+		if room := g.W - len([]rune(right)) - 7; room >= 4 {
+			maxBlock, rightBlock = room, " "+right+" "
+		}
+	}
+	if title != "" && maxBlock >= 4 {
+		block := []rune(" " + title + " ")
+		if len(block) > maxBlock {
+			block = append([]rune(" "), []rune(title)[:maxBlock-3]...)
+			block = append(block, '…', ' ')
+		}
+		g.Text(2, 0, string(block), grid.Style{Fg: orColour(p.Str("titleColor"), p.Str("color")), Bold: p.Bool("titleBold")}, 0)
+	}
+	if rightBlock != "" {
+		g.Text(g.W-2-len([]rune(rightBlock)), 0, rightBlock, grid.Style{Fg: orColour(p.Str("rightColor"), "240")}, 0)
 	}
 }
 

@@ -44,7 +44,7 @@ func parseSGR(text string, base grid.Style) []sgrRun {
 			if j < len(rs) {
 				if rs[j] == 'm' {
 					flush()
-					cur = applySGR(cur, base, string(rs[i+2:j]))
+					cur = applySGR(cur, string(rs[i+2:j]))
 				}
 				i = j
 				continue
@@ -67,11 +67,12 @@ func parseSGR(text string, base grid.Style) []sgrRun {
 	return runs
 }
 
-// applySGR changes style by the parameters of one SGR sequence; a reset goes
-// back to base.
-func applySGR(style, base grid.Style, params string) grid.Style {
+// applySGR changes style by the parameters of one SGR sequence. A reset (0, 39
+// or 49) means the terminal's default colours, not the style the text started
+// from: text that carries its own sequences is in charge of its colours.
+func applySGR(style grid.Style, params string) grid.Style {
 	if params == "" {
-		return base
+		return grid.Style{}
 	}
 	parts := strings.Split(params, ";")
 	num := func(i int) (int, bool) {
@@ -102,7 +103,7 @@ func applySGR(style, base grid.Style, params string) grid.Style {
 		}
 		switch {
 		case n == 0:
-			style = base
+			style = grid.Style{}
 		case n == 1:
 			style.Bold = true
 		case n == 2:
@@ -122,9 +123,9 @@ func applySGR(style, base grid.Style, params string) grid.Style {
 		case n >= 100 && n <= 107:
 			style.Bg = strconv.Itoa(n - 100 + 8)
 		case n == 39:
-			style.Fg = base.Fg
+			style.Fg = ""
 		case n == 49:
-			style.Bg = base.Bg
+			style.Bg = ""
 		case n == 38 || n == 48:
 			c, used := colour(i)
 			if c != "" {

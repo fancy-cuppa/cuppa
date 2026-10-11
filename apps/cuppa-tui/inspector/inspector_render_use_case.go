@@ -265,7 +265,7 @@ func (m *Model) properties(b *builder, n design.Node) {
 		_, own := n.Props[p.Key]
 		value := effective[p.Key]
 		m.block(b, p.Label, 1, theme.Dim, nil)
-		if p.Kind == definition.PropText {
+		if p.Kind == definition.PropText || p.Kind == definition.PropFloat {
 			m.textProp(b, "prop:"+p.Key, value)
 		} else {
 			b.text("  ")

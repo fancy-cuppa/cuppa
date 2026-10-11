@@ -23,6 +23,15 @@ func (p Props) Int(key string, def int) int {
 	return n
 }
 
+// Float returns the value of key as a number, or def if it does not parse.
+func (p Props) Float(key string, def float64) float64 {
+	f, err := strconv.ParseFloat(strings.TrimSpace(p[key]), 64)
+	if err != nil {
+		return def
+	}
+	return f
+}
+
 // Bool returns the value of key as a boolean.
 func (p Props) Bool(key string) bool { return p[key] == "true" }
 

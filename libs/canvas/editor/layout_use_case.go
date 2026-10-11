@@ -2,6 +2,7 @@ package editor
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/meta-tui/cuppa/libs/document/design"
@@ -110,6 +111,7 @@ func (e *Editor) resolveNode(id design.NodeID) {
 	}
 	r := n.Rect
 	w, h := e.doc.Width, e.doc.Height
+	env := e.layoutEnv()
 	pick := func(src string, parent int, cur int) int {
 		if src == "" {
 			return cur
@@ -118,7 +120,7 @@ func (e *Editor) resolveNode(id design.NodeID) {
 		if err != nil {
 			return cur
 		}
-		return x.Resolve(parent)
+		return x.ResolveIn(parent, env)
 	}
 	r.W = pick(n.Layout.W, w, r.W)
 	r.H = pick(n.Layout.H, h, r.H)
@@ -129,6 +131,55 @@ func (e *Editor) resolveNode(id design.NodeID) {
 	r.Y = pick(n.Layout.Y, h, r.Y)
 	r = r.MoveInto(e.doc.Bounds())
 	e.doc.Update(id, func(n *design.Node) { n.Rect = r })
+}
+
+// layoutEnv is what an expression can read: the inputs of the screen with the
+// value they have in the design (the bound property's value, or true for a
+// show-if), and the places the components before it have now.
+func (e *Editor) layoutEnv() *expr.Env {
+	inputs := map[string]float64{}
+	var scan func(nodes []design.Node)
+	scan = func(nodes []design.Node) {
+		for _, n := range nodes {
+			for key, name := range n.Bind {
+				value, set := n.Props[key]
+				if def, ok := e.cat.Get(n.Component); ok && !set {
+					if spec, ok := def.Prop(key); ok {
+						value = spec.Default
+					}
+				}
+				switch value {
+				case "true":
+					inputs[name] = 1
+				case "false":
+					inputs[name] = 0
+				default:
+					if f, err := strconv.ParseFloat(strings.TrimSpace(value), 64); err == nil {
+						inputs[name] = f
+					}
+				}
+			}
+			if n.ShowIf != "" && !expr.IsCondition(n.ShowIf) {
+				if _, known := inputs[n.ShowIf]; !known {
+					inputs[n.ShowIf] = 1
+				}
+			}
+			scan(n.Children)
+		}
+	}
+	scan(e.doc.Nodes)
+	return &expr.Env{
+		W: e.doc.Width, H: e.doc.Height,
+		Input: func(name string) (float64, bool) { v, ok := inputs[name]; return v, ok },
+		Rect: func(name, field string) (float64, bool) {
+			for _, n := range e.doc.Nodes {
+				if n.Name == name {
+					return expr.RectField(n.Rect.X, n.Rect.Y, n.Rect.W, n.Rect.H, field), true
+				}
+			}
+			return 0, false
+		},
+	}
 }
 
 // followRect writes a drag or resize back into the node's expressions so each

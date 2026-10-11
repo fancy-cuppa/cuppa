@@ -48,7 +48,7 @@ var bubbleTableSource string
 // community widgets are drawn with Lip Gloss to look like the library they
 // stand for, so the generated project needs no extra module for them.
 var generated = map[string]bool{
-	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true, "lipgloss.swatch": true, "lipgloss.rows": true, "lipgloss.colourpicker": true, "lipgloss.keybar": true, "lipgloss.slot": true,
+	"lipgloss.box": true, "lipgloss.label": true, "lipgloss.list": true, "lipgloss.swatch": true, "lipgloss.rows": true, "lipgloss.colourpicker": true, "lipgloss.keybar": true, "lipgloss.slot": true, "lipgloss.progressline": true,
 	"bubbles.textinput": true, "bubbles.textarea": true, "bubbles.list": true, "bubbles.table": true,
 	"bubbles.viewport": true, "bubbles.paginator": true, "bubbles.spinner": true, "bubbles.progress": true,
 	"bubbles.stopwatch": true, "bubbles.timer": true, "bubbles.tree": true,
@@ -98,6 +98,7 @@ var extensions = map[string]extension{
 	"lipgloss.rows":          {"community_widgets.go", communityWidgetsSource, ""},
 	"lipgloss.keybar":        {"community_widgets.go", communityWidgetsSource, ""},
 	"lipgloss.slot":          {"community_widgets.go", communityWidgetsSource, ""},
+	"lipgloss.progressline":  {"community_widgets.go", communityWidgetsSource, ""},
 	"lipgloss.colourpicker":  {"colourpicker.go", colourPickerSource(), ""},
 	"community.dropdown":     {"community_widgets.go", communityWidgetsSource, ""},
 	"community.promptinput":  {"community_widgets.go", communityWidgetsSource, ""},
@@ -262,12 +263,44 @@ func fitSource(l leaf) string {
 			return strconv.Itoa(fixed)
 		}
 		e, err := expr.Parse(src)
-		if err != nil {
+		if err != nil || e.UsesEnv() {
 			return strconv.Itoa(fixed)
 		}
 		return "cells(" + e.GoSource(parent) + ")"
 	}
 	return fmt.Sprintf("Fit: func(w, h int) (x, y, cw, ch int) {\n\t\treturn %s, %s, %s, %s\n\t}",
+		axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
+		axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h"))
+}
+
+// layoutReadsEnv reports whether any axis of the component's layout reads an
+// input or the place of another component.
+func layoutReadsEnv(l leaf) bool {
+	for _, src := range []string{l.Layout.X, l.Layout.Y, l.Layout.W, l.Layout.H} {
+		if src == "" {
+			continue
+		}
+		if e, err := expr.Parse(src); err == nil && e.UsesEnv() {
+			return true
+		}
+	}
+	return false
+}
+
+// fitEnvSource is the FitEnv field of a component of a screen whose place reads
+// inputs or other components.
+func fitEnvSource(l leaf) string {
+	axis := func(src string, fixed int, parent string) string {
+		if src == "" {
+			return strconv.Itoa(fixed)
+		}
+		e, err := expr.Parse(src)
+		if err != nil {
+			return strconv.Itoa(fixed)
+		}
+		return "cells(" + e.GoSource(parent) + ")"
+	}
+	return fmt.Sprintf("FitEnv: func(e fitEnv) (x, y, cw, ch int) {\n\t\tw, h := e.W, e.H\n\t\t_, _ = w, h\n\t\treturn %s, %s, %s, %s\n\t}",
 		axis(l.Layout.X, l.Rect.X, "w"), axis(l.Layout.Y, l.Rect.Y, "h"),
 		axis(l.Layout.W, l.Rect.W, "w"), axis(l.Layout.H, l.Rect.H, "h"))
 }

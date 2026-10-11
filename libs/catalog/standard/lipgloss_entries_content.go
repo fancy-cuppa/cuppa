@@ -17,6 +17,10 @@ func lipglossEntries() []definition.Definition {
 				choiceProp("border", "Border", "rounded", borders...),
 				colorProp("color", "Border color", "212"),
 				colorProp("gradient", "Gradient to (blend the border)", ""),
+				textProp("right", "Right label (in the top edge)", ""),
+				colorProp("titleColor", "Title colour (empty: the border's)", ""),
+				boolProp("titleBold", "Title in bold", true),
+				colorProp("rightColor", "Right label colour", "240"),
 			},
 		},
 		{
@@ -66,6 +70,22 @@ func lipglossEntries() []definition.Definition {
 				textProp("styles", "Row styles (normal, selected, dim, accent)", "selected,normal,normal,dim"),
 				textProp("cellstyles", "Cell styles (given by the program)", ""),
 				colorProp("color", "Colour", "212"),
+			},
+		},
+		{
+			ID: "lipgloss.progressline", Name: "Progress line", Family: definition.FamilyLipgloss,
+			Description: "A progress bar followed by a text, such as 34.2% of 112.4MiB at 8.1MiB/s. Bind the value (a number with a fraction) and the suffix.",
+			DefaultSize: size(70, 1), MinSize: size(4, 1), Import: lipglossImport, Status: definition.StatusSupported,
+			Props: []definition.PropSpec{
+				floatProp("value", "Done (0 to 100)", 34.2, 0, 100),
+				intProp("barWidth", "Bar width (0: what the text leaves)", 32, 0, 400),
+				textProp("full", "Full cell", "█"),
+				textProp("empty", "Empty cell", "░"),
+				colorProp("fullColor", "Full colour", "220"),
+				colorProp("emptyColor", "Empty colour", "240"),
+				textProp("suffix", "Text after the bar", "34.2% of 112.4MiB at 8.1MiB/s ETA 0:09"),
+				colorProp("suffixColor", "Text colour", "255"),
+				intProp("gap", "Spaces between", 3, 0, 16),
 			},
 		},
 		{

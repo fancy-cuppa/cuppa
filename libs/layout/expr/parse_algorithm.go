@@ -114,6 +114,8 @@ func (p *parser) atom() (node, error) {
 		return x, nil
 	case c >= '0' && c <= '9' || c == '.':
 		return p.quantity()
+	case c == '$':
+		return p.input()
 	case c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z':
 		return p.function()
 	default:
@@ -155,6 +157,12 @@ func (p *parser) function() (node, error) {
 		p.pos++
 	}
 	name := strings.ToLower(p.src[start:p.pos])
+	if (name == "w" || name == "h") && p.peek() != '(' {
+		return windowDim{axis: name[0]}, nil
+	}
+	if field, ok := rectFunctions[name]; ok {
+		return p.rectRef(name, field)
+	}
 	if name != "min" && name != "max" {
 		return nil, fmt.Errorf("unknown name %q at %d", p.src[start:p.pos], start+1)
 	}
@@ -179,4 +187,81 @@ func (p *parser) function() (node, error) {
 			return nil, fmt.Errorf("expected , or ) at %d", p.pos+1)
 		}
 	}
+}
+
+// input reads $Name or $"A name with spaces": a number or yes/no input of the
+// screen the expression is in.
+func (p *parser) input() (node, error) {
+	p.pos++ // $
+	if p.pos < len(p.src) && p.src[p.pos] == '"' {
+		name, err := p.quoted()
+		if err != nil {
+			return nil, err
+		}
+		return inputRef{name: name}, nil
+	}
+	start := p.pos
+	for p.pos < len(p.src) && (letterAfter(p.src, p.pos) || p.src[p.pos] >= '0' && p.src[p.pos] <= '9' || p.src[p.pos] == '_') {
+		p.pos++
+	}
+	if start == p.pos {
+		return nil, fmt.Errorf("an input name must follow $ at %d", start)
+	}
+	return inputRef{name: p.src[start:p.pos]}, nil
+}
+
+// rectFunctions are the functions that read the place of a component, with
+// the edge of its rectangle each one gives.
+var rectFunctions = map[string]string{
+	"below": "bottom", "right": "right", "top": "y", "left": "x", "height": "h", "width": "w",
+}
+
+// rectRef reads below("Name"), right("Name"), top, left, height or width: one
+// edge of a component placed before this one.
+func (p *parser) rectRef(fn, field string) (node, error) {
+	if p.peek() != '(' {
+		return nil, fmt.Errorf("%s needs ( at %d", fn, p.pos+1)
+	}
+	p.pos++
+	var name string
+	if p.peek() == '"' {
+		q, err := p.quoted()
+		if err != nil {
+			return nil, err
+		}
+		name = q
+	} else {
+		start := p.pos
+		for p.pos < len(p.src) && p.src[p.pos] != ')' {
+			p.pos++
+		}
+		name = strings.TrimSpace(p.src[start:p.pos])
+	}
+	if name == "" {
+		return nil, fmt.Errorf("%s needs the name of a component at %d", fn, p.pos+1)
+	}
+	if p.peek() != ')' {
+		return nil, fmt.Errorf("missing ) at %d", p.pos+1)
+	}
+	p.pos++
+	return rectRef{name: name, field: field}, nil
+}
+
+// quoted reads a "string" at the current position.
+func (p *parser) quoted() (string, error) {
+	p.skip()
+	if p.pos >= len(p.src) || p.src[p.pos] != '"' {
+		return "", fmt.Errorf("a quoted name was expected at %d", p.pos+1)
+	}
+	p.pos++
+	start := p.pos
+	for p.pos < len(p.src) && p.src[p.pos] != '"' {
+		p.pos++
+	}
+	if p.pos >= len(p.src) {
+		return "", fmt.Errorf("the quote opened at %d is not closed", start)
+	}
+	name := p.src[start:p.pos]
+	p.pos++
+	return name, nil
 }

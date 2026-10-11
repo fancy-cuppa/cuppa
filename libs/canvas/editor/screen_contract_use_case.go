@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/layout/expr"
 )
 
 // SetBinding ties a property of the component to a named screen input, or
@@ -53,8 +54,14 @@ func (e *Editor) SetShowIf(id design.NodeID, name string) error {
 	if err != nil {
 		return err
 	}
-	name, err = inputName(name)
-	if err != nil {
+	if expr.IsCondition(name) {
+		// A condition on the window and on inputs: "w >= 100", "$Count > 0".
+		cond, err := expr.ParseCond(name)
+		if err != nil {
+			return fmt.Errorf("editor: %w", err)
+		}
+		name = cond.String()
+	} else if name, err = inputName(name); err != nil {
 		return err
 	}
 	if n.ShowIf == name {

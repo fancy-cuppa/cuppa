@@ -10,6 +10,7 @@ import (
 
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/layout/expr"
 )
 
 //go:embed screens_go.txt
@@ -123,6 +124,8 @@ type partSource struct {
 	l      leaf
 	assign []string
 	show   string
+	// cond is the Go condition of a show-if that is an expression ("w >= 100").
+	cond string
 }
 
 func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) screen {
@@ -208,6 +211,8 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 
 	var parts []partSource
 	usesStrconv := false
+	// readRefs are the inputs that conditions and layout expressions read.
+	var readRefs []string
 	for _, l := range placed {
 		ps := partSource{l: l}
 		def, _ := cat.Get(l.Kind)
@@ -341,6 +346,9 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 			case "int":
 				usesStrconv = true
 				ps.assign = append(ps.assign, fmt.Sprintf("v[%q] = strconv.Itoa(p.%s)", key, field))
+			case "float64":
+				usesStrconv = true
+				ps.assign = append(ps.assign, fmt.Sprintf("v[%q] = strconv.FormatFloat(p.%s, 'f', -1, 64)", key, field))
 			case "bool":
 				usesStrconv = true
 				ps.assign = append(ps.assign, fmt.Sprintf("v[%q] = strconv.FormatBool(p.%s)", key, field))
@@ -353,14 +361,39 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 			}
 		}
 		if l.ShowIf != "" {
-			if field, ok := register(l.ShowIf, "bool", "true", fmt.Sprintf("whether %q is shown", l.Name)); ok {
+			if expr.IsCondition(l.ShowIf) {
+				cond, err := expr.ParseCond(l.ShowIf)
+				if err != nil {
+					note("the condition of %q (%s): %v", l.Name, l.ShowIf, err)
+				} else {
+					ps.cond = cond.GoSource()
+					readRefs = append(readRefs, cond.Refs()...)
+				}
+			} else if field, ok := register(l.ShowIf, "bool", "true", fmt.Sprintf("whether %q is shown", l.Name)); ok {
 				ps.show = "p." + field
+			}
+		}
+		for _, src := range []string{l.Layout.X, l.Layout.Y, l.Layout.W, l.Layout.H} {
+			if src == "" {
+				continue
+			}
+			if x, err := expr.Parse(src); err == nil {
+				refs, _ := x.Refs()
+				readRefs = append(readRefs, refs...)
 			}
 		}
 		if l.Event != "" {
 			addEvent(l.Event)
 		}
 		parts = append(parts, ps)
+	}
+	for _, ref := range readRefs {
+		if _, known := index[ref]; known {
+			continue
+		}
+		if _, ok := register(ref, "int", "0", "read by a layout expression or a condition"); ok {
+			note("input %q is read by a condition or a layout expression and bound to no property: it is a number (0 by default)", ref)
+		}
 	}
 	for _, k := range doc.Keys {
 		addEvent(k.Event)
@@ -441,13 +474,30 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	}
 	v.WriteString("\ttea \"charm.land/bubbletea/v2\"\n)\n\n")
 	fmt.Fprintf(&v, "const (\n\t%sWidth      = %d\n\t%sHeight     = %d\n\t%sBackground = %s\n)\n\n", lower, doc.Width, lower, doc.Height, lower, strconv.Quote(doc.Background))
+	// What expressions read: the window and the inputs that are numbers or yes/no.
+	var envCases strings.Builder
+	for _, in := range inputs {
+		switch in.typ {
+		case "int":
+			fmt.Fprintf(&envCases, "\t\tcase %q:\n\t\t\treturn float64(p.%s)\n", in.name, in.field)
+		case "float64":
+			fmt.Fprintf(&envCases, "\t\tcase %q:\n\t\t\treturn p.%s\n", in.name, in.field)
+		case "bool":
+			fmt.Fprintf(&envCases, "\t\tcase %q:\n\t\t\tif p.%s {\n\t\t\t\treturn 1\n\t\t\t}\n\t\t\treturn 0\n", in.name, in.field)
+		}
+	}
+	fmt.Fprintf(&v, "// %sEnv is what the layout expressions and conditions of the screen read.\nfunc %sEnv(p %sProps, w, h int) fitEnv {\n\t_ = p\n\treturn fitEnv{W: w, H: h, Inputs: func(name string) float64 {\n\t\tswitch name {\n%s\t\t}\n\t\treturn 0\n\t}}\n}\n\n", lower, lower, ident, envCases.String())
 	fmt.Fprintf(&v, "var %sParts = []screenPart[%sProps]{\n", lower, ident)
 	for _, ps := range parts {
 		l := ps.l
 		fmt.Fprintf(&v, "\t{\n\t\tplaced: placed{Kind: %s, Name: %s, X: %d, Y: %d, W: %d, H: %d, Props: map[string]string{%s}",
 			strconv.Quote(l.Kind), strconv.Quote(l.Name), l.Rect.X, l.Rect.Y, l.Rect.W, l.Rect.H, propsSource(l.Props))
 		if !l.Layout.IsZero() {
-			fmt.Fprintf(&v, ", MinW: %d, MinH: %d, %s", max(minOf(l, cat, true), 1), max(minOf(l, cat, false), 1), fitSource(l))
+			fit := fitSource(l)
+			if layoutReadsEnv(l) {
+				fit = fitEnvSource(l)
+			}
+			fmt.Fprintf(&v, ", MinW: %d, MinH: %d, %s", max(minOf(l, cat, true), 1), max(minOf(l, cat, false), 1), fit)
 		}
 		v.WriteString("},\n")
 		if len(l.Roles) > 0 {
@@ -456,12 +506,16 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 		if l.Event != "" && eventOf[l.Event] != "" {
 			fmt.Fprintf(&v, "\t\tEvent: %s,\n", strconv.Quote(l.Event))
 		}
-		if len(ps.assign) > 0 || ps.show != "" {
-			v.WriteString("\t\tApply: func(p " + ident + "Props, v map[string]string) bool {\n")
+		if len(ps.assign) > 0 || ps.show != "" || ps.cond != "" {
+			v.WriteString("\t\tApply: func(p " + ident + "Props, v map[string]string, w, h int) bool {\n")
 			for _, a := range ps.assign {
 				v.WriteString("\t\t\t" + a + "\n")
 			}
 			show := ps.show
+			if ps.cond != "" {
+				v.WriteString("\t\t\te := " + lower + "Env(p, w, h)\n")
+				show = ps.cond
+			}
 			if show == "" {
 				show = "true"
 			}
@@ -470,9 +524,9 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 		v.WriteString("\t},\n")
 	}
 	v.WriteString("}\n\n")
-	fmt.Fprintf(&v, "// %s draws the screen in an area of w by h cells for the values in p.\nfunc %s(p %sProps, w, h int) Frame {\n\treturn drawScreen(%sParts, p, p.Theme, w, h, %sBackground)\n}\n\n", ident, ident, ident, lower, lower)
+	fmt.Fprintf(&v, "// %s draws the screen in an area of w by h cells for the values in p.\nfunc %s(p %sProps, w, h int) Frame {\n\treturn drawScreen(%sParts, p, p.Theme, w, h, %sBackground, %sEnv)\n}\n\n", ident, ident, ident, lower, lower, lower)
 	fmt.Fprintf(&v, "// %sSize is the size of area the screen was designed for.\nfunc %sSize() (w, h int) { return %sWidth, %sHeight }\n\n", ident, ident, lower, lower)
-	fmt.Fprintf(&v, "// %sLayout is the screen without its drawing: the frame has the regions of the\n// visible components, so a program can size a model of its own before it is\n// drawn into one of them.\nfunc %sLayout(p %sProps, w, h int) Frame {\n\treturn layoutScreen(%sParts, p, p.Theme, w, h)\n}\n\n", ident, ident, ident, lower)
+	fmt.Fprintf(&v, "// %sLayout is the screen without its drawing: the frame has the regions of the\n// visible components, so a program can size a model of its own before it is\n// drawn into one of them.\nfunc %sLayout(p %sProps, w, h int) Frame {\n\treturn layoutScreen(%sParts, p, p.Theme, w, h, %sEnv)\n}\n\n", ident, ident, ident, lower, lower)
 	fmt.Fprintf(&v, "// %sHandle turns a click or a key into the screen's event. ok is false when\n// the message raises none. f is the frame the screen last returned.\nfunc %sHandle(f Frame, msg tea.Msg) (%sEvent, bool) {\n", ident, ident, ident)
 	clicks := false
 	for _, ps := range parts {
@@ -512,6 +566,12 @@ func inputType(spec definition.PropSpec, key, value string) (typ, lit string) {
 			n = 0
 		}
 		return "int", strconv.Itoa(n)
+	case spec.Kind == definition.PropFloat:
+		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil {
+			f = 0
+		}
+		return "float64", strconv.FormatFloat(f, 'f', -1, 64)
 	case spec.Kind == definition.PropBool:
 		return "bool", strconv.FormatBool(value == "true")
 	case spec.Kind == definition.PropText && listKeys[key]:
