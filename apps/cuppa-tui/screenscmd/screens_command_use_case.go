@@ -20,11 +20,15 @@ import (
 )
 
 const usage = `usage:
-  cuppa screens <design.cuppa|folder>... -o <folder> [-p <package>]
+  cuppa screens <design.cuppa|folder>... -o <folder> [-p <package>] [--check]
 
 Writes one contract and one view file per design, and the shared runtime, into
 <folder> (a package of its own). Files it wrote earlier are replaced and the
 files of designs that are gone are removed; any other file stops the export.
+
+With --check nothing is written: the command exits 1 and lists the files that
+are missing, differ from what the designs export, or are left over, so a CI job
+can tell that the generated package is out of date.
 `
 
 // Run executes "cuppa screens" with the arguments after the word screens and
@@ -32,8 +36,11 @@ files of designs that are gone are removed; any other file stops the export.
 func Run(args []string, stdout, stderr io.Writer) int {
 	var inputs []string
 	out, pkg := "", ""
+	check := false
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
+		case "--check":
+			check = true
 		case "-o", "--out":
 			i++
 			if i < len(args) {
@@ -52,14 +59,14 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprint(stderr, usage)
 		return 2
 	}
-	if err := run(inputs, out, pkg, stdout); err != nil {
+	if err := run(inputs, out, pkg, check, stdout); err != nil {
 		_, _ = fmt.Fprintln(stderr, "cuppa screens:", err)
 		return 1
 	}
 	return 0
 }
 
-func run(inputs []string, out, pkg string, stdout io.Writer) error {
+func run(inputs []string, out, pkg string, check bool, stdout io.Writer) error {
 	paths, err := designFiles(inputs)
 	if err != nil {
 		return err
@@ -79,6 +86,17 @@ func run(inputs []string, out, pkg string, stdout io.Writer) error {
 	}
 	cat := cupp.Adopt(standard.Default(), embedded)
 	project := gosource.GenerateScreens(docs, cat, pkg)
+	if check {
+		diffs := gosource.CheckScreens(out, project)
+		if len(diffs) == 0 {
+			_, _ = fmt.Fprintf(stdout, "%s is current: %d designs, %d files\n", out, len(docs), len(project.Files))
+			return nil
+		}
+		for _, d := range diffs {
+			_, _ = fmt.Fprintln(stdout, "  "+d)
+		}
+		return fmt.Errorf("%s is out of date with %d design(s): run cuppa screens again", out, len(docs))
+	}
 	if err := gosource.ReplaceScreens(out, project); err != nil {
 		return err
 	}

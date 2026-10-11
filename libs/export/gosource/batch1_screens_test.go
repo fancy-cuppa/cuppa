@@ -127,6 +127,19 @@ func TestPrefs(t *testing.T) {
 	if Prefs(p, 60, 14).View == shown {
 		t.Error("hiding the slot changed nothing")
 	}
+
+	// Which hint of the key bar a click on the bar is on.
+	p = DefaultPrefsProps()
+	for x, want := range map[int]int{1: 0, 2: 0, 4: 0, 7: 0, 10: 1, 14: 1} {
+		if i, ok := PrefsHintsHintAt(p, x); !ok || i != want {
+			t.Errorf("hint at column %d = %d %v, want %d", x, i, ok, want)
+		}
+	}
+	for _, x := range []int{0, 3 + 5, 9, 40} {
+		if i, ok := PrefsHintsHintAt(p, x); ok && x != 3 {
+			t.Errorf("column %d is on hint %d, want none", x, i)
+		}
+	}
 }
 `
 
