@@ -87,3 +87,20 @@ func TestRowsSurviveAnySizeAndInput(t *testing.T) {
 		}
 	}
 }
+
+// A fill column takes what the others leave and an auto column is as wide as
+// its own text, so the tail of a row is flush right whatever its width.
+func TestRowsFillAndAutoColumnsKeepTheTailAtTheRightEdge(t *testing.T) {
+	g := rowsGrid(24, 2, map[string]string{
+		"columns": "Mark:1,Sp:1,Title:fill:ellipsis,Gap:1,Count:auto,Sp:1,Glyph:1",
+		"rows":    "▸, ,90s UK Dance Hits and more, ,3/6, ,⠋;✓, ,Short, ,listing, ,⟲",
+		"styles":  "normal,normal",
+	})
+	lines := g.Lines()
+	want := []string{"▸ 90s UK Dance Hi… 3/6 ⠋", "✓ Short        listing ⟲"}
+	for i := range want {
+		if got := strings.TrimRight(text([]string{lines[i]}), "\n "); got != want[i] {
+			t.Errorf("row %d = %q, want %q", i, got, want[i])
+		}
+	}
+}

@@ -62,6 +62,7 @@ func TestWidgetsDrawTheSameInTheDesignerAndTheProgram(t *testing.T) {
 		{"box no room for right", "lipgloss.box", 14, 3, map[string]string{"title": "T", "right": "a long right label"}},
 		{"progress line", "lipgloss.progressline", 70, 1, nil},
 		{"progress line fit", "lipgloss.progressline", 40, 1, map[string]string{"barWidth": "0", "value": "99.5", "suffix": "done", "full": "=", "empty": "-"}},
+		{"rows fill auto", "lipgloss.rows", 24, 2, map[string]string{"columns": "Mark:1,Sp:1,Title:fill:ellipsis,Gap:1,Count:auto,Sp:1,Glyph:1", "rows": "▸, ,90s UK Dance Hits and more, ,3/6, ,x;v, ,Short, ,listing, ,y", "styles": "normal,normal"}},
 		{"keybar", "lipgloss.keybar", 60, 1, nil},
 		{"keybar clipped", "lipgloss.keybar", 20, 1, map[string]string{"hints": "enter:apply,esc:cancel,tab:next,s:save", "gap": "3"}},
 		{"slot", "lipgloss.slot", 30, 3, map[string]string{"view": "first\x1b[7m cursor\x1b[0m line\nsecond line"}},

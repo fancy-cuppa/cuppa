@@ -331,3 +331,27 @@ func TestPaletteRoundTripAndCleaning(t *testing.T) {
 		t.Errorf("not cleaned: %+v", got.Theme.Palette)
 	}
 }
+
+// A show-if written as a condition survives a save and a load; one that does
+// not parse is dropped like an invalid name.
+func TestShowIfConditionsSurviveTheFile(t *testing.T) {
+	doc := design.NewDocument("c", 40, 10)
+	doc.Add(design.Node{Component: "lipgloss.label", Name: "Wide", Rect: design.Rect{W: 10, H: 1}, ShowIf: "w >= 100 && $Flag == 1"})
+	doc.Add(design.Node{Component: "lipgloss.label", Name: "Bare", Rect: design.Rect{Y: 2, W: 10, H: 1}, ShowIf: "$Flag"})
+	doc.Add(design.Node{Component: "lipgloss.label", Name: "Name", Rect: design.Rect{Y: 4, W: 10, H: 1}, ShowIf: "Show keys"})
+	doc.Add(design.Node{Component: "lipgloss.label", Name: "Broken", Rect: design.Rect{Y: 6, W: 10, H: 1}, ShowIf: "w >="})
+	data, err := Encode(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := Decode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"w >= 100 && $Flag == 1", "$Flag", "Show keys", ""}
+	for i, n := range got.Nodes {
+		if n.ShowIf != want[i] {
+			t.Errorf("%s: show-if %q, want %q", n.Name, n.ShowIf, want[i])
+		}
+	}
+}

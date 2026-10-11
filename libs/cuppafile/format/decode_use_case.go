@@ -9,6 +9,7 @@ import (
 
 	"github.com/meta-tui/cuppa/libs/color/space"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/layout/expr"
 )
 
 // Decode reads a .cuppa file, migrating older versions to the current one.
@@ -133,13 +134,23 @@ func cleanScreenNames(n design.Node) design.Node {
 	if len(n.Bind) == 0 {
 		n.Bind = nil
 	}
-	if n.ShowIf != "" && !design.ValidInputName(n.ShowIf) {
+	if n.ShowIf != "" && !design.ValidInputName(n.ShowIf) && !validCondition(n.ShowIf) {
 		n.ShowIf = ""
 	}
 	if n.Event != "" && !design.ValidInputName(n.Event) {
 		n.Event = ""
 	}
 	return n
+}
+
+// validCondition reports whether a show-if is a condition that parses ("w >=
+// 100", "$Count > 0 && !$Busy").
+func validCondition(s string) bool {
+	if !expr.IsCondition(s) {
+		return false
+	}
+	_, err := expr.ParseCond(s)
+	return err == nil
 }
 
 func cleanKeys(in []design.KeyBinding) []design.KeyBinding {

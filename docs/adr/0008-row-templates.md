@@ -61,6 +61,8 @@ The field names come from the column names (`Mark`, `Name`, `Swatch`, `Hex`); a 
 
 Every typed row also has a `<Column>Style CellStyle{Fg, Bg string; Bold, Dim, Reverse bool}` next to each cell: what the program says about that cell now (a green tick, a red error tag, the cell under the cursor). It wins over the column's style, and the zero value keeps it. The text of a cell may carry SGR escape sequences (colours, bold, dim, reverse): they are parsed into cells and cut by width, so a text input's view can be a cell.
 
+Widths: a number is fixed; `fill` takes what the other columns leave (shared between fill columns; a last column with no width is one), and `auto` is as wide as the text of its own cell in that row. Columns after a `fill` column are flush with the right end, so a count of any width and a glyph can sit at the end of a row: `Mark:1,Sp:1,Title:fill:ellipsis,Gap:1,Count:auto,Sp:1,Glyph:1`.
+
 Further tokens: `selfg=<colour>` and `selbold` (the foreground and bold a column takes on a selected row) and `fit` (the selected background covers only the cells the text uses, not the column's width). `CellStyle.Plain` keeps the column's colours off one cell; an SGR reset (`0`, `39`, `49`) in a cell's text means the terminal's default colour.
 
 ### What does not change
