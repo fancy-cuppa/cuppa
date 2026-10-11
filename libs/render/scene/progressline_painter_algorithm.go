@@ -23,7 +23,7 @@ func paintProgressLine(g *grid.Grid, p Props) {
 	gap := min(max(p.Int("gap", 3), 0), 16)
 	barWidth := p.Int("barWidth", 32)
 	if barWidth <= 0 {
-		barWidth = g.W - gap - len([]rune(suffix))
+		barWidth = g.W - gap - grid.Width(suffix)
 	}
 	barWidth = min(max(barWidth, 0), g.W)
 	value := p.Float("value", 0)

@@ -151,7 +151,7 @@ func hex2(n int) string {
 func runesWidth(runs []sgrRun) int {
 	n := 0
 	for _, r := range runs {
-		n += len([]rune(r.text))
+		n += grid.Width(r.text)
 	}
 	return n
 }
@@ -176,13 +176,18 @@ func cutRuns(runs []sgrRun, w int, ellipsis bool) []sgrRun {
 		if keep <= 0 {
 			break
 		}
-		rs := []rune(r.text)
-		if len(rs) > keep {
-			rs = rs[:keep]
+		var kept []rune
+		for _, c := range r.text {
+			w := grid.RuneWidth(c)
+			if w > keep {
+				keep = 0
+				break
+			}
+			kept = append(kept, c)
+			keep -= w
 		}
-		out = append(out, sgrRun{string(rs), r.style})
+		out = append(out, sgrRun{string(kept), r.style})
 		last = r.style
-		keep -= len(rs)
 	}
 	if ellipsis {
 		out = append(out, sgrRun{"…", last})

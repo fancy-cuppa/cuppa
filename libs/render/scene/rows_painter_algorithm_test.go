@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"charm.land/lipgloss/v2"
 	"github.com/meta-tui/cuppa/libs/catalog/standard"
 	"github.com/meta-tui/cuppa/libs/document/design"
 	"github.com/meta-tui/cuppa/libs/render/grid"
@@ -130,5 +131,22 @@ func TestRowsFitColumnsFollowTheirContent(t *testing.T) {
 			t.Errorf("with a replaced title: column %d is %d wide, want %d (%v)", i, w, want[i], plan.row(rows[0]))
 			break
 		}
+	}
+}
+
+// A title with double-width characters is cut and padded by cells, so the
+// tail after it stays in the last cells of the line.
+func TestRowsCountCellsNotRunesInAFillColumn(t *testing.T) {
+	g := rowsGrid(40, 1, map[string]string{
+		"columns": "Glyph:1,Sp:1,Idx:2,Sp2:1,Title:fill:ellipsis,Sp3:1,Tag:auto",
+		"rows":    "⠋, ,05, ,Stardust - Music 日本語タイトル と もっと, , 34%",
+	})
+	line := g.Lines()[0]
+	if w := lipgloss.Width(line); w != 40 {
+		t.Fatalf("the line is %d cells wide, want 40: %q", w, line)
+	}
+	plain := strings.TrimRight(text([]string{line}), "\n")
+	if !strings.HasSuffix(plain, " 34%") || !strings.Contains(plain, "…") {
+		t.Errorf("tail or ellipsis lost: %q", plain)
 	}
 }

@@ -63,16 +63,40 @@ func (g *Grid) Fill(r design.Rect, ch rune, s Style) {
 	}
 }
 
+// wideTail is the second cell of a double-width character: the first cell
+// holds the character, this one is drawn as nothing.
+const wideTail rune = -1
+
+// RuneWidth is how many terminal cells a rune takes: 0 for a combining mark,
+// 2 for a wide character such as a Japanese one, 1 otherwise.
+func RuneWidth(r rune) int {
+	if r < 0x300 {
+		return 1
+	}
+	return lipgloss.Width(string(r))
+}
+
+// Width is how many terminal cells a text takes.
+func Width(s string) int { return lipgloss.Width(s) }
+
 // Text paints text starting at (x, y), stopping after maxW cells (no limit if
-// maxW <= 0). It returns the number of cells written.
+// maxW <= 0) or at the end of the grid. A double-width character takes two
+// cells and is not split. It returns the number of cells written.
 func (g *Grid) Text(x, y int, text string, s Style, maxW int) int {
 	n := 0
 	for _, ch := range text {
-		if maxW > 0 && n >= maxW {
+		w := RuneWidth(ch)
+		if w == 0 {
+			continue
+		}
+		if maxW > 0 && n+w > maxW || w == 2 && x+n+w > g.W {
 			break
 		}
 		g.Set(x+n, y, Cell{Ch: ch, Style: s})
-		n++
+		if w == 2 {
+			g.Set(x+n+1, y, Cell{Ch: wideTail, Style: s})
+		}
+		n += w
 	}
 	return n
 }
@@ -128,6 +152,9 @@ func (g *Grid) row(y int) string {
 	}
 	for x := 0; x < g.W; x++ {
 		c := g.cells[y*g.W+x]
+		if c.Ch == wideTail {
+			continue
+		}
 		if c.Style != cur {
 			flush()
 			cur = c.Style
