@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -30,6 +31,44 @@ func WriteScreens(dir string, p Project) error {
 		}
 	}
 	return nil
+}
+
+// CheckScreens says how the folder differs from what GenerateScreens made: a
+// file that is missing or has other content, and a generated file of a screen
+// that is no longer designed. It writes nothing; an empty result means the
+// folder is current. Line endings are not compared.
+func CheckScreens(dir string, p Project) []string {
+	var out []string
+	same := func(a, b string) bool {
+		return strings.ReplaceAll(a, "\r\n", "\n") == strings.ReplaceAll(b, "\r\n", "\n")
+	}
+	names := make([]string, 0, len(p.Files))
+	for name := range p.Files {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		switch {
+		case err != nil:
+			out = append(out, name+": missing")
+		case !same(string(data), p.Files[name]):
+			out = append(out, name+": differs from what the designs export")
+		}
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return out
+	}
+	for _, e := range entries {
+		if _, kept := p.Files[e.Name()]; kept || e.IsDir() || !strings.HasSuffix(e.Name(), ".go") {
+			continue
+		}
+		if data, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil && strings.HasPrefix(string(data), GeneratedHeader) {
+			out = append(out, e.Name()+": generated for a screen that is no longer designed")
+		}
+	}
+	return out
 }
 
 // ReplaceScreens is WriteScreens for a project that holds every screen of the

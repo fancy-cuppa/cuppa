@@ -127,7 +127,9 @@ from the same table it uses for the keys, and a click on the bar arrives as the 
 
 Commit the designs (`designs/*.cuppa`) and the generated package (`cuppa_*.go`, `*_screen_*.go`), and say in
 the commit which `cuppa-tui` version wrote them, so CI and a contributor without Cuppa can build. Regenerate
-with `cuppa screens` and review the diff; never edit a generated file.
+with `cuppa screens` and review the diff; never edit a generated file. In CI run
+`cuppa screens designs -o <package folder> -p <package> --check`: it writes nothing and exits 1, listing the
+files that are missing, differ from what the designs export, or are left over.
 
 ## Limits to know now
 

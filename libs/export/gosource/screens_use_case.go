@@ -205,7 +205,10 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	var rowTypes []rowType
 	rowTypeIndex := map[string]int{}
 	// Hint types: a bound key bar is a typed list of keys and labels.
-	type hintType struct{ name, input string }
+	type hintType struct {
+		name, input, field string
+		gap                int
+	}
 	var hintTypes []hintType
 	hintTypeIndex := map[string]bool{}
 
@@ -268,7 +271,11 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 				}
 				if !hintTypeIndex[typeName] {
 					hintTypeIndex[typeName] = true
-					hintTypes = append(hintTypes, hintType{name: typeName, input: field})
+					gap := 2
+					if g, err := strconv.Atoi(l.Props["gap"]); err == nil {
+						gap = g
+					}
+					hintTypes = append(hintTypes, hintType{name: typeName, input: field, field: field, gap: gap})
 				}
 				ps.assign = append(ps.assign, fmt.Sprintf("{\n\t\t\t\titems := make([]string, len(p.%[1]s))\n\t\t\t\tfor i, h := range p.%[1]s {\n\t\t\t\t\titems[i] = h.Key + \":\" + h.Label\n\t\t\t\t}\n\t\t\t\tv[%[2]q] = joinList(items)\n\t\t\t}", field, key))
 				continue
@@ -443,6 +450,8 @@ func buildScreen(doc design.Document, ident string, placed []leaf, cat Catalog) 
 	}
 	for _, ht := range hintTypes {
 		fmt.Fprintf(&c, "// %s is one hint of the key bar %s.\ntype %s struct{ Key, Label string }\n\n", ht.name, ht.input, ht.name)
+		fmt.Fprintf(&c, "// %sAt is the index of the hint of %s under column x of the bar (X of the\n// click's event), and false between hints.\nfunc %sAt(p %sProps, x int) (int, bool) {\n\tkeys := make([][2]string, len(p.%s))\n\tfor i, h := range p.%s {\n\t\tkeys[i] = [2]string{h.Key, h.Label}\n\t}\n\treturn hintIndexAt(keys, %d, x)\n}\n\n",
+			ht.name, ht.input, ht.name, ident, ht.field, ht.field, ht.gap)
 	}
 	fmt.Fprintf(&c, "// Default%sProps is the screen as it was designed: each input holds the value\n// it had in the design.\nfunc Default%sProps() %sProps {\n\treturn %sProps{\n", ident, ident, ident, ident)
 	for _, in := range inputs {
