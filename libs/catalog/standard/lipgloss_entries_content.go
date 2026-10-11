@@ -69,6 +69,7 @@ func lipglossEntries() []definition.Definition {
 				textProp("rows", "Sample rows (; between rows, , between cells)", "▸,Accent,#ff007f,#ff007f;,Focus,#00f0ff,#00f0ff;,Success,#3ddc84,#3ddc84;,Error,#ff4d4d,#ff4d4d"),
 				textProp("styles", "Row styles (normal, selected, dim, accent)", "selected,normal,normal,dim"),
 				textProp("cellstyles", "Cell styles (given by the program)", ""),
+				intProp("gap", "Spaces between columns", 0, 0, 8),
 				colorProp("color", "Colour", "212"),
 			},
 		},

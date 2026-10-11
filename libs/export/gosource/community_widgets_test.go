@@ -63,6 +63,8 @@ func TestWidgetsDrawTheSameInTheDesignerAndTheProgram(t *testing.T) {
 		{"progress line", "lipgloss.progressline", 70, 1, nil},
 		{"progress line fit", "lipgloss.progressline", 40, 1, map[string]string{"barWidth": "0", "value": "99.5", "suffix": "done", "full": "=", "empty": "-"}},
 		{"rows fill auto", "lipgloss.rows", 24, 2, map[string]string{"columns": "Mark:1,Sp:1,Title:fill:ellipsis,Gap:1,Count:auto,Sp:1,Glyph:1", "rows": "▸, ,90s UK Dance Hits and more, ,3/6, ,x;v, ,Short, ,listing, ,y", "styles": "normal,normal"}},
+		{"rows fit", "lipgloss.rows", 60, 3, map[string]string{"columns": "Review:6,Artist:fit=4..30%,Song:fit=6..50%,Video:fill:min=4:ellipsis,Replaced:fit=0..25%:floor=6:hide-empty,Addr:8", "rows": "ok,Aphex,Windowlicker (extended mix),Aphex Twin - Windowlicker official video, ,url;,B,Hi,Another long video title here, ,url2", "gap": "2", "styles": "normal,selected"}},
+		{"rows fit hidden", "lipgloss.rows", 40, 2, map[string]string{"columns": "A:fit=2..40%,B:fill,C:fit=0..30%:hide-empty", "rows": "x,wide text,;yy,more,", "gap": "1"}},
 		{"keybar", "lipgloss.keybar", 60, 1, nil},
 		{"keybar clipped", "lipgloss.keybar", 20, 1, map[string]string{"hints": "enter:apply,esc:cancel,tab:next,s:save", "gap": "3"}},
 		{"slot", "lipgloss.slot", 30, 3, map[string]string{"view": "first\x1b[7m cursor\x1b[0m line\nsecond line"}},
