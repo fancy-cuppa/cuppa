@@ -2,10 +2,13 @@ package editor
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/meta-tui/cuppa/libs/catalog/definition"
 	"github.com/meta-tui/cuppa/libs/document/design"
+	"github.com/meta-tui/cuppa/libs/layout/expr"
 )
 
 // VariableKind is which namespace a variable lives in: a named colour, a
@@ -53,6 +56,8 @@ const (
 	UseShowIf = "showif"
 	UseEvent  = "event"
 	UseKey    = "key"
+	// UseLayout is an input read by a layout expression: Prop is the axis.
+	UseLayout = "layout"
 )
 
 // Variables lists every named variable of the design: the colours of the
@@ -92,8 +97,30 @@ func (e *Editor) Variables() []Variable {
 				out[i].Uses = append(out[i].Uses, Use{Node: n.ID, NodeName: n.Name, Where: label(key), Prop: key, Role: UseProp})
 			}
 			if n.ShowIf != "" {
-				i := add(VarInput, n.ShowIf, "yes/no", "true")
-				out[i].Uses = append(out[i].Uses, Use{Node: n.ID, NodeName: n.Name, Where: "Show if", Role: UseShowIf})
+				if expr.IsCondition(n.ShowIf) {
+					// A condition reads inputs by $Name.
+					if cond, err := expr.ParseCond(n.ShowIf); err == nil {
+						for _, ref := range cond.Refs() {
+							i := add(VarInput, ref, "number", "")
+							out[i].Uses = append(out[i].Uses, Use{Node: n.ID, NodeName: n.Name, Where: "Show if", Role: UseShowIf})
+						}
+					}
+				} else {
+					i := add(VarInput, n.ShowIf, "yes/no", "true")
+					out[i].Uses = append(out[i].Uses, Use{Node: n.ID, NodeName: n.Name, Where: "Show if", Role: UseShowIf})
+				}
+			}
+			for _, axis := range []struct{ key, src string }{{"x", n.Layout.X}, {"y", n.Layout.Y}, {"w", n.Layout.W}, {"h", n.Layout.H}} {
+				if !strings.Contains(axis.src, "$") {
+					continue
+				}
+				if x, err := expr.Parse(axis.src); err == nil {
+					refs, _ := x.Refs()
+					for _, ref := range refs {
+						i := add(VarInput, ref, "number", "")
+						out[i].Uses = append(out[i].Uses, Use{Node: n.ID, NodeName: n.Name, Where: "Layout " + axis.key, Prop: axis.key, Role: UseLayout})
+					}
+				}
 			}
 			if n.Event != "" {
 				i := add(VarEvent, n.Event, "event", "")
@@ -137,7 +164,7 @@ func sortedPropKeys(m map[string]string) []string {
 
 func propType(spec definition.PropSpec) string {
 	switch spec.Kind {
-	case definition.PropInt:
+	case definition.PropInt, definition.PropFloat:
 		return "number"
 	case definition.PropBool:
 		return "yes/no"
@@ -220,7 +247,11 @@ func renameIn(nodes []design.Node, kind VariableKind, from, to string) {
 			}
 			if n.ShowIf == from {
 				n.ShowIf = to
+			} else if expr.IsCondition(n.ShowIf) {
+				n.ShowIf = renameRef(n.ShowIf, from, to)
 			}
+			n.Layout.X, n.Layout.Y = renameRef(n.Layout.X, from, to), renameRef(n.Layout.Y, from, to)
+			n.Layout.W, n.Layout.H = renameRef(n.Layout.W, from, to), renameRef(n.Layout.H, from, to)
 		case VarEvent:
 			if n.Event == from {
 				n.Event = to
@@ -258,4 +289,29 @@ func (e *Editor) Relink(u Use, kind VariableKind, to string) error {
 		return e.SetKeys(design.FormatKeys(keys))
 	}
 	return fmt.Errorf("editor: cannot link that use")
+}
+
+// renameRef renames an input in an expression or a condition: $Name and
+// $"A name" become $New or $"A new".
+func renameRef(text, from, to string) string {
+	if !strings.Contains(text, "$") {
+		return text
+	}
+	plain := func(s string) bool {
+		for _, r := range s {
+			if r != '_' && (r < '0' || r > '9') && (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+				return false
+			}
+		}
+		return s != ""
+	}
+	repl := "$" + to
+	if !plain(to) {
+		repl = "$" + strconv.Quote(to)
+	}
+	text = strings.ReplaceAll(text, "$"+strconv.Quote(from), repl)
+	if plain(from) {
+		text = regexp.MustCompile(`\$`+regexp.QuoteMeta(from)+`\b`).ReplaceAllLiteralString(text, repl)
+	}
+	return text
 }

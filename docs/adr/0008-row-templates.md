@@ -61,6 +61,8 @@ The field names come from the column names (`Mark`, `Name`, `Swatch`, `Hex`); a 
 
 Every typed row also has a `<Column>Style CellStyle{Fg, Bg string; Bold, Dim, Reverse bool}` next to each cell: what the program says about that cell now (a green tick, a red error tag, the cell under the cursor). It wins over the column's style, and the zero value keeps it. The text of a cell may carry SGR escape sequences (colours, bold, dim, reverse): they are parsed into cells and cut by width, so a text input's view can be a cell.
 
+Further tokens: `selfg=<colour>` and `selbold` (the foreground and bold a column takes on a selected row) and `fit` (the selected background covers only the cells the text uses, not the column's width). `CellStyle.Plain` keeps the column's colours off one cell; an SGR reset (`0`, `39`, `49`) in a cell's text means the terminal's default colour.
+
 ### What does not change
 
 - `lipgloss.list` and the Bubbles components keep trimming their items. Rows are the way to a list with alignment, styles or several parts per row.

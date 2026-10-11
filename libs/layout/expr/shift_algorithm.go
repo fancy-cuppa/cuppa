@@ -12,7 +12,7 @@ import (
 // percentage, and a calculation ending in "± n" has that n changed (or gains
 // one).
 func (e Expr) Shift(delta, parent int) Expr {
-	if delta == 0 {
+	if delta == 0 || e.UsesEnv() {
 		return e
 	}
 	if e.IsFixed() {
@@ -82,6 +82,12 @@ func format(n node, min int) string {
 	case binary:
 		p := precedence(v)
 		s = format(v.l, p) + " " + string(v.op) + " " + format(v.r, p+1)
+	case windowDim:
+		s = string(v.axis)
+	case inputRef:
+		s = "$" + quoteIfNeeded(v.name)
+	case rectRef:
+		s = v.fn() + "(" + strconv.Quote(v.name) + ")"
 	case call:
 		args := make([]string, len(v.args))
 		for i, a := range v.args {
@@ -108,4 +114,15 @@ func PercentOf(cells, parent int) Expr {
 		}
 	}
 	return Cells(cells)
+}
+
+// quoteIfNeeded writes an input name as it is when it is a plain word, else in
+// quotes.
+func quoteIfNeeded(name string) string {
+	for _, r := range name {
+		if r != '_' && (r < '0' || r > '9') && (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return strconv.Quote(name)
+		}
+	}
+	return name
 }

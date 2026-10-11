@@ -18,15 +18,19 @@ type rowsColumn struct {
 	colour, glyph bool
 	// ellipsis cuts a cell that is too long with "…".
 	ellipsis bool
-	// fg and bg are the colour of the column's text and its background; selBg
-	// is the background the column takes on a selected row. They are colours or
-	// @Name of the palette.
-	fg, bg, selBg string
+	// fg and bg are the colour of the column's text and its background; selBg,
+	// selFg and selBold are what the column takes on a selected row. They are
+	// colours or @Name of the palette.
+	fg, bg, selBg, selFg string
+	selBold              bool
+	// fit limits the selected background to the cells the text uses, not the
+	// column's whole width.
+	fit bool
 }
 
 // rowsColumns reads "Name[:width][:token]..." items separated by commas. A
-// token is colour, glyph, ellipsis, fg=<colour>, bg=<colour> or
-// selbg=<colour>. A column without a width takes twelve cells, except the
+// token is colour, glyph, ellipsis, fg=<colour>, bg=<colour>,
+// selbg=<colour>, selfg=<colour>, selbold or fit. A column without a width takes twelve cells, except the
 // last, which takes what is left of the row.
 func rowsColumns(spec string) []rowsColumn {
 	var out []rowsColumn
@@ -47,6 +51,12 @@ func rowsColumns(spec string) []rowsColumn {
 				col.glyph = true
 			case lower == "ellipsis":
 				col.ellipsis = true
+			case lower == "fit":
+				col.fit = true
+			case lower == "selbold":
+				col.selBold = true
+			case strings.HasPrefix(lower, "selfg="):
+				col.selFg = strings.TrimSpace(extra[6:])
 			case strings.HasPrefix(lower, "fg="):
 				col.fg = strings.TrimSpace(extra[3:])
 			case strings.HasPrefix(lower, "bg="):
@@ -129,6 +139,10 @@ func cellStyleOf(p Props, code string, base grid.Style) grid.Style {
 		return base
 	}
 	parts := strings.Split(code, "|")
+	if len(parts) > 2 && strings.Contains(parts[2], "p") {
+		// Plain: the terminal's own colours, whatever the column says.
+		base.Fg, base.Bg = "", ""
+	}
 	if len(parts) > 0 && parts[0] != "" {
 		base.Fg = paletteColour(p, parts[0])
 	}
@@ -157,7 +171,7 @@ func paintRows(g *grid.Grid, p Props) {
 	cellStyles := rowsCells(p.Str("cellstyles"))
 	anySelBg := false
 	for _, c := range columns {
-		anySelBg = anySelBg || c.selBg != ""
+		anySelBg = anySelBg || c.selBg != "" || c.selFg != "" || c.selBold
 	}
 	for y, row := range rowsCells(p.Str("rows")) {
 		if y >= g.H {
@@ -200,6 +214,12 @@ func paintRows(g *grid.Grid, p Props) {
 			if isSelected && col.selBg != "" {
 				style.Bg = paletteColour(p, col.selBg)
 			}
+			if isSelected && col.selFg != "" {
+				style.Fg = paletteColour(p, col.selFg)
+			}
+			if isSelected && col.selBold {
+				style.Bold = true
+			}
 			if y < len(cellStyles) && i < len(cellStyles[y]) {
 				style = cellStyleOf(p, cellStyles[y][i], style)
 			}
@@ -212,7 +232,7 @@ func paintRows(g *grid.Grid, p Props) {
 			case col.colour || col.glyph:
 				g.Text(x, y, "·", p.Dim(), w)
 			default:
-				if style.Bg != "" {
+				if style.Bg != "" && (!isSelected || !col.fit || col.selBg == "") {
 					g.Fill(design.Rect{X: x, Y: y, W: w, H: 1}, ' ', grid.Style{Bg: style.Bg})
 				}
 				at := x

@@ -79,6 +79,7 @@ var painters = map[string]painter{
 	"community.toast":         paintToast,
 	"lipgloss.rows":           paintRows,
 	"lipgloss.keybar":         paintKeybar,
+	"lipgloss.progressline":   paintProgressLine,
 	"lipgloss.slot":           paintSlot,
 	"lipgloss.colourpicker":   paintColourPicker,
 	"community.dropdown":      paintDropdown,

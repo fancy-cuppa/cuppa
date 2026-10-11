@@ -78,6 +78,15 @@ func normalise(spec definition.PropSpec, value string) (string, error) {
 			n = min(max(n, spec.Min), spec.Max)
 		}
 		return strconv.Itoa(n), nil
+	case definition.PropFloat:
+		f, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil {
+			return "", fmt.Errorf("editor: %s must be a number", spec.Label)
+		}
+		if spec.Max > spec.Min {
+			f = min(max(f, float64(spec.Min)), float64(spec.Max))
+		}
+		return strconv.FormatFloat(f, 'f', -1, 64), nil
 	case definition.PropBool:
 		switch strings.ToLower(strings.TrimSpace(value)) {
 		case "true", "yes", "on", "1":

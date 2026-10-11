@@ -62,6 +62,7 @@ type PropKind string
 const (
 	PropText   PropKind = "text"
 	PropInt    PropKind = "int"
+	PropFloat  PropKind = "float"
 	PropBool   PropKind = "bool"
 	PropColor  PropKind = "color"
 	PropChoice PropKind = "choice"

@@ -115,6 +115,7 @@ func TestEscapeCancelsAndBadInputReports(t *testing.T) {
 
 func TestLayerButtonsAndList(t *testing.T) {
 	m, ed, a := setup(t, "lipgloss.box")
+	m.SetSize(32, 80) // the box has many properties; the layer list is under them
 	b, _ := ed.Add("lipgloss.label", 0, 0)
 	ed.Select(a)
 	m.Lines()
