@@ -26,11 +26,16 @@ type rowsColumn struct {
 	// fit limits the selected background to the cells the text uses, not the
 	// column's whole width.
 	fit bool
+	// fill takes what the other columns leave (shared by the fill columns), and
+	// auto is as wide as the text of its own cell in that row: columns after a
+	// fill column are therefore flush with the right end, however wide an
+	// auto cell is.
+	fill, auto bool
 }
 
 // rowsColumns reads "Name[:width][:token]..." items separated by commas. A
 // token is colour, glyph, ellipsis, fg=<colour>, bg=<colour>,
-// selbg=<colour>, selfg=<colour>, selbold or fit. A column without a width takes twelve cells, except the
+// selbg=<colour>, selfg=<colour>, selbold, fit, fill or auto. A column without a width takes twelve cells, except the
 // last, which takes what is left of the row.
 func rowsColumns(spec string) []rowsColumn {
 	var out []rowsColumn
@@ -53,6 +58,10 @@ func rowsColumns(spec string) []rowsColumn {
 				col.ellipsis = true
 			case lower == "fit":
 				col.fit = true
+			case lower == "fill":
+				col.fill = true
+			case lower == "auto":
+				col.auto = true
 			case lower == "selbold":
 				col.selBold = true
 			case strings.HasPrefix(lower, "selfg="):
@@ -68,7 +77,7 @@ func rowsColumns(spec string) []rowsColumn {
 		out = append(out, col)
 	}
 	for i := range out {
-		if out[i].width == 0 && i < len(out)-1 {
+		if out[i].width == 0 && i < len(out)-1 && !out[i].fill && !out[i].auto {
 			out[i].width = 12
 		}
 	}
@@ -113,6 +122,44 @@ func rowsCells(s string) [][]string {
 		rows = append(rows, rowsSplit(raw, ",", true))
 	}
 	return rows
+}
+
+// rowsWidths is the width of each column in one row: a fixed one as it is, an
+// auto one as wide as its cell's text, and what is left shared by the fill
+// columns (the last column counts as one when it has no width).
+func rowsWidths(columns []rowsColumn, row []string, total int) []int {
+	widths := make([]int, len(columns))
+	used, fills := 0, 0
+	for i, col := range columns {
+		switch {
+		case col.auto:
+			cell := ""
+			if i < len(row) {
+				cell = row[i]
+			}
+			widths[i] = runesWidth(parseSGR(cell, grid.Style{}))
+		case col.fill || col.width == 0 && i == len(columns)-1:
+			fills++
+			continue
+		default:
+			widths[i] = col.width
+		}
+		used += widths[i]
+	}
+	left := max(total-used, 0)
+	if fills > 0 {
+		share, extra := left/fills, left%fills
+		for i, col := range columns {
+			if col.fill || col.width == 0 && i == len(columns)-1 && !col.auto {
+				widths[i] = share
+				fills--
+				if fills == 0 {
+					widths[i] += extra
+				}
+			}
+		}
+	}
+	return widths
 }
 
 // paletteColour resolves a colour of a column or a cell: a name of the
@@ -194,12 +241,9 @@ func paintRows(g *grid.Grid, p Props) {
 			}
 		}
 		x := 0
+		widths := rowsWidths(columns, row, g.W)
 		for i, col := range columns {
-			w := col.width
-			if w == 0 {
-				w = max(g.W-x, 0)
-			}
-			w = min(w, max(g.W-x, 0))
+			w := min(widths[i], max(g.W-x, 0))
 			cell := ""
 			if i < len(row) {
 				cell = row[i]
