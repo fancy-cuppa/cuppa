@@ -104,3 +104,31 @@ func TestRowsFillAndAutoColumnsKeepTheTailAtTheRightEdge(t *testing.T) {
 		}
 	}
 }
+
+// The widths of the columns of a list whose text decides them: fit columns
+// from their longest cell within bounds, one that hides when it is empty, and
+// the fill column with what is left.
+func TestRowsFitColumnsFollowTheirContent(t *testing.T) {
+	columns := rowsColumns("Review:9,Artist:fit=6..30%,Song:fit=8..50%,Video:fill:min=4,Replaced:fit=0..25%:floor=8:hide-empty,Address:31")
+	rows := [][]string{
+		{"", strings.Repeat("a", 12), strings.Repeat("s", 30), strings.Repeat("v", 40), "", ""},
+		{"", "b", "c", "d", "", ""},
+	}
+	plan := newRowsPlan(columns, rows, 100, 2)
+	want := []int{9, 12, 26, 14, 0, 31}
+	for i, w := range plan.row(rows[0]) {
+		if w != want[i] {
+			t.Errorf("without replaced titles: column %d is %d wide, want %d (%v)", i, w, want[i], plan.row(rows[0]))
+			break
+		}
+	}
+	rows[1][4] = strings.Repeat("r", 20)
+	plan = newRowsPlan(columns, rows, 100, 2)
+	want = []int{9, 12, 25, 4, 12, 31}
+	for i, w := range plan.row(rows[0]) {
+		if w != want[i] {
+			t.Errorf("with a replaced title: column %d is %d wide, want %d (%v)", i, w, want[i], plan.row(rows[0]))
+			break
+		}
+	}
+}

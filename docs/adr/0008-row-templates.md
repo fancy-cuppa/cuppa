@@ -63,6 +63,8 @@ Every typed row also has a `<Column>Style CellStyle{Fg, Bg string; Bold, Dim, Re
 
 Widths: a number is fixed; `fill` takes what the other columns leave (shared between fill columns; a last column with no width is one), and `auto` is as wide as the text of its own cell in that row. Columns after a `fill` column are flush with the right end, so a count of any width and a glyph can sit at the end of a row: `Mark:1,Sp:1,Title:fill:ellipsis,Gap:1,Count:auto,Sp:1,Glyph:1`.
 
+Widths from the content: `fit=6..30%` is as wide as the longest cell of any row, at least 6 cells and at most 30% of what the fixed columns and the gaps leave (never below `floor=<n>`, 6 by default here); `fit=0..20` bounds it by cells instead. `hide-empty` gives a column no width and no gap when every cell is empty, `min=<n>` is the least a `fill` column takes, and the component's `gap` property is the number of cells between the visible columns. The playlist editor of MVD is `Review:9,Artist:fit=6..30%,Song:fit=8..50%,Video:fill:min=4,Replaced:fit=0..25%:floor=8:hide-empty,Address:31` with `gap=2`.
+
 Further tokens: `selfg=<colour>` and `selbold` (the foreground and bold a column takes on a selected row) and `fit` (the selected background covers only the cells the text uses, not the column's width). `CellStyle.Plain` keeps the column's colours off one cell; an SGR reset (`0`, `39`, `49`) in a cell's text means the terminal's default colour.
 
 ### What does not change
